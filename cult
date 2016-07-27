@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+require 'cri'
+require_relative './nodes-cmd'
+require_relative './roles-cmd'
+require_relative './tasks-cmd'
+require_relative './fleet-cmd'
+
+cult = Cri::Command.define do
+  name 'cult'
+  version = '0.1.0pre'
+  usage 'cult [options] [command [options...]]'
+  summary 'Control a fleet of obedient zombo machines'
+  description 'Cult is a tool for managing fleets of servers using a bunch ' +
+              'of shell scripts and SSH.'
+
+  flag :h, :help, 'show help for this command' do |value, cmd|
+    puts cmd.help
+    exit 0
+  end
+
+  flag :v, :version, 'show cult version' do |_, cmd|
+    puts 'Cult 0.1.0pre'
+    puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
+    exit 0
+  end
+
+  run do |opts, args, cmd|
+    stuff = opts.fetch(:stuff, 'generic stuff')
+    puts "Doing #{stuff}!"
+
+    if opts[:more]
+      puts 'Doing it even more!'
+    end
+  end
+end
+cult.add_command(Cult::CLI.nodes_cmd)
+cult.add_command(Cult::CLI.roles_cmd)
+cult.add_command(Cult::CLI.tasks_cmd)
+cult.add_command(Cult::CLI.fleet_cmd)
+
+cult.run(ARGV)
+exit
