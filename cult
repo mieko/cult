@@ -4,6 +4,7 @@ require_relative './nodes-cmd'
 require_relative './roles-cmd'
 require_relative './tasks-cmd'
 require_relative './fleet-cmd'
+require_relative './init-cmd'
 
 cult = Cri::Command.define do
   name 'cult'
@@ -12,6 +13,15 @@ cult = Cri::Command.define do
   summary 'Control a fleet of obedient zombo machines'
   description 'Cult is a tool for managing fleets of servers using a bunch ' +
               'of shell scripts and SSH.'
+
+  required :C, :directory, 'specify an alternate project path',
+                       argument: :required do |value, cmd|
+    Cult.project = Cult::Project.locate_from_path(value)
+    if Cult.project.nil?
+      $stderr.puts "#{$0}: #{value} is not a valid cult project."
+      exit 1
+    end
+  end
 
   flag :h, :help, 'show help for this command' do |value, cmd|
     puts cmd.help
@@ -25,18 +35,18 @@ cult = Cri::Command.define do
   end
 
   run do |opts, args, cmd|
-    stuff = opts.fetch(:stuff, 'generic stuff')
-    puts "Doing #{stuff}!"
-
-    if opts[:more]
-      puts 'Doing it even more!'
-    end
+    puts cmd.help
+    exit 0;
   end
 end
+
 cult.add_command(Cult::CLI.nodes_cmd)
 cult.add_command(Cult::CLI.roles_cmd)
 cult.add_command(Cult::CLI.tasks_cmd)
 cult.add_command(Cult::CLI.fleet_cmd)
+cult.add_command(Cult::CLI.init_cmd)
+
+Cult.project = Cult::Project.from_cwd
 
 cult.run(ARGV)
 exit

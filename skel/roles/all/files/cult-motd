@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+NODE="<%= node.name %>"
+ROLES="<%= node.roles.join(', ') %>"
+SPAWN="<%= Time.now.to_s %>"
+
+colorize() {
+  i=124
+  d=1
+  while IFS='' read -r LINE ; do
+    printf "\e[38;5;${i}m$LINE\e[0m\n"
+    i=$(($i + $d))
+    if [ $i -eq 124 ] ; then
+      d=1
+    elif [ $i -eq 135 ] ; then
+      d=-1
+    fi
+  done
+}
+
+inf() {
+  txt=$(echo "$1" | fold -s -w 60 | fmt -s -c -w 78)
+  printf '\e[38;5;8m%s\e[0m\n'  "$txt"
+}
+
+# We don't want everyone to have to install figlet.
+cat << EOD | colorize
+
+                     @@@@@@@  @@@  @@@  @@@       @@@@@@@
+                    @@@@@@@@  @@@  @@@  @@@       @@@@@@@
+                    !@@       @@!  @@@  @@!         @@!
+                    !@!       !@!  @!@  !@!         !@!
+                    !@!       @!@  !@!  @!!         @!!
+                    !!!       !@!  !!!  !!!         !!!
+                    :!!       !!:  !!!  !!:         !!:
+                    :!:       :!:  !:!   :!:        :!:
+                     ::: :::  ::::: ::   :: ::::     ::
+                     :: :: :   : :  :   : :: : :     :
+
+EOD
+
+inf "node: $NODE, since $SPAWN"
+inf "roles: $ROLES"
+echo

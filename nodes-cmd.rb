@@ -1,4 +1,5 @@
 require 'cri'
+require_relative './skel'
 
 module Cult
   module CLI
@@ -20,6 +21,10 @@ module Cult
 
         run do |opts, args, cmd|
           puts "creating node #{args.inspect} with roles #{opts[:roles].inspect}"
+          args.each do |arg|
+            Skel.new(Cult.project).copy_template("nodes/template.json.erb",
+                                                 "nodes/#{arg}/node.json")
+          end
         end
       end
       nodes.add_command node_create
