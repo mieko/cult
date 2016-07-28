@@ -16,7 +16,7 @@ cult = Cri::Command.define do
 
   required :C, :directory, 'specify an alternate project path',
                        argument: :required do |value, cmd|
-    Cult.project = Cult::Project.locate_from_path(value)
+    Cult.project = Cult::Project.locate(value)
     if Cult.project.nil?
       $stderr.puts "#{$0}: #{value} is not a valid cult project."
       exit 1

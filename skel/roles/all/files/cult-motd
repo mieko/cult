@@ -18,8 +18,8 @@ colorize() {
 }
 
 inf() {
-  txt=$(echo "$1" | fold -s -w 60 | fmt -s -c -w 78)
-  printf '\e[38;5;8m%s\e[0m\n'  "$txt"
+  TEXT=$(echo "$1" | fold -s -w 60 | fmt -s -c -w 78)
+  printf '\e[38;5;8m%s\e[0m\n' "$TEXT"
 }
 
 # We don't want everyone to have to install figlet.

@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module Cult
   module_function
   def project=(project)
@@ -40,11 +42,18 @@ module Cult
     end
 
     def create_cult_file!
-      FileUtils.touch cult_file
+      File.write(cult_file, SecureRandom.hex(8))
     end
 
-    def self.locate_from_path(path)
-      puts "locate_from_path: #{path}"
+    def cult_id
+      @cult_id ||= begin
+        File.read(cult_file).chomp
+      rescue
+        nil
+      end
+    end
+
+    def self.locate(path)
       path = File.expand_path(path)
       loop do
         return nil if path == '/'
@@ -60,7 +69,7 @@ module Cult
     end
 
     def self.from_cwd
-      locate_from_path Dir.getwd
+      locate Dir.getwd
     end
   end
 end
