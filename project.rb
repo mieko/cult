@@ -17,7 +17,6 @@ module Cult
     attr_reader :cult_file
 
     def initialize(path)
-      puts "init with #{path}"
       fail if path.match /\.cult/
       @path = path
       @cult_file = File.join(self.path, CULT_FILENAME)

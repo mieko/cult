@@ -7,7 +7,10 @@ module Cult
         summary 'Tasks are scripts which run on nodes to bring them up to date.'
         usage 'tasks [command]'
 
-        run {|_, _, cmd| puts cmd.help; exit}
+        run do |_, _, cmd|
+          puts cmd.help;
+          exit
+        end
       end
 
       tasks_sanity = Cri::Command.define do

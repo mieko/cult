@@ -1,5 +1,5 @@
-require_relative './skel'
-require_relative './project'
+require_relative '../skel'
+require_relative '../project'
 
 module Cult
   module CLI
@@ -10,7 +10,7 @@ module Cult
         summary 'Create a new cult project in DIRECTORY'
         usage 'init DIRECTORY'
 
-        run do |ops, args, cmd|
+        run do |ops, args|
           fail ArgumentError, "DIRECTORY required" if args.size != 1
 
           project = Project.new(args[0])

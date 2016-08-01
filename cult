@@ -1,10 +1,16 @@
 #!/usr/bin/env ruby
 require 'cri'
-require_relative './nodes-cmd'
-require_relative './roles-cmd'
-require_relative './tasks-cmd'
-require_relative './fleet-cmd'
-require_relative './init-cmd'
+
+require_relative './project'
+require_relative './cli/all'
+
+def set_project(path)
+  Cult.project = Cult::Project.locate(path)
+  if Cult.project.nil?
+    $stderr.puts "#{File.basename($0)}: #{path} is not a valid cult project."
+    exit 1
+  end
+end
 
 cult = Cri::Command.define do
   name 'cult'
@@ -15,12 +21,8 @@ cult = Cri::Command.define do
               'of shell scripts and SSH.'
 
   required :C, :directory, 'specify an alternate project path',
-                       argument: :required do |value, cmd|
-    Cult.project = Cult::Project.locate(value)
-    if Cult.project.nil?
-      $stderr.puts "#{$0}: #{value} is not a valid cult project."
-      exit 1
-    end
+                       argument: :required do |value|
+    set_project(value)
   end
 
   flag :h, :help, 'show help for this command' do |value, cmd|
@@ -28,25 +30,27 @@ cult = Cri::Command.define do
     exit 0
   end
 
-  flag :v, :version, 'show cult version' do |_, cmd|
+  flag :v, :version, 'show cult version' do
     puts 'Cult 0.1.0pre'
     puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
     exit 0
   end
 
-  run do |opts, args, cmd|
+  run do |_, _, cmd|
     puts cmd.help
     exit 0;
   end
 end
 
-cult.add_command(Cult::CLI.nodes_cmd)
-cult.add_command(Cult::CLI.roles_cmd)
-cult.add_command(Cult::CLI.tasks_cmd)
-cult.add_command(Cult::CLI.fleet_cmd)
-cult.add_command(Cult::CLI.init_cmd)
+Cult::CLI.all_commands.each do |m|
+  cult.add_command(m)
+end
 
-Cult.project = Cult::Project.from_cwd
+if (env = ENV['CULT_PROJECT'])
+  set_project(env)
+end
+
+Cult.project ||= Cult::Project.from_cwd
 
 cult.run(ARGV)
 exit

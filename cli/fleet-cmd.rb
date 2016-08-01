@@ -7,7 +7,6 @@ module Cult
         summary 'Your fleet is the set of remote machines, each associated ' +
                 'with a node.'
       end
-
       fleet
     end
   end
