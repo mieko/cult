@@ -46,7 +46,6 @@ module Cult
         end
       end
       ui.add_command(ui_node_info)
-
       ui
     end
 

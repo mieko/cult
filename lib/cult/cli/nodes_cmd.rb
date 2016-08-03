@@ -1,4 +1,4 @@
-require_relative '../skel'
+require 'cult/skel'
 
 module Cult
   module CLI

@@ -1,5 +1,5 @@
-require_relative '../skel'
-require_relative '../project'
+require 'cult/skel'
+require 'cult/project'
 
 module Cult
   module CLI

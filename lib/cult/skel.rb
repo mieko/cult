@@ -1,5 +1,5 @@
 require 'fileutils'
-require_relative './quickerb'
+require 'cult/quick_erb'
 
 module Cult
   class Skel
@@ -11,7 +11,7 @@ module Cult
       @project = project
     end
 
-    def quickerb
+    def quick_erb
       @erb ||= QuickErb.new(project: project)
     end
 
@@ -47,7 +47,7 @@ module Cult
 
       dst, data = case src
         when /\.erb\z/
-          [ dst.sub(/\.erb\z/, ''), quickerb.process(File.read(src))]
+          [ dst.sub(/\.erb\z/, ''), quick_erb.process(File.read(src))]
         else
           [dst, File.read(src)]
         end

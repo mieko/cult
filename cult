@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby
+$: << File.join(__dir__, "lib")
+
 require 'cri'
 
-require_relative './project'
-require_relative './node_file'
-require_relative './cli/all'
+require 'cult/project'
+require 'cult/node'
+require 'cult/cli/all'
 
 def set_project(path)
   Cult.project = Cult::Project.locate(path)
@@ -54,4 +56,3 @@ end
 Cult.project ||= Cult::Project.from_cwd
 
 cult.run(ARGV)
-exit

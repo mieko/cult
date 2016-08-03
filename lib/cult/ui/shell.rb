@@ -1,5 +1,6 @@
 require 'shellwords'
-require_relative './panel'
+
+require 'cult/ui/panel'
 
 module Cult
   module UI

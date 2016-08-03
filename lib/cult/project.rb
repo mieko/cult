@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'cult/role'
 
 module Cult
   module_function
@@ -26,6 +27,10 @@ module Cult
       File.basename(path)
     end
 
+    def inspect
+      "\#<#{self.class.name} name=#{name.inspect} path=#{path.inspect}>"
+    end
+
     def location_of(file)
       File.join(path, file)
     end
@@ -50,6 +55,13 @@ module Cult
       rescue
         nil
       end
+    end
+
+    def nodes
+    end
+
+    def roles
+      Role.all(self)
     end
 
     def self.locate(path)

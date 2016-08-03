@@ -1,7 +1,8 @@
 require 'shellwords'
-require_relative '../node_file.rb'
-require_relative '../role_file.rb'
-require_relative './tmux.rb'
+
+require 'cult/role'
+require 'cult/node'
+require 'cult/ui/tmux'
 
 module Cult
   module UI
@@ -11,7 +12,7 @@ module Cult
         @list = list
         @list.puts '%set-title Nodes'
         @list.puts '%clear'
-        NodeFile.all.with_index do |v, i|
+        Node.all.with_index do |v, i|
           @list.puts v.name
         end
         @list.puts '%set-selection 0'
@@ -35,7 +36,7 @@ module Cult
         @list = list
         @list.puts '%set-title Roles'
         @list.puts '%clear'
-        RoleFile.all do |v|
+        Role.all do |v|
           @list.puts v.name
         end
         @list.puts '%set-selection 0'
