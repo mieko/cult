@@ -2,6 +2,7 @@
 require 'cri'
 
 require_relative './project'
+require_relative './node_file'
 require_relative './cli/all'
 
 def set_project(path)

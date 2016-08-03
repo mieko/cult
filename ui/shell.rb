@@ -12,7 +12,7 @@ module Cult
         exec tmux_sh, project&.path
       end
 
-      def panel
+      def panel(argv = [])
         Panel.new.run
       end
 
@@ -24,7 +24,6 @@ module Cult
       def doc(name)
         file = File.join(File.dirname(__FILE__), "../doc", "#{name}.txt")
         file = File.expand_path(file)
-        exec "vim #{esc file}"
         exec "less -M --tilde --quiet #{esc file}"
       end
 

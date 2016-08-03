@@ -1,4 +1,5 @@
 require_relative '../ui/shell'
+require_relative '../ui/node_info'
 
 module Cult
   module CLI
@@ -34,6 +35,17 @@ module Cult
         end
       end
       ui.add_command(ui_panel)
+
+      ui_node_info = Cri::Command.define do
+        name 'node-info'
+        summary 'Display information about a node'
+        usage 'node-info NODENAME'
+
+        run do |_, argv|
+          Cult::UI::NodeInfo.new(argv).run
+        end
+      end
+      ui.add_command(ui_node_info)
 
       ui
     end
