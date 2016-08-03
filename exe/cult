@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-$: << File.join(__dir__, "lib")
+$LOAD_PATH << File.expand_path(File.join(__dir__, '../lib'))
 
 require 'cri'
 
@@ -24,7 +24,7 @@ cult = Cri::Command.define do
               'of shell scripts and SSH.'
 
   required :C, :directory, 'specify an alternate project path',
-                       argument: :required do |value|
+                           argument: :required do |value|
     set_project(value)
   end
 

@@ -29,7 +29,7 @@ module Cult
       end
 
       def tmux_sh
-        File.join(File.dirname(__FILE__), "tmux.sh")
+        File.join(__dir__, "tmux.sh")
       end
 
       def project
