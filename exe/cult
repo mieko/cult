@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+$: << File.join(__dir__, "lib")
+
+require 'cri'
+
+require 'cult/project'
+require 'cult/node'
+require 'cult/cli/all'
+
+def set_project(path)
+  Cult.project = Cult::Project.locate(path)
+  if Cult.project.nil?
+    $stderr.puts "#{File.basename($0)}: #{path} is not a valid cult project."
+    exit 1
+  end
+end
+
+cult = Cri::Command.define do
+  name 'cult'
+  version = '0.1.0pre'
+  usage 'cult [options] [command [options...]]'
+  summary 'Control a fleet of obedient zombo machines'
+  description 'Cult is a tool for managing fleets of servers using a bunch ' +
+              'of shell scripts and SSH.'
+
+  required :C, :directory, 'specify an alternate project path',
+                       argument: :required do |value|
+    set_project(value)
+  end
+
+  flag :h, :help, 'show help for this command' do |value, cmd|
+    puts cmd.help
+    exit 0
+  end
+
+  flag :v, :version, 'show cult version' do
+    puts 'Cult 0.1.0pre'
+    puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
+    exit 0
+  end
+
+  run do |_, _, cmd|
+    puts cmd.help
+    exit 0;
+  end
+end
+
+Cult::CLI.all_commands.each do |m|
+  cult.add_command(m)
+end
+
+if (env = ENV['CULT_PROJECT'])
+  set_project(env)
+end
+
+Cult.project ||= Cult::Project.from_cwd
+
+cult.run(ARGV)
