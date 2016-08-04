@@ -20,7 +20,7 @@ module Cult
     # they're not copied over until needed.
     def skeleton_files
       Dir.glob(File.join(SKEL_DIR, "**", "{.*,*}")).reject do |fn|
-        fn.match(/\/template\./)
+        fn.match(/template/i)
       end
     end
 

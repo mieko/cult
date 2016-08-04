@@ -36,7 +36,7 @@ module Cult
         @list = list
         @list.puts '%set-title Roles'
         @list.puts '%clear'
-        Role.all do |v|
+        Cult.project.roles.each do |v|
           @list.puts v.name
         end
         @list.puts '%set-selection 0'

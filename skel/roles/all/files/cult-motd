@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 NODE="<%= node.name %>"
 ROLES="<%= node.roles.join(', ') %>"
 SPAWN="<%= Time.now.to_s %>"

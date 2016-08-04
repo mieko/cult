@@ -6,7 +6,7 @@ module Tmux
 
   def resize_pane(target, width: nil, height: nil)
     if (width && height) || (width.nil? && height.nil?)
-      fail "only one of width: or height: required"
+      fail 'only one of width: or height: required'
     end
 
     k = width ? '-x' : '-y'

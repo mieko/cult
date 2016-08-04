@@ -4,9 +4,8 @@ set -e
 # Nothing happens automatically with files, other than they get to the node.
 # They can be referenced as "files/filename"
 
-# Ubuntu-style
 if [ -d "/etc/update-motd.d" ]; then
   sudo cp "files/cult-motd" "/etc/update-motd.d/99-cult-motd"
-elif [ -f "/etc/motd" ]
+elif [ -f "/etc/motd" ]; then
   ./files/cult-motd | sudo tee -a "/etc/motd"
 fi

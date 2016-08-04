@@ -21,7 +21,7 @@ module Cult
         run do |opts, args|
           puts "creating node #{args.inspect} with roles #{opts[:roles].inspect}"
           args.each do |arg|
-            Skel.new(Cult.project).copy_template("nodes/template.json.erb",
+            Skel.new(Cult.project).copy_template("nodes/node-template.json.erb",
                                                  "nodes/#{arg}/node.json")
           end
         end

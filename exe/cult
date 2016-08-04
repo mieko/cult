@@ -6,6 +6,7 @@ require 'cri'
 require 'cult/project'
 require 'cult/node'
 require 'cult/cli/all'
+require 'cult/vps/all'
 
 def set_project(path)
   Cult.project = Cult::Project.locate(path)

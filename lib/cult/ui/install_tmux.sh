@@ -1,37 +1,42 @@
 #!/bin/sh
 
-if tmux -V &>/dev/null ; then
-  exit 0
-fi
+tmux -V &> /dev/null && exit 0
 
-echo "Cult's UI requires tmux to be installed, but it didn't find it in " \
-     "your path.  We can totally install it for you, though:"
+echo "Cult's UI requires tmux to be installed, but it didn't execute in" \
+     "your path."
 
-if [ -f /etc/debian_version ]; then
+if [ `uname` == 'Linux' -a -f /etc/debian_version ]; then
   COMMAND="sudo apt-get install tmux"
-elif [ `uname` == 'Darwin' ]
-  COMMAND="sudo brew install tmux"
-elif [ -f /etc/fedora-release ]; then
+elif [ `uname` == 'Linux' -a -f /etc/fedora-release ]; then
   which dnf &> /dev/null && \
        COMMAND="sudo dnf install tmux" \
     || COMMAND="sudo yum install tmux"
-elif freebsd-version &> /dev/null
+elif [ `uname` == 'Darwin' ]; then
+  if brew -v &> /dev/null ; then
+    COMMAND="brew update; brew install tmux"
+  elif port version &> /dev/null ; then
+    COMMAND="port install tmux"
+  else
+    ERRMSG="macOS was detected, but neither 'brew' nor 'port' is available"
+  fi
+elif freebsd-version &> /dev/null ; then
   COMMAND="sudo pkg install tmux"
 fi
 
-if [-z "$COMMAND" ]; then
-  echo "I lied.  I tried a bunch of common setups, but yours wasn't one of " \
-       "them.  Perhaps try installing tmux yourself and give it another shot?"
-  echo
-  echo "And let us know how we could've installed tmux at the cult GitHub page."
+if [ -z "$COMMAND" ]; then
+  if [ -z "$ERRMSG" ]; then
+    echo "No suggestion for installation command on this system."
+  else
+    echo "$ERRMSG"
+  fi
   exit 1
 fi
 
-echo "The crystal ball says I can install tmux by running the following command:"
+echo "tmux can be installed with the following command:"
 echo
 echo "  $COMMAND"
 echo
-echo "Press ENTER to do so, or ctrl-c to abort."
+echo "Press Enter to do so, or ctrl-c to abort."
 read
 
-"$COMMAND"
+exec $COMMAND
