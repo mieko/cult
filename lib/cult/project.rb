@@ -30,6 +30,7 @@ module Cult
     def inspect
       "\#<#{self.class.name} name=#{name.inspect} path=#{path.inspect}>"
     end
+    alias_method :to_s, :inspect
 
     def location_of(file)
       File.join(path, file)
@@ -58,6 +59,7 @@ module Cult
     end
 
     def nodes
+      Node.all(self)
     end
 
     def roles

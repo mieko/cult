@@ -49,7 +49,8 @@ module Cult
 
         required :r, :role,      'Specify possibly multiple roles',
                  multiple: true
-        flag     :p, :provision, 'Provision and bootstrap the created node'
+        flag     :p, :provision, 'Provision created node'
+        flag     :b, :bootstrap, 'Provision and bootstrap created node'
         required :n, :count,     'Generates <value> number of nodes'
 
         run do |opts, args|
@@ -67,15 +68,16 @@ module Cult
         name        'list'
         summary     'List nodes'
         description <<~EOD
-        This command lists the nodes in the project.
+          This command lists the nodes in the project.
         EOD
 
         required :r, :role, 'List only nodes which include <value>'
 
 
         run do |opts, args, cmd|
-          # TODO
-          puts "LIST!"
+          Cult.project.nodes.each do |node|
+            puts "Node: #{node.inspect}"
+          end
         end
       end
       node.add_command node_list
