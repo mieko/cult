@@ -8,8 +8,12 @@ module Cult
     def ui_cmd
       shell = Cult::UI::Shell.new
       ui = Cri::Command.define do
-        name 'ui'
-        summary 'Run the interactive cult command center'
+        name        'ui'
+        summary     'The interactive Cult command center'
+        description <<~EOD
+          Cult includes a terminal-mode, but graphical user interface to access
+          some of its functionality.
+        EOD
 
         run do |_, _|
           shell.run
@@ -17,8 +21,8 @@ module Cult
       end
 
       ui_welcome = Cri::Command.define do
-        name 'welcome'
-        summary 'Displays the ui welcome page in less'
+        name        'welcome'
+        summary     'Displays the ui welcome page'
 
         run do |_, _|
           shell.doc('welcome')
@@ -27,8 +31,8 @@ module Cult
       ui.add_command(ui_welcome)
 
       ui_panel = Cri::Command.define do
-        name 'panel'
-        summary 'Displays the node selection panel'
+        name        'panel'
+        summary     'Displays the node/role selection panel'
 
         run do |_,_|
           shell.panel
@@ -37,9 +41,9 @@ module Cult
       ui.add_command(ui_panel)
 
       ui_node_info = Cri::Command.define do
-        name 'node-info'
-        summary 'Display information about a node'
-        usage 'node-info NODENAME'
+        name        'node-info'
+        summary     'Display information about a node'
+        usage       'node-info NODENAME'
 
         run do |_, argv|
           Cult::UI::NodeInfo.new(argv).run

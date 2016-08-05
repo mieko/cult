@@ -3,7 +3,7 @@ require 'cult/quick_erb'
 
 module Cult
   class Skel
-    SKEL_DIR = File.expand_path(File.join(File.dirname(__FILE__), 'skel'))
+    SKEL_DIR = File.expand_path(File.join(__dir__, '../../skel'))
 
     attr_reader :project
 
@@ -35,7 +35,6 @@ module Cult
     end
 
     def process_file(src, dst = nil)
-      puts "process_file #{src} => #{dst}"
       dst ||= begin
         relative = src.sub(%r/\A#{Regexp.escape(SKEL_DIR)}/, '')
         project.location_of(relative)
@@ -49,18 +48,32 @@ module Cult
         when /\.erb\z/
           [ dst.sub(/\.erb\z/, ''), quick_erb.process(File.read(src))]
         else
-          [dst, File.read(src)]
+          [ dst, File.read(src) ]
         end
+
+      display_name = File.basename(dst) == ".keep" ? File.dirname(dst) : dst
+
+      print "  Creating #{display_name}"
+      if File.exist?(dst)
+        puts "exists, skipped."
+        return
+      end
+
+
       FileUtils.mkdir_p(File.dirname(dst))
 
       File.write(dst, data)
       File.chmod(File.stat(src).mode, dst)
+      puts
     end
 
     def copy!
+      puts "Creating project from skeleton..."
+      FileUtils.mkdir_p(project.path)
       skeleton_files.each do |file|
         process_file(file)
       end
+      puts
     end
   end
 end

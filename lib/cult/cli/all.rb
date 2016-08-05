@@ -10,7 +10,7 @@ module Cult
       end
     end
 
-    def all_commands
+    def commands
       Cult::CLI.methods(false).select do |m|
         m.to_s.match(/_cmd\z/)
       end.map do |m|

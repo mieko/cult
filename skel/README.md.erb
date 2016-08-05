@@ -7,14 +7,16 @@ anything useful.
 
 Cult projects have a defined directory structure:
 
-  * `keys`: SSH keys you'll need to log in to the fleet.  Cult will work
-    without these, assuming the keys you'll need are known to SSH when you try
-    to command nodes.
+  * `keys/{public,private}`: SSH keys you'll need to log in to the fleet.  Cult
+    will work without these, assuming the keys you'll need are known to SSH when
+    you try to command nodes.  It is up to your policy if `keys/private` gets
+    checked into source control.
   * `nodes/(nodename)`: Nodes are created by the `cult nodes create your-node-name`
     command, and live here.  A node represents information about a living,
     breathing actual machine out there.
   * `roles/(rolename)`: A node has one or more roles.  When you synchronize a
     node, it's applying rules to conform to its role.  Generate new roles with
     `cult roles create your-role-name`
+  * `vps`: Configuration for your VPS.
 
-[1]: https://github.com/metermd/cult/  "Optional Title Here"
+[1]: https://github.com/metermd/cult/ "Cult"

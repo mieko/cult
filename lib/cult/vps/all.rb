@@ -39,7 +39,7 @@ module Cult
     end
 
     def find(name)
-      bind_bundled(name) || find_third_party(name)
+      find_bundled(name) || find_third_party(name)
     end
 
   end

@@ -3,9 +3,9 @@ module Cult
     module_function
     def tasks_cmd
       tasks = Cri::Command.define do
-        name 'tasks'
-        summary 'Tasks are scripts which run on nodes to bring them up to date.'
-        usage 'tasks [command]'
+        name    'tasks'
+        summary 'Task Manipulation'
+        usage   'tasks [command]'
 
         run do |_, _, cmd|
           puts cmd.help;
@@ -14,8 +14,10 @@ module Cult
       end
 
       tasks_sanity = Cri::Command.define do
-        name 'sanity'
-        summary 'checks task files for numbering sanity'
+        name        'sanity'
+        summary     'checks task files for numbering sanity'
+        description <<~EOD
+        EOD
 
         run do |args, ops, cmd|
           puts 'checking sanity...'
@@ -24,11 +26,14 @@ module Cult
       tasks.add_command tasks_sanity
 
       tasks_create = Cri::Command.define do
-        name 'create'
-        aliases 'new'
-        summary 'create a new task for ROLE with a proper serial'
-        usage 'create [options] DESCRIPTION'
-        option :r, :role, 'role for task.  defaults to "all"', argument: :required
+        name        'create'
+        aliases     'new'
+        usage       'create [options] DESCRIPTION'
+        summary     'create a new task for ROLE with a proper serial'        
+        description <<~EOD
+        EOD
+
+        required :r, :role, 'role for task.  defaults to "all"'
         flag :e, :edit, 'open generated task file in your $EDITOR'
 
         run do |opts, args, cmd|

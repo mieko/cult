@@ -3,6 +3,7 @@ $LOAD_PATH << File.expand_path(File.join(__dir__, '../lib'))
 
 require 'cri'
 
+require 'cult/version'
 require 'cult/project'
 require 'cult/node'
 require 'cult/cli/all'
@@ -11,31 +12,45 @@ require 'cult/vps/all'
 def set_project(path)
   Cult.project = Cult::Project.locate(path)
   if Cult.project.nil?
-    $stderr.puts "#{File.basename($0)}: #{path} is not a valid cult project."
+    $stderr.puts "#{$0}: '#{path}' does not contain a valid cult project."
     exit 1
   end
 end
 
 cult = Cri::Command.define do
-  name 'cult'
-  version = '0.1.0pre'
-  usage 'cult [options] [command [options...]]'
-  summary 'Control a fleet of obedient zombo machines'
-  description 'Cult is a tool for managing fleets of servers using a bunch ' +
-              'of shell scripts and SSH.'
+  name        'cult'
+  usage       'cult [options] [command [options...]]'
+  summary     'Control a Fleet of Obedient Zomboid Machines'
+  description <<~EOD
+    Cult is a tool for creating and then managing a fleet of servers you
+    control.  It operates on a few simple concepts:
 
-  required :C, :directory, 'specify an alternate project path',
-                           argument: :required do |value|
+      * Nodes: actual servers out there somewhere.  The purpose of using Cult is
+        to end up with nodes doing useful work for you.
+
+      * Roles: Every node has one or more roles, things it plans on being.
+        Roles are composed of...
+
+      * Tasks: Basically shell scripts that run in a specific order.
+
+   Cult has a few more convenience concepts, like Keys and Providers, but you
+   don't end up thinking about them too often.
+
+   To create a new Cult project, use 'cult init DIRECTORY', but see the 'init'
+   help first, with 'cult init --help'
+  EOD
+
+  required :C, :directory, 'Specify a project path' do |value|
     set_project(value)
   end
 
-  flag :h, :help, 'show help for this command' do |value, cmd|
+  flag :h, :help, 'Show this help' do |value, cmd|
     puts cmd.help
     exit 0
   end
 
-  flag :v, :version, 'show cult version' do
-    puts 'Cult 0.1.0pre'
+  flag :v, :version, 'Show version information' do
+    puts "Cult #{Cult::VERSION}"
     puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
     exit 0
   end
@@ -46,7 +61,7 @@ cult = Cri::Command.define do
   end
 end
 
-Cult::CLI.all_commands.each do |m|
+Cult::CLI.commands.each do |m|
   cult.add_command(m)
 end
 
@@ -56,4 +71,6 @@ end
 
 Cult.project ||= Cult::Project.from_cwd
 
-cult.run(ARGV)
+begin
+  cult.run(ARGV)
+end

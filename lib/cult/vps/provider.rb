@@ -31,10 +31,13 @@ module Cult
           Array(required_gems).each do |g|
             require g
           end
-        rescue LoadError
+        rescue LoadError => e
           raise GemNeededError.new(Array(required_gems))
         end
         super
+      end
+
+      def initial_configuration
       end
     end
 
