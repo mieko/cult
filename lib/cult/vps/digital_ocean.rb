@@ -6,8 +6,13 @@ module Cult
     class DigitalOcean < Provider
       self.required_gems = 'droplet_kit'
 
-      def initialize(configuration = {})
-        @conf = configuration
+      attr_reader :client
+
+      def initialize(config = {})
+        @client = DropletKit::Client.new(access_token: config['access-token'])
+      end
+
+      def provision(role)
       end
 
       def launch_browser(url)
@@ -21,7 +26,7 @@ module Cult
         end
       end
 
-      def initial_configuration
+      def setup!
         url = "https://cloud.digitalocean.com/settings/api/tokens/new"
 
         puts "Cult needs a read/write Access Token created for your " +

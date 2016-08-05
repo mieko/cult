@@ -58,7 +58,7 @@ module Cult
           begin
             cls = Cult::VPS.find(ops[:provider])
             provider = cls.new({})
-            initial_config = provider.initial_configuration
+            initial_config = provider.setup!
             vps_config.merge!(initial_config)
 
             File.write(project.location_of('vps/default.json'),

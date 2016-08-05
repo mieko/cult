@@ -1,5 +1,8 @@
 require 'securerandom'
+
+require 'cult/config'
 require 'cult/role'
+
 
 module Cult
   module_function
@@ -21,6 +24,11 @@ module Cult
       fail if path.match /\.cult/
       @path = path
       @cult_file = File.join(self.path, CULT_FILENAME)
+
+      if Cult.immutable?
+        self.provider
+        self.freeze
+      end
     end
 
     def name
@@ -64,6 +72,10 @@ module Cult
 
     def roles
       Role.all(self)
+    end
+
+    def provider
+      @provider ||= VPS::Provider.for(self)
     end
 
     def self.locate(path)

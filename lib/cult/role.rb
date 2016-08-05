@@ -1,6 +1,7 @@
 require 'json'
 
 require 'cult/task'
+require 'cult/config'
 
 module Cult
   class Role
@@ -10,6 +11,12 @@ module Cult
     def initialize(project, path)
       @project = project
       @path = path
+
+      if Cult.immutable?
+        json
+        parent_roles
+        self.freeze
+      end
     end
 
     def name
@@ -17,13 +24,17 @@ module Cult
     end
 
     def inspect
-      "\#<#{self.class.name} #{name.inspect}>"
+      if Cult.immutable?
+        "\#<#{self.class.name} id:#{object_id.to_s(36)} #{name.inspect}>"
+      else
+        "\#<#{self.class.name} #{name.inspect}>"
+      end
     end
 
     alias_method :to_s, :inspect
 
     def ==(rhs)
-      [project, path] == [rhs.project, rhs.path]
+      [self.class, project, path] == [rhs.class, rhs.project, rhs.path]
     end
 
     def tasks
@@ -42,7 +53,7 @@ module Cult
     end
 
     def includes
-      json['include'] || json['includes'] || json['roles'] || json['_includes']
+      json['includes'] || json['include'] || ['all']
     end
 
     def parent_roles
@@ -69,7 +80,7 @@ module Cult
     end
 
     def default_json
-      {'_includes': ['all']}
+      {}
     end
 
     def json_file
@@ -88,6 +99,37 @@ module Cult
       Dir.glob(File.join(path(project), "*")).select do |file|
         Dir.exist?(file)
       end
+    end
+
+    if Cult.immutable?
+      def self.cache_get(cls, *args)
+        @singletons ||= {}
+        key = [cls, *args]
+
+        if (rval = @singletons[key])
+          return rval
+        end
+
+        return nil
+      end
+
+      def self.cache_put(obj, *args)
+        @singletons ||= {}
+        key = [obj.class, *args]
+        @singletons[key] = obj
+        obj
+      end
+
+      def self.new(*args)
+        if (result = cache_get(self, *args))
+          return result
+        else
+          result = super
+          cache_put(result, *args)
+          return result
+        end
+      end
+
     end
 
     def self.all(project)

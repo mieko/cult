@@ -13,6 +13,7 @@ module Cult
       end
     end
 
+
     class Provider
       class << self
         attr_accessor :required_gems
@@ -37,7 +38,17 @@ module Cult
         super
       end
 
-      def initial_configuration
+      def setup!
+      end
+
+      def self.for(project)
+        json_file = project.location_of("providers/default.json")
+        config = JSON.parse(File.read(json_file))
+        if (cls = Cult::VPS.find(config['adapter']))
+          cls.new(config)
+        end
+      rescue Errno::ENOENT
+        nil
       end
     end
 
