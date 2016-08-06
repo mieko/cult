@@ -27,7 +27,7 @@ module Cult
     end
     alias_method :to_s, :inspect
 
-    def self.for_role(role)
+    def self.for_role(project, role)
       Dir.glob(File.join(role.path, "tasks", "*")).map do |filename|
         next unless File.basename(filename).match(BASENAME_RE)
         new(role, filename).tap do |new_task|
@@ -35,6 +35,6 @@ module Cult
         end
       end
     end
-    
+
   end
 end

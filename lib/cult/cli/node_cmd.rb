@@ -1,4 +1,5 @@
 require 'cult/skel'
+require 'cult/bootstrapper'
 
 module Cult
   module CLI
@@ -18,6 +19,29 @@ module Cult
           exit 0;
         end
       end
+
+      node_bootstrap = Cri::Command.define do
+        name        'bootstrap'
+        usage       'bootstrap NODE'
+        summary     'Executes bootstrap tasks on NODE'
+        description <<~EOD
+        'cult node bootstrap NODE' takes an existing node (which has been
+        provisioned), and runs all tasks in the "bootstrap" role on it.
+
+        This command is used primarily for testing the bootstrap process in
+        isolation, as 'cult node create -p NAME' creates, provisions, and then
+        bootstraps a node from the ground up.
+        EOD
+
+        run do |opts, args, cmd|
+          args.each do |node_name|
+            node = Cult.project.nodes.find {|n| n.name == node_name}
+            bootstrapper = Bootstrapper.new(project: Cult.project, node: node)
+            bootstrapper.execute!
+          end
+        end
+      end
+      node.add_command(node_bootstrap)
 
       node_create = Cri::Command.define do
         name        'create'

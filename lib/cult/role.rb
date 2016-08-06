@@ -1,4 +1,5 @@
 require 'json'
+require 'tsort'
 
 require 'cult/task'
 require 'cult/config'
@@ -19,9 +20,11 @@ module Cult
       end
     end
 
+
     def name
       File.basename(path)
     end
+
 
     def inspect
       if Cult.immutable?
@@ -30,16 +33,24 @@ module Cult
         "\#<#{self.class.name} #{name.inspect}>"
       end
     end
-
     alias_method :to_s, :inspect
+
+
+    def hash
+      [self.class, project, path].hash
+    end
+
 
     def ==(rhs)
       [self.class, project, path] == [rhs.class, rhs.project, rhs.path]
     end
+    alias_method :eql?, :==
+
 
     def tasks
-      Task.for_role(self)
+      Task.for_role(project, self)
     end
+
 
     def json
       @json ||= begin
@@ -52,9 +63,11 @@ module Cult
       end
     end
 
+
     def includes
       json['includes'] || json['include'] || ['all']
     end
+
 
     def parent_roles
       @parent_roles ||= begin
@@ -64,42 +77,50 @@ module Cult
       end
     end
 
-    def complete_parent_roles(seen = [])
+
+    def recursive_parent_roles(seen = [])
       result = []
       parent_roles.each do |role|
         next if seen.include?(role)
         seen.push(role)
         result.push(role)
-        result += role.complete_parent_roles(seen)
+        result += role.recursive_parent_roles(seen)
       end
       result
     end
 
+
     def tree
-      [self] + complete_parent_roles
+      [self] + recursive_parent_roles
     end
+
 
     def default_json
       {}
     end
 
+
     def json_file
       File.join(path, "role.json")
     end
+
 
     def self.by_name(project, name)
       new(project, File.join(path(project), name))
     end
 
+
     def self.path(project)
       File.join(project.path, "roles")
     end
+
 
     def self.all_files(project)
       Dir.glob(File.join(path(project), "*")).select do |file|
         Dir.exist?(file)
       end
     end
+
 
     if Cult.immutable?
       def self.cache_get(cls, *args)
@@ -129,16 +150,30 @@ module Cult
           return result
         end
       end
-
     end
 
+
     def self.all(project)
-      return enum_for(__method__, project) unless block_given?
       all_files(project).map do |filename|
         new(project, filename).tap do |new_role|
           yield new_role if block_given?
         end
       end
+    end
+
+
+    def sorted_graph
+      all_items = self.tree
+
+      each_node = ->(&block) {
+        all_items.each(&block)
+      }
+
+      each_child = ->(node, &block) {
+        node.parent_roles.each(&block)
+      }
+
+      TSort.tsort(each_node, each_child).uniq
     end
   end
 end

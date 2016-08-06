@@ -15,6 +15,10 @@ module Cult
       json['roles'] || super
     end
 
+    def host
+      json['host']
+    end
+
     alias_method :roles, :parent_roles
   end
 end

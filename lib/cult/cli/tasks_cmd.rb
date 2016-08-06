@@ -29,7 +29,7 @@ module Cult
         name        'create'
         aliases     'new'
         usage       'create [options] DESCRIPTION'
-        summary     'create a new task for ROLE with a proper serial'        
+        summary     'create a new task for ROLE with a proper serial'
         description <<~EOD
         EOD
 
