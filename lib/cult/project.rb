@@ -96,5 +96,29 @@ module Cult
     def self.from_cwd
       locate Dir.getwd
     end
+
+    def vcs_branch
+      contents = File.read(location_of('.git/HEAD'))
+      if (m = contents.match(%r!\Aref: .*/(.*)$!))
+        m[1].split('/').last
+      end
+    rescue Errno::ENOENT
+      nil
+    end
+
+    def env
+      ENV['CULT_ENV'] || begin
+        if vcs_branch&.match(/\bdev(el(opment)?)?\b/)
+          'development'
+        else
+          'production'
+        end
+      end
+    end
+
+    def development?
+      env == 'development'
+    end
+
   end
 end
