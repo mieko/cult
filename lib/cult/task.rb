@@ -1,4 +1,4 @@
-require 'cult/quick_erb'
+require 'cult/template'
 
 module Cult
   class Task
@@ -30,7 +30,7 @@ module Cult
     alias_method :to_s, :inspect
 
     def content(project, role, node)
-      erb = Cult::QuickErb.new(project: project, role: role, node: node)
+      erb = Template.new(project: project, role: role, node: node)
       erb.process File.read(path)
     end
 

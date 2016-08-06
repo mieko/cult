@@ -1,7 +1,7 @@
 require 'erb'
 
 module Cult
-  class QuickErb
+  class Template
 
     # Alright!  We found a use for refinements!
     module Refinements

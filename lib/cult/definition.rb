@@ -1,6 +1,6 @@
 require 'yaml'
 require 'json'
-require 'cult/quick_erb'
+require 'cult/template'
 
 module Cult
   class Definition
@@ -40,7 +40,7 @@ module Cult
     def process(**kw)
       if file
         contents = File.read(file)
-        erb = QuickErb.new(kw)
+        erb = Template.new(kw)
         contents = erb.process(contents)
         decoder_for(file).call(contents)
       else

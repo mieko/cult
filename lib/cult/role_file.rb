@@ -1,15 +1,17 @@
-require 'cult/quick_erb'
+require 'cult/template'
 
 module Cult
   class RoleFile
     attr_reader :path
     attr_reader :role
-    attr_reader :name
 
     def initialize(role, path)
       @role = role
       @path = path
-      @name = File.basename(path)
+    end
+
+    def name
+      File.basename(path)
     end
 
     def inspect
@@ -18,7 +20,7 @@ module Cult
     alias_method :to_s, :inspect
 
     def content(project, role, node)
-      erb = Cult::QuickErb.new(project: project, role: role, node: node)
+      erb = Template.new(project: project, role: role, node: node)
       erb.process File.read(path)
     end
 
