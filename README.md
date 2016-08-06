@@ -21,7 +21,10 @@ Cult may be what you're looking for if:
   * When you think of a forward migration, the first thing that comes to mind is
     `#!/usr/bin/env my-favorite-language`
   * You don't get why you need more than a working SSH to configure a server,
-    and why you'd need an agent running thereafter.
+    and why you'd want an agent running thereafter.
+  * It doesn't creep you out that Cult can look at your git branch name to
+    decide if you're in production or development mode.  There are some
+    conventions going on.
 
 Cult's probably not your bourbon and ginger if:
 
@@ -48,13 +51,13 @@ But, what you gain via Cult is transparency, repeatability, and obviousness.
 
 Cult requires nothing to be installed on each node, other than working SSH with
 public key authorization.  Things like [cloud-init][1] are perfectly capable of
-getting you a blank slate with a root account, setup with an SSH key, and many
-VPS providers have it ready to go.
+getting you a blank slate with a root account, setup with an SSH key.  Many
+VPS providers have that ready to go.
 
-If you're betting on Cult, you'll do *only* that in cloud-init, and let Cult's
-bootstrap role handle the rest.
+The best plan is to do *only* that in cloud-init, and let Cult's bootstrap role
+handle the rest.
 
-Cult is written in Ruby and available as a gem,  but it is an application, not a
+Cult is written in Ruby and available as a gem, but it is an application, not a
 library.  It's not written in Rails.
 
     $ gem install cult
@@ -62,6 +65,17 @@ library.  It's not written in Rails.
 Even though you aren't required to use them, it includes the terminal-mode GUI
 packages (`$ cult ui`).  Because it's 2016, and we're not worried about a few
 MB of extra packages hanging around anymore.
+
+Cult ships with a handful of adapters for popular cloud VPS providers.  Some of
+these require additional gems (typically the official API gem).  Cult doesn't
+directly depend on any of these, but will detect when you need them (i.e.,
+you're trying to use them) and offer to gem-install them for you.
+
+By default, Cult uses a 'scripts' adapter that expects you do write scripts to
+provision and destroy nodes.  If your provider has no adapter in Cult, but a
+decent command-line client, these tend to be really short.  If you have to do
+something ultra-specific to provision and destroy nodes, you have all the
+options in the world here.
 
 ## Usage
 
