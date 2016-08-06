@@ -1,3 +1,5 @@
+require 'cult/quick_erb'
+
 module Cult
   class Task
     attr_reader :path
@@ -26,6 +28,11 @@ module Cult
           "serial:#{serial} name:#{name.inspect}>"
     end
     alias_method :to_s, :inspect
+
+    def contents(project, role, node)
+      erb = Cult::QuickErb.new(project: project, role: role, node: node)
+      erb.process File.read(path)
+    end
 
     def self.for_role(project, role)
       Dir.glob(File.join(role.path, "tasks", "*")).map do |filename|
