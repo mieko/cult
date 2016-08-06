@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-NODE="<%= node.name %>"
-ROLES="<%= node.roles.join(', ') %>"
-SPAWN="<%= Time.now.to_s %>"
+NODE=<%= node.name.sq %>
+ROLES=<%= node.roles.join(', ').sq %>
+SPAWN=<%= Time.now.to_s.sq %>
 
 colorize() {
   i=124
@@ -24,7 +24,7 @@ inf() {
 }
 
 # We don't want everyone to have to install figlet.
-cat << EOD | colorize
+cat <<EOD | colorize
 
                      @@@@@@@  @@@  @@@  @@@       @@@@@@@
                     @@@@@@@@  @@@  @@@  @@@       @@@@@@@
