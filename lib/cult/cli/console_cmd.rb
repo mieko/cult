@@ -19,7 +19,7 @@ module Cult
         super
       end
 
-      # Gives us an escape hatch through SimpleDelegator
+      # Gives us an escape hatch to get the real, non-decorated object
       def project
         __getobj__
       end

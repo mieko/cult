@@ -1,7 +1,6 @@
 require 'cult/role'
 
 module Cult
-
   class Node < Role
     def self.path(project)
       File.join(project.path, 'nodes')
