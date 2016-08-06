@@ -19,7 +19,7 @@ module Cult
       end
 
       def node_info(node_name)
-        Tmux.replace_pane(0, command: "cult ui node-info #{node_name}")
+        Tmux.replace_pane(0, command: "cult ui role-info #{node_name} | less")
       end
 
       def process(cmdline)
@@ -43,7 +43,7 @@ module Cult
       end
 
       def role_info(name)
-        Tmux.replace_pane(0, command: "cult ui role-info #{name}")
+        Tmux.replace_pane(0, command: "cult ui role-info #{name} | less -R")
       end
 
       def process(cmdline)

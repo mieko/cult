@@ -1,7 +1,7 @@
-require 'json'
 require 'tsort'
 
 require 'cult/task'
+require 'cult/role_file'
 require 'cult/config'
 require 'cult/definition'
 
@@ -104,16 +104,6 @@ module Cult
 
     def tree
       [self] + recursive_parent_roles
-    end
-
-
-    def default_json
-      {}
-    end
-
-
-    def json_file
-      File.join(path, "role.json")
     end
 
 
