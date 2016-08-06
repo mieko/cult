@@ -1,3 +1,5 @@
+require 'cult/definition'
+
 module Cult
   module VPS
 
@@ -42,9 +44,8 @@ module Cult
       end
 
       def self.for(project)
-        json_file = project.location_of("providers/default.json")
-        config = JSON.parse(File.read(json_file))
-        if (cls = Cult::VPS.find(config['adapter']))
+        conf = Definition.load(project.location_of('providers/default'))
+        if (cls = Cult::VPS.find(conf['adapter']))
           cls.new(config)
         end
       rescue Errno::ENOENT

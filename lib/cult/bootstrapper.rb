@@ -17,7 +17,7 @@ module Cult
     end
 
     def user
-      role.json['user'] || 'root'
+      role.definition['user'] || 'root'
     end
 
     def execute!

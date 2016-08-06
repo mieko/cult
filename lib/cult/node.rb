@@ -6,16 +6,20 @@ module Cult
       File.join(project.path, 'nodes')
     end
 
-    def json_file
-      File.join(path, 'node.json')
+    def definition_file
+      File.join(path, 'node')
+    end
+
+    def definition_parameters
+      super.merge(node: self)
     end
 
     def includes
-      json['roles'] || super
+      definition['roles'] || super
     end
 
     def host
-      json['host']
+      definition['host']
     end
 
     alias_method :roles, :parent_roles

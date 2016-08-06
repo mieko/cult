@@ -29,7 +29,7 @@ module Cult
     end
     alias_method :to_s, :inspect
 
-    def contents(project, role, node)
+    def content(project, role, node)
       erb = Cult::QuickErb.new(project: project, role: role, node: node)
       erb.process File.read(path)
     end
@@ -40,7 +40,7 @@ module Cult
         new(role, filename).tap do |new_task|
           yield new_task if block_given?
         end
-      end
+      end.compact
     end
 
   end

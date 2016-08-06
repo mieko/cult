@@ -12,7 +12,7 @@ module Cult
         @list = list
         @list.puts '%set-title Nodes'
         @list.puts '%clear'
-        Node.all.with_index do |v, i|
+        Cult.project.nodes.each do |v|
           @list.puts v.name
         end
         @list.puts '%set-selection 0'

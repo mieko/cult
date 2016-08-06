@@ -13,7 +13,9 @@ module Cult
       end
 
       refine String do
-        alias_method :quote, :to_json
+        def quote
+          to_json
+        end
         alias_method :q, :quote
 
         def squote

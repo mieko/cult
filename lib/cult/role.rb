@@ -3,6 +3,7 @@ require 'tsort'
 
 require 'cult/task'
 require 'cult/config'
+require 'cult/definition'
 
 module Cult
   class Role
@@ -14,10 +15,15 @@ module Cult
       @path = path
 
       if Cult.immutable?
-        json
+        definition
         parent_roles
         self.freeze
       end
+    end
+
+
+    def exist?
+      Dir.exist?(path)
     end
 
 
@@ -51,21 +57,27 @@ module Cult
       Task.for_role(project, self)
     end
 
+    def files
+      RoleFile.for_role(project, self)
+    end
 
-    def json
-      @json ||= begin
-        defaults = default_json
-        if File.exist?(json_file)
-          defaults.merge(JSON.parse(File.read(json_file)))
-        else
-          defaults
-        end
+    def definition_parameters
+      { project: project, role: self }
+    end
+
+    def definition
+      @definition ||= begin
+        Cult::Definition.load(definition_file, definition_parameters)
       end
     end
 
+    def definition_file
+      File.join(path, "role")
+    end
 
     def includes
-      json['includes'] || json['include'] || ['all']
+      definition['includes'] || definition['include'] ||
+       (exist? ? ['all'] : [])
     end
 
 
@@ -162,7 +174,7 @@ module Cult
     end
 
 
-    def sorted_graph
+    def build_order
       all_items = self.tree
 
       each_node = ->(&block) {
