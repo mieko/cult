@@ -65,7 +65,7 @@ module Cult
 
       def syntax_highlight(text)
 
-        theme = Rouge::Theme.find('molokai')
+        theme = Rouge::Theme.find('brighteyes')
         lexer = Rouge::Lexer.guess(source: text).new
         formatter = Rouge::Formatters::Terminal256.new(theme)
         formatter.format(lexer.lex(text), &method(:print))
