@@ -1,8 +1,10 @@
-require 'colorize'
+require 'rainbow'
 require 'rouge'
 
 module Cult
   module UI
+    using Rainbow
+
     class RoleInfo
       attr_reader :argv
       attr_reader :io
@@ -62,6 +64,7 @@ module Cult
       end
 
       def syntax_highlight(text)
+
         theme = Rouge::Theme.find('molokai')
         lexer = Rouge::Lexer.guess(source: text).new
         formatter = Rouge::Formatters::Terminal256.new(theme)
@@ -73,12 +76,12 @@ module Cult
       def show_tasks(role, summary: false)
         unless role.tasks.empty?
           if summary
-          puts "Tasks: ".bold + role.tasks.map(&:name).join(', ').white
+            puts "Tasks: ".bold + role.tasks.map(&:name).join(', ').white
           else
             role.tasks.each do |t|
               line = " Task: #{t.name} (serial: #{t.serial})"
               blanks = ' ' *  (78 - line.size)
-              puts (line + blanks).swap
+              puts (line + blanks).inverse
               puts
               syntax_highlight t.content(Cult.project, role, role)
               puts
@@ -96,7 +99,7 @@ module Cult
             role.files.each do |t|
               line = " File: #{t.name}"
               blanks = ' ' *  (78 - line.size)
-              puts (line + blanks).swap
+              puts (line + blanks).inverse
               puts
               syntax_highlight t.content(Cult.project, role, role)
               puts
@@ -106,7 +109,9 @@ module Cult
       end
 
       def info_page(role)
-        puts "#{role.class.name}: " + role.name.bold
+        Rainbow.enabled = true
+
+        puts "#{role.class.name.split('::')[-1]}: " + role.name.bold
         hr
         puts
         show_includes(role)
@@ -124,6 +129,7 @@ module Cult
 
       def run
         role = Cult.project.roles.find { |r| r.name == argv[0] }
+        role ||= Cult.project.nodes.find { |r| r.name == argv[0] }
         info_page(role)
       end
     end

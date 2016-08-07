@@ -7,42 +7,20 @@ require 'cult/ui/tmux'
 module Cult
   module UI
 
-    class NodeView
-      def initialize(list)
-        @list = list
-        @list.puts '%set-title Nodes'
-        @list.puts '%clear'
-        Cult.project.nodes.each do |v|
-          @list.puts v.name
-        end
-        @list.puts '%set-selection 0'
+    class InfoListView
+      def title
+        'INFOVIEW'
       end
 
-      def node_info(node_name)
-        Tmux.replace_pane(0, command: "cult ui role-info #{node_name} | less")
+      def collection
+        raise NotImplementedError
       end
 
-      def process(cmdline)
-        case cmdline[0]
-          when '%selected-is'
-            return if cmdline[2].empty?
-            node_info(cmdline[2])
-        end
-      end
-    end
-
-    class RoleView
-      def initialize(list)
-        @list = list
-        @list.puts '%set-title Roles'
-        @list.puts '%clear'
-        Cult.project.roles.each do |v|
-          @list.puts v.name
-        end
-        @list.puts '%set-selection 0'
+      def text_for(item)
+        item.name
       end
 
-      def role_info(name)
+      def on_selection_changed(name)
         Tmux.replace_pane(0, command: "cult ui role-info #{name} | less -R")
       end
 
@@ -50,8 +28,40 @@ module Cult
         case cmdline[0]
           when '%selected-is'
             return if cmdline[2].empty?
-            role_info(cmdline[2])
+            on_selection_changed(cmdline[2])
         end
+      end
+
+      def initialize(list)
+        @list = list
+        @list.puts "%set-title #{title}"
+        @list.puts '%clear'
+
+        collection.each do |b|
+          @list.puts text_for(b)
+        end
+
+        @list.puts '%get-selected'
+      end
+    end
+
+    class NodeView < InfoListView
+      def title
+        'Nodes'
+      end
+
+      def collection
+        Cult.project.nodes
+      end
+    end
+
+    class RoleView < InfoListView
+      def title
+        'Roles'
+      end
+
+      def collection
+        Cult.project.roles
       end
     end
 
