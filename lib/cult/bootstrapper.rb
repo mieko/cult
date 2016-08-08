@@ -3,28 +3,14 @@ require 'net/scp'
 require 'shellwords'
 
 module Cult
-  class Commander
-
-    attr_reader :project
-    attr_reader :node
-
-    def initialize(project, node)
-      @project = project
-      @node = node
-    end
-
-    def rsync?
-      false
-    end
-
-  end
-end
-
-module Cult
   class Bootstrapper
     attr_reader :project
     attr_reader :node
     attr_reader :role
+
+    def esc(s)
+      Shellwords.escape(s)
+    end
 
     def initialize(project:, node:, role: nil)
       @project = project

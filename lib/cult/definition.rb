@@ -14,6 +14,7 @@ module Cult
       @decoder = decoder_for(@file)
     end
 
+    # Finds the first existing file in the candidate list
     def locate_file
       candidates.find do |candidate|
         File.exist?(candidate)
