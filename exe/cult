@@ -42,6 +42,10 @@ cult = Cri::Command.define do
     exit 0
   end
 
+  flag :y, :yes, 'answer "yes" to any questions' do
+    Cult::CLI.yes = true
+  end
+
   flag :v, :version, 'Show version information' do
     puts "Cult #{Cult::VERSION}"
     puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
