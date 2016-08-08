@@ -10,14 +10,6 @@ require 'cult/node'
 require 'cult/cli/all'
 require 'cult/vps/all'
 
-def set_project(path)
-  Cult.project = Cult::Project.locate(path)
-  if Cult.project.nil?
-    $stderr.puts "#{$0}: '#{path}' does not contain a valid cult project."
-    exit 1
-  end
-end
-
 cult = Cri::Command.define do
   name        'cult'
   usage       'cult [options] [command [options...]]'
@@ -42,7 +34,7 @@ cult = Cri::Command.define do
   EOD
 
   required :C, :directory, 'Specify a project path' do |value|
-    set_project(value)
+    Cult::CLI.set_project(value)
   end
 
   flag :h, :help, 'Show this help' do |value, cmd|
@@ -67,10 +59,10 @@ Cult::CLI.commands.each do |m|
 end
 
 if (env = ENV['CULT_PROJECT'])
-  set_project(env)
+  Cult::CLI.set_project(env)
+else
+  Cult.project ||= Cult::Project.from_cwd
 end
-
-Cult.project ||= Cult::Project.from_cwd
 
 begin
   cult.run(ARGV)
