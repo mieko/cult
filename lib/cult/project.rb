@@ -3,17 +3,7 @@ require 'securerandom'
 require 'cult/config'
 require 'cult/role'
 
-
 module Cult
-  module_function
-  def project=(project)
-    @project = project
-  end
-
-  def project
-    @project
-  end
-
   class Project
     CULT_FILENAME = '.cult'
 
@@ -42,6 +32,10 @@ module Cult
 
     def location_of(file)
       File.join(path, file)
+    end
+
+    def remote_path
+      "cult"
     end
 
     def constructed?

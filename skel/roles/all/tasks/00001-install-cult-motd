@@ -6,6 +6,7 @@ set -e
 
 if [ -d "/etc/update-motd.d" ]; then
   sudo cp "files/cult-motd" "/etc/update-motd.d/99-cult-motd"
+  sudo chmod +x "/etc/update-motd.d/99-cult-motd"
 elif [ -f "/etc/motd" ]; then
   ./files/cult-motd | sudo tee -a "/etc/motd"
 fi

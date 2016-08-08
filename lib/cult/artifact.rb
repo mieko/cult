@@ -1,7 +1,17 @@
-require 'cult/template'
+require 'cult/transferable'
 
 module Cult
-  class RoleFile
+  class Artifact
+    include Transferable
+
+    def collection_name
+      "files"
+    end
+
+    def relative_name
+      name
+    end
+
     attr_reader :path
     attr_reader :role
 
@@ -10,25 +20,17 @@ module Cult
       @path = path
     end
 
-    def name
-      File.basename(path)
-    end
 
     def inspect
       "\#<#{self.class.name} role:#{role&.name.inspect} name:#{name.inspect}>"
     end
     alias_method :to_s, :inspect
 
-    def content(project, role, node)
-      erb = Template.new(project: project, role: role, node: node)
-      erb.process File.read(path)
-    end
-
-    def self.for_role(project, role)
+    def self.all_for_role(project, role)
       Dir.glob(File.join(role.path, "files", "**/*")).map do |filename|
         next if File.directory?(filename)
-        new(role, filename).tap do |new_role_file|
-          yield new_role_task if block_given?
+        new(role, filename).tap do |new_file|
+          yield new_file if block_given?
         end
       end.compact
     end

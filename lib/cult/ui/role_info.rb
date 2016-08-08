@@ -90,13 +90,13 @@ module Cult
         end
       end
 
-      def show_files(role, summary: false)
-        unless role.files.empty?
+      def show_artifacts(role, summary: false)
+        unless role.artifacts.empty?
           if summary
-            puts "Files: ".bold + role.files.map(&:name).join(', ').white
+            puts "Files: ".bold + role.artifacts.map(&:name).join(', ').white
             puts
           else
-            role.files.each do |t|
+            role.artifacts.each do |t|
               line = " File: #{t.name}"
               blanks = ' ' *  (78 - line.size)
               puts (line + blanks).inverse
@@ -117,13 +117,13 @@ module Cult
         show_includes(role)
         show_build_order(role)
         show_tasks(role, summary: true)
-        show_files(role, summary: true)
+        show_artifacts(role, summary: true)
         show_readme(role)
         show_tree(role)
         puts
         puts
         show_tasks(role, summary: false)
-        show_files(role, summary: false)
+        show_artifacts(role, summary: false)
 
       end
 

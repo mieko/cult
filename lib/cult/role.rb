@@ -1,7 +1,7 @@
 require 'tsort'
 
 require 'cult/task'
-require 'cult/role_file'
+require 'cult/artifact'
 require 'cult/config'
 require 'cult/definition'
 
@@ -21,16 +21,27 @@ module Cult
       end
     end
 
-
     def exist?
       Dir.exist?(path)
     end
-
 
     def name
       File.basename(path)
     end
 
+    def collection_name
+      class_name = self.class.name.split('::')[-1]
+      class_name.downcase + 's'
+    end
+
+    def remote_path
+      File.join(project.remote_path, collection_name, name)
+    end
+
+    def relative_path(obj_path)
+      fail unless obj_path.start_with?(path)
+      obj_path[path.size + 1 .. -1]
+    end
 
     def inspect
       if Cult.immutable?
@@ -54,11 +65,11 @@ module Cult
 
 
     def tasks
-      Task.for_role(project, self)
+      Task.all_for_role(project, self)
     end
 
-    def files
-      RoleFile.for_role(project, self)
+    def artifacts
+      Artifact.all_for_role(project, self)
     end
 
     def definition_parameters

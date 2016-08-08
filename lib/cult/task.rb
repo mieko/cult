@@ -1,11 +1,13 @@
-require 'cult/template'
+require 'cult/transferable'
 
 module Cult
   class Task
+    include Transferable
+
     attr_reader :path
+    attr_reader :role
     attr_reader :serial
     attr_reader :name
-    attr_reader :role
 
     LEADING_ZEROS = 5
     BASENAME_RE = /\A(\d{#{LEADING_ZEROS},})-([\w-]+)(\..+)?\z/i
@@ -23,18 +25,21 @@ module Cult
       end
     end
 
+    def relative_name
+      File.basename(path)
+    end
+
     def inspect
       "\#<#{self.class.name} role:#{role&.name.inspect} " +
           "serial:#{serial} name:#{name.inspect}>"
     end
     alias_method :to_s, :inspect
 
-    def content(project, role, node)
-      erb = Template.new(project: project, role: role, node: node)
-      erb.process File.read(path)
+    def file_mode
+      super | 0100
     end
 
-    def self.for_role(project, role)
+    def self.all_for_role(project, role)
       Dir.glob(File.join(role.path, "tasks", "*")).map do |filename|
         next unless File.basename(filename).match(BASENAME_RE)
         new(role, filename).tap do |new_task|

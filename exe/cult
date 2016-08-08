@@ -4,6 +4,7 @@ $LOAD_PATH << File.expand_path(File.join(__dir__, '../lib'))
 require 'cri'
 
 require 'cult/version'
+require 'cult/config'
 require 'cult/project'
 require 'cult/node'
 require 'cult/cli/all'

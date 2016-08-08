@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "listpager", "~> 1.0.4"
   spec.add_dependency "net-ssh",   "~> 3.2.0"
+  spec.add_dependency "net-scp",   "~> 1.2.1"
   spec.add_dependency "rainbow",   "~> 2.1.0"
   spec.add_dependency "rouge",     "~> 2.0.5"
 

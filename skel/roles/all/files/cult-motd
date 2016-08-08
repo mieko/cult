@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 NODE=<%= node.name.sq %>
-ROLES=<%= node.roles.join(', ').sq %>
+ROLES=<%= node.roles.map(&:name).sq %>
 SPAWN=<%= Time.now.to_s.sq %>
 
 colorize() {
