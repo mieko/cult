@@ -4,11 +4,11 @@ module Cult
   class Artifact
     include Transferable
 
-    def collection_name
+    def self.collection_name
       "files"
     end
 
-    def relative_name
+    def relative_path
       name
     end
 

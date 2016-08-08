@@ -25,7 +25,12 @@ module Cult
       end
     end
 
-    def relative_name
+    def self.from_serial_and_name(role, serial:, name:)
+      basename = sprintf("%0#{LEADING_ZEROS}d-%s", serial, name)
+      new(role, File.join(role.path, collection_name, basename))
+    end
+
+    def relative_path
       File.basename(path)
     end
 
