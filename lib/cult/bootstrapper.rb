@@ -28,7 +28,7 @@ module Cult
 
     def send_file(ssh, role, transferable)
       src, dst = transferable.path, transferable.remote_path
-      data = StringIO.new(transferable.contents(project, role, node))
+      data = StringIO.new(transferable.contents(project, role, node, pwd: role.path))
       puts "Sending file: #{dst}"
 
       scp = Net::SCP.new(ssh)

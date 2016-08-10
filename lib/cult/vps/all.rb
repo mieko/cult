@@ -5,9 +5,7 @@ module Cult
 
     module_function
     def load_providers!
-      Dir.glob(File.join(__dir__, "*.rb")).each do |file|
-        next if file == __FILE__
-        next if File.basename(file) == 'provider.rb'
+      Dir.glob(File.join(__dir__, "*_provider.rb")).each do |file|
         require file
       end
     end
@@ -26,20 +24,8 @@ module Cult
       end
     end
 
-    def find_third_party(name)
-      begin
-        require "cult/vps/#{name.gsub('-', '_')}"
-        cls_name = name.capitalize.gsub(/([a-z])[_-]([a-z])/) do |s| "
-          #{m[0]}#{m[2].upcase}"
-        end
-        Cult::VPS.const_get(cls_name)
-      rescue LoadError
-        nil
-      end
-    end
-
     def find(name)
-      find_bundled(name) || find_third_party(name)
+      find_bundled(name)
     end
 
   end

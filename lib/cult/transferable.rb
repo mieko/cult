@@ -16,8 +16,8 @@ module Cult
       File.join(collection_name, relative_name)
     end
 
-    def contents(project, role, node)
-      erb = Template.new(project: project, role: role, node: node)
+    def contents(project, role, node, pwd: nil)
+      erb = Template.new(pwd: pwd, project: project, role: role, node: node)
       erb.process File.read(path)
     end
 

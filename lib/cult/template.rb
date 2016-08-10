@@ -48,19 +48,22 @@ module Cult
     class Context
       using Refinements
 
-      def initialize(**kw)
+      def initialize(pwd: nil, **kw)
+        @pwd = pwd
         kw.each do |k,v|
           define_singleton_method(k) { v }
         end
       end
 
       def _process(template)
-        ::ERB.new(template).result(binding)
+        Dir.chdir(@pwd || Dir.pwd) do
+          ::ERB.new(template).result(binding)
+        end
       end
     end
 
-    def initialize(**kw)
-      @context = Context.new(kw)
+    def initialize(pwd: nil, **kw)
+      @context = Context.new(pwd: pwd, **kw)
     end
 
     def process(text)

@@ -1,4 +1,5 @@
 require 'cult/definition'
+require 'cult/vps/ssh_spin'
 
 module Cult
   module VPS
@@ -21,9 +22,13 @@ module Cult
         attr_accessor :required_gems
       end
 
-      # MyVpsProvider => my-vps-provider
+      # MyVpsProvider => my-vps
       def self.provider_name
-        name.split('::').last.gsub(/([a-z])([A-Z])/, '\1-\2').downcase
+        name.split('::')
+            .last
+            .sub(/Provider\z/, '')
+            .gsub(/([a-z])([A-Z])/, '\1-\2')
+            .downcase
       end
 
       # Loads all of the required gems before calling initialize.  If it gets
@@ -46,7 +51,7 @@ module Cult
       def self.for(project)
         conf = Definition.load(project.location_of('providers/default'))
         if (cls = Cult::VPS.find(conf['adapter']))
-          cls.new(config)
+          cls.new(conf)
         end
       rescue Errno::ENOENT
         nil
