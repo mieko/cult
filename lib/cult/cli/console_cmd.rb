@@ -1,4 +1,5 @@
 require 'delegate'
+require 'rainbow'
 
 module Cult
   module CLI
@@ -61,7 +62,7 @@ module Cult
           else
             $stderr.puts <<~EOD
 
-              Welcome to the Cult Console.
+              Welcome to the #{Rainbow('Cult').green} Console.
 
               Your project has been made accessible via 'project', and forwards
               via 'self':

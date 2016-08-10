@@ -18,24 +18,37 @@ module Cult
 
       task_reserial = Cri::Command.define do
         name        'resequence'
-        summary     'Does nothing useful'
+        summary     'Resequences task serial numbers'
 
-        flag     nil, :pointless,       'Describes the procedure'
-        flag     nil, :'but-automatic', 'Automates the pointlessness'
         flag     :A,  :all,             'Reserial all roles'
-        flag     :G,  :'git-add',       'git add all changes'
-        required :r,  :role,            'Roles to resequence',
+        flag     :G,  :'git-add',       '`git add` each change'
+        required :r,  :role,            'Roles to resequence (multiple)',
                       multiple: true
 
         description <<~EOD
           Resequences the serial numbers in each task provided with --roles,
-          or all roles with --all.
+          or all roles with --all.  You cannot supply both --all and specify
+          --roles.
 
-          This isn't something to do lightly.  Make sure your fleet is up to
-          date.
+          A resequence isn't something to do lightly once you have deployed
+          nodes.  This will be elaborated on in the future.  It's probably
+          a good idea to do this in a development branch and test out the
+          results.
+
+          The --git-add option will execute `git add` for each rename made.
+          This will make your status contain a bunch of neat renames, instead of
+          a lot of deleted and untracked files.
+
+          This command respects the global --yes flag.
         EOD
 
         run do |opts, args, cmd|
+          unless args.empty?
+            $stderr.puts cmd.help
+            $stderr.puts "This command takes no arguments"
+            exit 1
+          end
+
           if opts[:all] && Array(opts[:role]).size != 0
             $stderr.puts "#{$0}: can't supply -A and also a list of roles"
             exit 1

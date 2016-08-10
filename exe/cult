@@ -39,22 +39,23 @@ cult = Cri::Command.define do
 
   flag :h, :help, 'Show this help' do |value, cmd|
     puts cmd.help
-    exit 0
   end
 
-  flag :y, :yes, 'answer "yes" to any questions' do
+  flag :y, :yes, 'Answer "yes" to any questions' do
     Cult::CLI.yes = true
+  end
+
+  flag :q, :quiet, "Don't show any unnecessary information" do
+    Cult::CLI.quiet = true
   end
 
   flag :v, :version, 'Show version information' do
     puts "Cult #{Cult::VERSION}"
     puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
-    exit 0
   end
 
   run do |_, _, cmd|
     puts cmd.help
-    exit 0;
   end
 end
 
@@ -70,4 +71,6 @@ end
 
 begin
   cult.run(ARGV)
+rescue Interrupt
+  exit 1
 end

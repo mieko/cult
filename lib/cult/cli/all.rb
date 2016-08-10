@@ -25,6 +25,18 @@ module Cult
       end
     end
 
+    def quiet=(v)
+      @quiet = v
+    end
+
+    def quiet?(v)
+      @quiet
+    end
+
+    def say(v)
+      puts v unless @quiet
+    end
+
     def yes=(v)
       @yes = v
     end
