@@ -34,6 +34,16 @@ module Cult
       File.join(path, file)
     end
 
+    def relative_path(obj_path)
+      prefix = "#{path}/"
+
+      if obj_path.start_with?(prefix)
+        return obj_path[prefix.length .. -1]
+      end
+
+      fail ArgumentError, "#{path} isn't in the project"
+    end
+
     def remote_path
       "cult"
     end

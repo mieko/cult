@@ -39,8 +39,6 @@ module Cult
           in each node's MOTD.
         EOD
 
-
-        flag     :y, :yes,      'Respond "y" to all questions'
         required :p, :provider, 'VPS provider'
 
         run do |ops, args|
@@ -74,12 +72,7 @@ module Cult
               Cult can install them for you.
             EOD
 
-            unless ops[:y]
-              print 'Install? [Y/n]: '
-              if $stdin.gets.match(/^[Nn]/)
-                next
-              end
-            end
+            next unless Cult::CLI.yes_no("Install?")
 
             e.gems.each do |gem|
               cmd = "gem install #{gem}"

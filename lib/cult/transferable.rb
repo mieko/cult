@@ -2,10 +2,18 @@ require 'cult/template'
 
 module Cult
   module Transferable
+    module ClassMethods
+      def collection_name
+        name.split('::')[-1].downcase + 's'
+      end
+    end
+
+    def self.included(cls)
+      cls.extend(ClassMethods)
+    end
 
     def collection_name
-      class_name = self.class.name.split('::')[-1]
-      class_name.downcase + 's'
+      self.class.collection_name
     end
 
     def remote_path
@@ -13,7 +21,7 @@ module Cult
     end
 
     def role_relative_path
-      File.join(collection_name, relative_name)
+      File.join(collection_name, relative_path)
     end
 
     def contents(project, role, node, pwd: nil)
