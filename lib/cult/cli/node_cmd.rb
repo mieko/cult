@@ -1,5 +1,5 @@
 require 'cult/skel'
-require 'cult/bootstrapper'
+require 'cult/controller'
 
 module Cult
   module CLI
@@ -20,6 +20,20 @@ module Cult
         end
       end
 
+      node_ssh = Cri::Command.define do
+        name    'ssh'
+        usage   'ssh NODE'
+        summary 'Starts an interactive SSH shell to NODE'
+
+        run do |opts, args, cmd|
+          node_name = args[0]
+
+          node = Cult.project.nodes.find {|n| n.name == node_name}
+          exec "ssh", "#{node.user}@#{node.host}"
+        end
+      end
+      node.add_command(node_ssh)
+
       node_bootstrap = Cri::Command.define do
         name        'bootstrap'
         usage       'bootstrap NODE'
@@ -36,8 +50,8 @@ module Cult
         run do |opts, args, cmd|
           args.each do |node_name|
             node = Cult.project.nodes.find {|n| n.name == node_name}
-            bootstrapper = Bootstrapper.new(project: Cult.project, node: node)
-            bootstrapper.execute!
+            ctrl = Controller.new(project: Cult.project, node: node)
+            ctrl.bootstrap!
           end
         end
       end
@@ -78,11 +92,21 @@ module Cult
         required :n, :count,     'Generates <value> number of nodes'
 
         run do |opts, args|
+          opts[:bootstrap] = true if opts[:migrate]
+          opts[:provision] = true if opts[:bootstrap]
           puts "creating node #{args.inspect} with roles #{opts[:roles].inspect}"
-          # TODO: Operate as described above
+
           args.each do |arg|
-            Skel.new(Cult.project).copy_template("nodes/node-template.json.erb",
-                                                 "nodes/#{arg}/node.json")
+            node = nil
+            if opts[:provision]
+              provdata = Cult.project.provider.provision!(name: arg, spec_name: 'small')
+              node = Cult::Node.create_from_provision!(Cult.project, provdata)
+            end
+
+            if opts[:bootstrap]
+              control = Cult::Controller.new(project: Cult.project, node: node)
+              control.bootstrap!
+            end
           end
         end
       end

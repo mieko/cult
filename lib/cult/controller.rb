@@ -3,19 +3,17 @@ require 'net/scp'
 require 'shellwords'
 
 module Cult
-  class Bootstrapper
+  class Controller
     attr_reader :project
     attr_reader :node
-    attr_reader :role
+
+    def initialize(project:, node:)
+      @project = project
+      @node = node
+    end
 
     def esc(s)
       Shellwords.escape(s)
-    end
-
-    def initialize(project:, node:, role: nil)
-      @project = project
-      @node = node
-      @role = role || project.roles.find { |r| r.name == 'bootstrap' }
     end
 
     def host
@@ -23,7 +21,7 @@ module Cult
     end
 
     def user
-      role.definition['user'] || 'cult'
+      node.definition['user'] || 'cult'
     end
 
     def send_file(ssh, role, transferable)
@@ -35,12 +33,15 @@ module Cult
       ssh.exec! "mkdir -p #{Shellwords.escape(File.dirname(dst))}"
       scp.upload!(data, dst)
       ssh.exec!("chmod 0#{transferable.file_mode.to_s(8)} #{Shellwords.escape(dst)}")
+    rescue
+      $stderr.puts "fail: #{role.inspect}, #{transferable.inspect}"
+      raise
     end
 
-    def install!
+    def install!(role, user: nil)
       role.build_order.each do |r|
         puts "DOING #{r}"
-        connect do |ssh|
+        connect(user: user) do |ssh|
           (r.artifacts + r.tasks).each do |f|
             send_file(ssh, r, f)
           end
@@ -65,33 +66,13 @@ module Cult
       end
     end
 
-    def execute!
-      connect do |ssh|
-        (role.artifacts + role.tasks).each do |f|
-          send_file(ssh, role, f)
-        end
-
-        esc = ->(s) { Shellwords.escape(s) }
-        working_dir = role.remote_path
-
-        role.tasks.each do |t|
-          puts "Executing: #{t.remote_path}"
-          task_bin = role.relative_path(t.path)
-          r = ssh.exec! <<~BASH
-            cd #{esc.(working_dir)}; \
-              if [ ! -f ./#{esc.(task_bin)}.success ]; then  \
-                touch ./#{esc.(task_bin)}.attempt && \
-                ./#{esc.(task_bin)} && \
-                touch ./#{esc.(task_bin)}.success ; \
-              fi
-          BASH
-          puts r
-        end
-      end
+    def bootstrap!(role = nil)
+      role ||= project.roles.find { |r| r.name == 'bootstrap' }
+      install!(role, user: 'root')
     end
 
-    def connect(&block)
-      connection = Net::SSH.start(host, user) do |ssh|
+    def connect(user: nil, &block)
+      connection = Net::SSH.start(host, user || self.user) do |ssh|
         yield ssh
       end
     end

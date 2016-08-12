@@ -27,7 +27,7 @@ module Cult
       end
 
 
-      def provision(name:, spec_name:)
+      def provision!(name:, spec_name:)
         spec = @conf['machine-specs'][spec_name]
         if spec.nil?
           fail ArgumentError, "Unknown spec_name: #{spec_name}"
@@ -46,15 +46,16 @@ module Cult
         ipv6_private = droplet.networks.v6.find {|n| n.type == 'private' }
 
         ssh_spin(ipv4_public.ip_address)
-
-        {
-          id:           droplet.id,
-          name:         droplet.name,
-          created_at:   droplet.created_at,
-          ipv4_public:  ipv4_public&.ip_address,
-          ipv4_private: ipv4_private&.ip_address,
-          ipv6_public:  ipv6_public&.ip_address,
-          ipv6_private: ipv6_private&.ip_address,
+        return {
+            id:           droplet.id,
+            name:         droplet.name,
+            created_at:   droplet.created_at,
+            host:         ipv4_public&.ip_address,
+            ipv4_public:  ipv4_public&.ip_address,
+            ipv4_private: ipv4_private&.ip_address,
+            ipv6_public:  ipv6_public&.ip_address,
+            ipv6_private: ipv6_private&.ip_address,
+            extra: JSON.parse(droplet.to_json) # Lose magic
         }
       end
 
