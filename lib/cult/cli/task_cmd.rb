@@ -6,9 +6,13 @@ module Cult
     module_function
     def task_cmd
       task = Cri::Command.define do
-        name    'task'
-        summary 'Task Manipulation'
-        usage   'task [command]'
+        no_project
+        name        'task'
+        summary     'Task Manipulation'
+        usage       'task [command]'
+        description <<~EOD
+
+        EOD
 
         run do |_, _, cmd|
           puts cmd.help
@@ -108,6 +112,7 @@ module Cult
         name        'sanity'
         summary     'checks task files for numbering sanity'
         description <<~EOD
+          TODO: Document (and do something!)
         EOD
 
         run do |args, ops, cmd|

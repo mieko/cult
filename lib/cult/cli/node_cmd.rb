@@ -7,6 +7,7 @@ module Cult
     module_function
     def node_cmd
       node = Cri::Command.define do
+        no_project
         name        'node'
         summary     'Manage nodes'
         description <<~EOD

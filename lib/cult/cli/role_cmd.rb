@@ -3,6 +3,7 @@ module Cult
     module_function
     def role_cmd
       role = Cri::Command.define do
+        no_project
         name        'role'
         summary     'Manage roles'
         description <<~EOD

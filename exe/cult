@@ -11,6 +11,7 @@ require 'cult/cli/all'
 require 'cult/vps/all'
 
 cult = Cri::Command.define do
+  no_project
   name        'cult'
   usage       'cult [options] [command [options...]]'
   summary     'Control a Fleet of Obedient Zomboid Machines'

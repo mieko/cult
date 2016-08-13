@@ -1,4 +1,5 @@
 require 'cri'
+require 'cult/cli/ext'
 
 module Cult
   module CLI

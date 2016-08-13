@@ -8,7 +8,7 @@ module Cult
     def init_cmd
       Cri::Command.define do
         providers = Cult::VPS.providers.map { |p| p.provider_name }.join ', '
-
+        no_project
         name        'init'
         usage       'init DIRECTORY'
         summary     'Create a new Cult project'
