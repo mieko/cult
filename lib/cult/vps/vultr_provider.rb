@@ -2,8 +2,8 @@ require 'cult/vps/provider'
 
 module Cult
   module VPS
-    class LinodeProvider < Provider
-      self.required_gems = 'linode'
+    class VultrProvider < Provider
+      self.required_gems = 'vultr'
 
       attr_reader :conf
       attr_reader :client
@@ -12,7 +12,7 @@ module Cult
         fail NotImplementedError
         
         @conf = conf
-        @client = Linode.new(api_key: conf['api-key'])
+        @client = nil
       end
 
     end
