@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+
+# This file is loaded every time the cult command is run in the project
+# directory.  If there's a any special setup you'd like to do, this is the
+# place to do it.
+
+# If you'd prefer a script that only loads during `cult console`, check out
+# .cultconsolerc
+
+Cult.project.instance_eval do
+
+  # In this this scope, you're in a context very similar to the console, where
+  # `nodes`, `roles`, etc, work as you'd expect.  If you'd prefer to type 
+  # Cult.project a trillion times instead, delete this block and go to town.
+
+end

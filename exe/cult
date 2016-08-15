@@ -70,6 +70,11 @@ else
   Cult.project ||= Cult::Project.from_cwd
 end
 
+if Cult.project
+  cultrc = Cult.project.location_of(".cultrc")
+  load(cultrc) if File.exist?(cultrc)
+end
+
 begin
   cult.run(ARGV)
 rescue Interrupt
