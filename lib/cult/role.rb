@@ -199,5 +199,12 @@ module Cult
 
       TSort.tsort(each_node, each_child).uniq
     end
+
+    def has_role?(role)
+      if role.is_a?(String)
+        role = self.class.by_name(project, role)
+      end
+      build_order.include?(role)
+    end
   end
 end
