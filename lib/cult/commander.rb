@@ -30,9 +30,9 @@ module Cult
       puts "Sending file: #{dst}"
 
       scp = Net::SCP.new(ssh)
-      ssh.exec! "mkdir -p #{Shellwords.escape(File.dirname(dst))}"
+      ssh.exec! "mkdir -p #{esc(File.dirname(dst))}"
       scp.upload!(data, dst)
-      ssh.exec!("chmod 0#{transferable.file_mode.to_s(8)} #{Shellwords.escape(dst)}")
+      ssh.exec!("chmod 0#{transferable.file_mode.to_s(8)} #{esc(dst)}")
     rescue
       $stderr.puts "fail: #{role.inspect}, #{transferable.inspect}"
       raise
@@ -46,18 +46,17 @@ module Cult
             send_file(ssh, r, f)
           end
 
-          esc = ->(s) { Shellwords.escape(s) }
           working_dir = r.remote_path
 
           r.tasks.each do |t|
             puts "Executing: #{t.remote_path}"
             task_bin = r.relative_path(t.path)
             res = ssh.exec! <<~BASH
-              cd #{esc.(working_dir)}; \
-                if [ ! -f ./#{esc.(task_bin)}.success ]; then  \
-                  touch ./#{esc.(task_bin)}.attempt && \
-                  ./#{esc.(task_bin)} && \
-                  touch ./#{esc.(task_bin)}.success ; \
+              cd #{esc(working_dir)}; \
+                if [ ! -f ./#{esc(task_bin)}.success ]; then  \
+                  touch ./#{esc(task_bin)}.attempt && \
+                  ./#{esc(task_bin)} && \
+                  touch ./#{esc(task_bin)}.success ; \
                 fi
             BASH
             puts res unless res.empty?
