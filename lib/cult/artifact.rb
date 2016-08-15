@@ -1,4 +1,5 @@
 require 'cult/transferable'
+require 'cult/named_array'
 
 module Cult
   class Artifact
@@ -32,7 +33,7 @@ module Cult
         new(role, filename).tap do |new_file|
           yield new_file if block_given?
         end
-      end.compact
+      end.compact.to_named_array
     end
 
   end

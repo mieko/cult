@@ -1,4 +1,5 @@
 require 'cult/transferable'
+require 'cult/named_array'
 
 module Cult
   class Task
@@ -50,7 +51,7 @@ module Cult
         new(role, filename).tap do |new_task|
           yield new_task if block_given?
         end
-      end.compact
+      end.compact.to_named_array
     end
 
   end

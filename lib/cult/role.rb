@@ -4,6 +4,7 @@ require 'cult/task'
 require 'cult/artifact'
 require 'cult/config'
 require 'cult/definition'
+require 'cult/named_array'
 
 module Cult
   class RoleNotFoundError < RuntimeError
@@ -82,6 +83,7 @@ module Cult
     def artifacts
       Artifact.all_for_role(project, self)
     end
+    alias_method :files, :artifacts
 
     def definition_parameters
       { project: project, role: self }
@@ -104,11 +106,9 @@ module Cult
 
 
     def parent_roles
-      @parent_roles ||= begin
-        includes.map do |name|
-          Role.by_name(project, name)
-        end
-      end
+      includes.map do |name|
+        Role.by_name(project, name)
+      end.to_named_array
     end
 
 
@@ -120,12 +120,12 @@ module Cult
         result.push(role)
         result += role.recursive_parent_roles(seen)
       end
-      result
+      result.to_named_array
     end
 
 
     def tree
-      [self] + recursive_parent_roles
+      ([self] + recursive_parent_roles).to_named_array
     end
 
 
@@ -182,7 +182,7 @@ module Cult
         new(project, filename).tap do |new_role|
           yield new_role if block_given?
         end
-      end
+      end.to_named_array
     end
 
 
@@ -197,14 +197,11 @@ module Cult
         node.parent_roles.each(&block)
       }
 
-      TSort.tsort(each_node, each_child).uniq
+      TSort.tsort(each_node, each_child).uniq.to_named_array
     end
 
     def has_role?(role)
-      if role.is_a?(String)
-        role = self.class.by_name(project, role)
-      end
-      build_order.include?(role)
+      ! tree[role].nil?
     end
   end
 end
