@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'shellwords'
 
 require 'cult/config'
 require 'cult/role'
@@ -101,18 +102,16 @@ module Cult
       locate Dir.getwd
     end
 
-    def vcs_branch
-      contents = File.read(location_of('.git/HEAD'))
-      if (m = contents.match(%r!\Aref: .*/(.*)$!))
-        m[1].split('/').last
+    def git_branch
+      res = %x(git -C #{Shellwords.escape(path)} branch --no-color)
+      if res && (m = res.match(/^\* (.*)/))
+        return m[1].chomp
       end
-    rescue Errno::ENOENT
-      nil
     end
 
     def env
       ENV['CULT_ENV'] || begin
-        if vcs_branch&.match(/\bdev(el(opment)?)?\b/)
+        if git_branch&.match(/\bdev(el(opment)?)?\b/)
           'development'
         else
           'production'

@@ -3,7 +3,7 @@ require 'net/scp'
 require 'shellwords'
 
 module Cult
-  class Controller
+  class Commander
     attr_reader :project
     attr_reader :node
 

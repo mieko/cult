@@ -1,5 +1,5 @@
 require 'cult/skel'
-require 'cult/controller'
+require 'cult/commander'
 
 module Cult
   module CLI
@@ -51,7 +51,7 @@ module Cult
         run do |opts, args, cmd|
           args.each do |node_name|
             node = Cult.project.nodes.find {|n| n.name == node_name}
-            ctrl = Controller.new(project: Cult.project, node: node)
+            ctrl = Commander.new(project: Cult.project, node: node)
             ctrl.bootstrap!
           end
         end
@@ -105,7 +105,7 @@ module Cult
             end
 
             if opts[:bootstrap]
-              control = Cult::Controller.new(project: Cult.project, node: node)
+              control = Cult::Commander.new(project: Cult.project, node: node)
               control.bootstrap!
             end
           end
