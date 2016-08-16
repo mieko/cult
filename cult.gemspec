@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '~> 2.3'
 
+  spec.add_dependency "cri",       "~> 2.7.0"
   spec.add_dependency "listpager", "~> 1.0.4"
   spec.add_dependency "net-ssh",   "~> 3.2.0"
   spec.add_dependency "net-scp",   "~> 1.2.1"
