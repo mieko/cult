@@ -148,7 +148,6 @@ module Cult
             ipv4_private: ipv4_private&.ip_address,
             ipv6_public:  ipv6_public&.ip_address,
             ipv6_private: ipv6_private&.ip_address,
-            params:       params,
             meta:         JSON.parse(droplet.to_json)
         }
       end
