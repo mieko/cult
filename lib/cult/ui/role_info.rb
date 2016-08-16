@@ -83,7 +83,7 @@ module Cult
               blanks = ' ' *  (78 - line.size)
               puts (line + blanks).inverse
               puts
-              syntax_highlight t.content(Cult.project, role, role)
+              syntax_highlight t.contents(Cult.project, role, role)
               puts
             end
           end
@@ -101,7 +101,7 @@ module Cult
               blanks = ' ' *  (78 - line.size)
               puts (line + blanks).inverse
               puts
-              syntax_highlight t.content(Cult.project, role, role)
+              syntax_highlight t.contents(Cult.project, role, role)
               puts
             end
           end
