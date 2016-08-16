@@ -9,37 +9,37 @@
 #
 # By default named_array_identifier returns name, but this can be overridden.
 
-class Object
-  def named_array_identifier
-    name
-  end
-end
-
 module Cult
-
-  # Any Array can convert itself to a NamedArray
-  module ArrayExtensions
-    def to_named_array
-      NamedArray.new(self)
-    end
-  end
-  ::Array.prepend(ArrayExtensions)
-
-
   class NamedArray < Array
+    # Any Array can convert itself to a NamedArray
+    module ArrayExtensions
+      def to_named_array
+        NamedArray.new(self)
+      end
+      ::Array.include(self)
+    end
+
+    # This maps #named_array_identifier to #name by default
+    module ObjectExtensions
+      def named_array_identifier
+        name
+      end
+      ::Object.include(self)
+    end
+
     def to_named_array
       self
     end
 
     # Wrap any non-mutating methods that can return an Array,
-    # and wrap the result with a NamedArray
-    superclass.instance_methods(false).each do |method_name|
-      method_name = method_name.to_s
-      unless ['?', '!'].include?(method_name[-1])
-        define_method(method_name) do |*args, &b|
-          r = super(*args, &b)
-          r.respond_to?(:to_named_array) ? r.to_named_array : r
-        end
+    # and wrap the result with a NamedArray.  This is why NamedArray.select
+    # results in a NamedArray instead of an Array
+    PROXY_METHODS = %i(& * + - << | collect compact flatten reject reverse
+                       rotate select shuffle slice sort uniq)
+    PROXY_METHODS.each do |method_name|
+      define_method(method_name) do |*args, &b|
+        r = super(*args, &b)
+        r.respond_to?(:to_named_array) ? r.to_named_array : r
       end
     end
 
@@ -73,6 +73,14 @@ module Cult
 
     def key?(key)
       !! all(key, :find)
+    end
+
+    def keys
+      map(&:named_array_identifier)
+    end
+
+    def values
+      self
     end
   end
 end
