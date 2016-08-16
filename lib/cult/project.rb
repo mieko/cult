@@ -3,6 +3,7 @@ require 'shellwords'
 
 require 'cult/config'
 require 'cult/role'
+require 'cult/named_array'
 
 module Cult
   class Project
@@ -77,6 +78,10 @@ module Cult
 
     def roles
       Role.all(self)
+    end
+
+    def drivers
+      Cult::Drivers.all.to_named_array
     end
 
     def provider

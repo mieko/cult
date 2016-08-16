@@ -8,7 +8,7 @@ require 'cult/config'
 require 'cult/project'
 require 'cult/node'
 require 'cult/cli/all'
-require 'cult/vps/all'
+require 'cult/drivers/all'
 
 cult = Cri::Command.define do
   no_project

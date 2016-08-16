@@ -1,3 +1,9 @@
+class Object
+  def named_array_identifier
+    name
+  end
+end
+
 module Cult
   module ArrayExtensions
     def to_named_array
@@ -27,7 +33,7 @@ module Cult
           super
         when String, Symbol
           key = key.to_s
-          find { |v| v.name == key }
+          find { |v| v.named_array_identifier == key }
         else
           fail ArgumentError
       end

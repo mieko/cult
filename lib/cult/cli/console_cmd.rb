@@ -36,6 +36,10 @@ module Cult
         system $0, *argv
       end
 
+      def ecult(*argv)
+        exec $0, *argv
+      end
+
       def reload!
         Array(@before_reload).each do |p|
           p.call
@@ -84,11 +88,11 @@ module Cult
 
                 => #{context.inspect}
 
-              Useful methods: nodes, roles, providers
+              Useful methods: nodes, roles, providers, drivers
 
             EOD
           end
-          
+
           context.load_rc
 
           if opts[:ripl]

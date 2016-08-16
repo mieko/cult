@@ -1,9 +1,11 @@
 require 'socket'
 
 module Cult
-  module VPS
-    module SSHSpin
+  module Drivers
+    module Common
 
+      module_function
+      # This should not be needed, but it is:
       # https://spin.atomicobject.com/2013/09/30/socket-connection-timeout-ruby/
       def connect_timeout(host, port, timeout = 5)
         # Convert the passed host into structures the non-blocking calls
@@ -45,6 +47,8 @@ module Cult
       end
 
       def ssh_spin(host)
+        wait = 3
+        mul = 1.2
         loop do
           sock = nil
           puts "loop"
@@ -52,7 +56,8 @@ module Cult
             sock = connect_timeout(host, 22, 2)
             return
           rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED
-            sleep 3
+            sleep wait
+            wait *= mul
           ensure
             sock.close if sock
           end
