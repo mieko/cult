@@ -122,6 +122,9 @@ module Cult
         r.nil? ? nil : r["ip"]
       end
 
+      def destroy!(id:)
+        Vultr::Server.destroy(SUBID: id)
+      end
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         keys = Array(ssh_key_files).map do |filename|
@@ -140,37 +143,38 @@ module Cult
 
         subid = r[:result]["SUBID"]
 
-        # Wait until it's active, it won't have an IP until then
-        backoff_loop do
-          r = Vultr::Server.list(SUBID: subid)[:result]
-          throw :done if r['status'] == 'active'
+        rollback_on_error(id: subid) do
+          # Wait until it's active, it won't have an IP until then
+          backoff_loop do
+            r = Vultr::Server.list(SUBID: subid)[:result]
+            throw :done if r['status'] == 'active'
+          end
+
+          iplist4 = Vultr::Server.list_ipv4(SUBID: subid)[:result].values[0]
+          iplist6 = Vultr::Server.list_ipv6(SUBID: subid)[:result].values[0]
+
+          host = fetch_ip(iplist4, :public)
+          await_ssh(host)
+
+          return {
+              name:          name,
+              size:          size,
+              zone:          zone,
+              image:         image,
+              ssh_key_files: ssh_key_files,
+              ssh_keys:      keys.map{|v| v["fingerprint"]},
+              extra:         extra,
+
+              id:           subid,
+              created_at:   Time.now.iso8601,
+              host:         host,
+              ipv4_public:  host,
+              ipv4_private: fetch_ip(iplist4, :private),
+              ipv6_public:  fetch_ip(iplist6, :public),
+              ipv6_private: fetch_ip(iplist6, :private),
+              meta:         {}
+          }
         end
-
-        iplist4 = Vultr::Server.list_ipv4(SUBID: subid)[:result].values[0]
-        iplist6 = Vultr::Server.list_ipv6(SUBID: subid)[:result].values[0]
-
-        host = fetch_ip(iplist4, :public)
-        ssh_spin(host)
-
-        return {
-            name:          name,
-            size:          size,
-            zone:          zone,
-            image:         image,
-            ssh_key_files: ssh_key_files,
-            ssh_keys:      keys.map{|v| v["fingerprint"]},
-            extra:         extra,
-
-            id:           subid,
-            created_at:   Time.now.iso8601,
-            host:         host,
-            ipv4_public:  host,
-            ipv4_private: fetch_ip(iplist4, :private),
-            ipv6_public:  fetch_ip(iplist6, :public),
-            ipv6_private: fetch_ip(iplist6, :private),
-            meta:         {}
-        }
-
       end
 
       with_api_key :provision!

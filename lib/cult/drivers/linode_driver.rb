@@ -130,6 +130,10 @@ module Cult
         end.kernelid
       end
 
+      def destroy!(id:)
+        client.linode.delete(linodeid: id, skipchecks: true)
+      end
+
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         begin
           sizeid   = sizes_map.fetch size.to_s
@@ -144,86 +148,88 @@ module Cult
                 "disksize #{disksize / 1024}gb"
           fail ArgumentError, msg
         end
-        result = client.linode.create(datacenterid: zoneid, planid: sizeid)
-        linodeid = result.linodeid
+        linodeid = client.linode.create(datacenterid: zoneid,
+                                        planid: sizeid).linodeid
 
-        # We give it a name early so we can find it in the Web UI if anything
-        # goes wrong.
-        client.linode.update(linodeid: linodeid, label: name)
-        client.linode.ip.addprivate(linodeid: linodeid)
+        rollback_on_error(id: linodeid) do
+          # We give it a name early so we can find it in the Web UI if anything
+          # goes wrong.
+          client.linode.update(linodeid: linodeid, label: name)
+          client.linode.ip.addprivate(linodeid: linodeid)
 
-        authorized_keys = Array(ssh_key_files).map do |file|
-          File.read(file)
-        end.join("\n")
+          authorized_keys = Array(ssh_key_files).map do |file|
+            File.read(file)
+          end.join("\n")
 
-        # You shouldn't run meaningful swap, but this makes the Web UI not
-        # scare you, and apparently Linux runs better with ANY swap, regardless
-        # of how small.  We've matched the small size the Linode Web UI does by
-        # default.
-        swapid = client.linode.disk.create(linodeid: linodeid,
-                                           label: "Cult: #{name}-swap",
-                                           type: "swap",
-                                           size: SWAP_SIZE).diskid
+          # You shouldn't run meaningful swap, but this makes the Web UI not
+          # scare you, and apparently Linux runs better with ANY swap, regardless
+          # of how small.  We've matched the small size the Linode Web UI does by
+          # default.
+          swapid = client.linode.disk.create(linodeid: linodeid,
+                                             label: "Cult: #{name}-swap",
+                                             type: "swap",
+                                             size: SWAP_SIZE).diskid
 
-        # Here, we create the OS on-node storage
-        params = {
-          linodeid: linodeid,
-          distributionid: imageid,
-          label: "Cult: #{name}",
-          # Linode's max length is 128, generates longer than that to
-          # no get the fixed == and truncates.
-          rootpass: SecureRandom.base64(100)[0...128],
-          rootsshkey: authorized_keys,
-          size: disksize - SWAP_SIZE
-        }
-        diskid = client.linode.disk.createfromdistribution(params).diskid
+          # Here, we create the OS on-node storage
+          params = {
+            linodeid: linodeid,
+            distributionid: imageid,
+            label: "Cult: #{name}",
+            # Linode's max length is 128, generates longer than that to
+            # no get the fixed == and truncates.
+            rootpass: SecureRandom.base64(100)[0...128],
+            rootsshkey: authorized_keys,
+            size: disksize - SWAP_SIZE
+          }
+          diskid = client.linode.disk.createfromdistribution(params).diskid
 
 
-        # We don't have to reference the config specifically: It'll be the only
-        # configuration that exists, so it'll be used.
-        client.linode.config.create(linodeid: linodeid,
-                                    kernelid: latest_kernel_id,
-                                    disklist: "#{diskid},#{swapid}",
-                                    rootdevicenum: 1,
-                                    label: "Cult: Latest Linux-x64")
+          # We don't have to reference the config specifically: It'll be the only
+          # configuration that exists, so it'll be used.
+          client.linode.config.create(linodeid: linodeid,
+                                      kernelid: latest_kernel_id,
+                                      disklist: "#{diskid},#{swapid}",
+                                      rootdevicenum: 1,
+                                      label: "Cult: Latest Linux-x64")
 
-        client.linode.reboot(linodeid: linodeid)
+          client.linode.reboot(linodeid: linodeid)
 
-        # Information gathering step...
-        all_ips = client.linode.ip.list(linodeid: linodeid)
+          # Information gathering step...
+          all_ips = client.linode.ip.list(linodeid: linodeid)
 
-        ipv4_public  = all_ips.find{ |ip| ip.ispublic == 1 }&.ipaddress
-        ipv4_private = all_ips.find{ |ip| ip.ispublic == 0 }&.ipaddress
+          ipv4_public  = all_ips.find{ |ip| ip.ispublic == 1 }&.ipaddress
+          ipv4_private = all_ips.find{ |ip| ip.ispublic == 0 }&.ipaddress
 
-        # This is a shame: Linode has awesome support for ipv6, but doesn't
-        # expose it in the API.
-        ipv6_public  = nil
-        ipv6_private = nil
+          # This is a shame: Linode has awesome support for ipv6, but doesn't
+          # expose it in the API.
+          ipv6_public  = nil
+          ipv6_private = nil
 
-        fingerprints = Array(ssh_key_files).map do |keyfile|
-          Net::SSH::KeyFactory.load_public_key(keyfile).fingerprint
+          fingerprints = Array(ssh_key_files).map do |keyfile|
+            Net::SSH::KeyFactory.load_public_key(keyfile).fingerprint
+          end
+
+          await_ssh(ipv4_public)
+
+          return {
+              name:          name,
+              size:          size,
+              zone:          zone,
+              image:         image,
+              ssh_key_files: ssh_key_files,
+              ssh_keys:      fingerprints,
+              extra:         extra,
+
+              id:           linodeid,
+              created_at:   Time.now.iso8601,
+              host:         ipv4_public,
+              ipv4_public:  ipv4_public,
+              ipv4_private: ipv4_private,
+              ipv6_public:  ipv6_public,
+              ipv6_private: ipv6_private,
+              meta:         {}
+          }
         end
-
-        ssh_spin(ipv4_public)
-
-        return {
-            name:          name,
-            size:          size,
-            zone:          zone,
-            image:         image,
-            ssh_key_files: ssh_key_files,
-            ssh_keys:      fingerprints,
-            extra:         extra,
-
-            id:           linodeid,
-            created_at:   Time.now.iso8601,
-            host:         ipv4_public,
-            ipv4_public:  ipv4_public,
-            ipv4_private: ipv4_private,
-            ipv6_public:  ipv6_public,
-            ipv6_private: ipv6_private,
-            meta:         {}
-        }
       end
 
       def self.interrupts

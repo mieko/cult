@@ -45,8 +45,6 @@ module Cult
       self.class.driver_name
     end
 
-    # MikesKvmWarehouseDriver => mikes-kvm-warehouse
-
     # Attempts to loads all of the required gems before doing any real work
     def self.try_requires!
       begin

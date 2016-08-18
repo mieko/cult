@@ -5,6 +5,34 @@ module Cult
     module Common
 
       module_function
+      # Enter this block once a node has been created.  It makes sure it's
+      # destroyed if there's an error later in the procedure.
+      def rollback_on_error(id: id, &block)
+        begin
+          yield
+        rescue
+          destroy!(id: id)
+          raise
+        end
+      end
+
+      # Does back-off retrying.  Defaults to not-exponential.
+      # Block must throw :done to signal they are done.
+      def backoff_loop(wait = 3, scale = 1.2, &block)
+        times = 0
+        total_wait = 0.0
+
+        catch :done do
+          loop do
+            yield times, total_wait
+            sleep wait
+            times += 1
+            total_wait += wait
+            wait *= scale
+          end
+        end
+      end
+
       # This should not be needed, but it is:
       # https://spin.atomicobject.com/2013/09/30/socket-connection-timeout-ruby/
       def connect_timeout(host, port, timeout = 5)
@@ -46,22 +74,9 @@ module Cult
         end
       end
 
-      def backoff_loop(wait = 3, scale = 1.2, &block)
-        times = 0
-        total_wait = 0.0
-
-        catch :done do
-          loop do
-            yield times, total_wait
-            sleep wait
-            times += 1
-            total_wait += wait
-            wait *= scale
-          end
-        end
-      end
-
-      def ssh_spin(host)
+      # Waits until SSH is available at host.  "available" jsut means
+      # "listening"/acceping connections.
+      def await_ssh(host)
         backoff_loop do
           begin
             sock = connect_timeout(host, 22, 1)

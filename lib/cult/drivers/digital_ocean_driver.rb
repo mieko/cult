@@ -70,6 +70,10 @@ module Cult
         end
       end
 
+      def destroy!(id:)
+        client.droplets.delete(id: id)
+      end
+
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         fingerprints = Array(ssh_key_files).map do |file|
           upload_ssh_key(file: file).fingerprint
@@ -87,33 +91,36 @@ module Cult
         }
 
         droplet = DropletKit::Droplet.new(params)
-        droplet = client.droplets.create(droplet)
-        droplet = await_creation(droplet)
 
-        ipv4_public  = droplet.networks.v4.find {|n| n.type == 'public'  }
-        ipv4_private = droplet.networks.v4.find {|n| n.type == 'private' }
-        ipv6_public  = droplet.networks.v6.find {|n| n.type == 'public'  }
-        ipv6_private = droplet.networks.v6.find {|n| n.type == 'private' }
+        rollback_on_error(id: droplet.id) do
+          droplet = client.droplets.create(droplet)
+          droplet = await_creation(droplet)
 
-        ssh_spin(ipv4_public.ip_address)
-        return {
-            name:          droplet.name,
-            size:          size,
-            zone:          zone,
-            image:         image,
-            ssh_key_files: ssh_key_files,
-            ssh_keys:      fingerprints,
-            extra:         extra,
+          ipv4_public  = droplet.networks.v4.find {|n| n.type == 'public'  }
+          ipv4_private = droplet.networks.v4.find {|n| n.type == 'private' }
+          ipv6_public  = droplet.networks.v6.find {|n| n.type == 'public'  }
+          ipv6_private = droplet.networks.v6.find {|n| n.type == 'private' }
 
-            id:           droplet.id,
-            created_at:   droplet.created_at,
-            host:         ipv4_public&.ip_address,
-            ipv4_public:  ipv4_public&.ip_address,
-            ipv4_private: ipv4_private&.ip_address,
-            ipv6_public:  ipv6_public&.ip_address,
-            ipv6_private: ipv6_private&.ip_address,
-            meta:         JSON.parse(droplet.to_json)
-        }
+          await_ssh(ipv4_public.ip_address)
+          return {
+              name:          droplet.name,
+              size:          size,
+              zone:          zone,
+              image:         image,
+              ssh_key_files: ssh_key_files,
+              ssh_keys:      fingerprints,
+              extra:         extra,
+
+              id:           droplet.id,
+              created_at:   droplet.created_at,
+              host:         ipv4_public&.ip_address,
+              ipv4_public:  ipv4_public&.ip_address,
+              ipv4_private: ipv4_private&.ip_address,
+              ipv6_public:  ipv6_public&.ip_address,
+              ipv6_private: ipv6_private&.ip_address,
+              meta:         JSON.parse(droplet.to_json)
+          }
+        end
       end
 
       def self.setup!
