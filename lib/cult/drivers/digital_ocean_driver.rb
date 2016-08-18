@@ -6,17 +6,16 @@ module Cult
   module Drivers
 
     class DigitalOceanDriver < ::Cult::Driver
-      include Common
-
       self.required_gems = 'droplet_kit'
 
-      attr_accessor :access_token
+      include Common
+
+      attr_reader :access_token
+      attr_reader :client
+
       def initialize(api_key:)
         @access_token = api_key
-      end
-
-      def client
-        @client ||= DropletKit::Client.new(access_token: access_token)
+        @client = DropletKit::Client.new(access_token: access_token)
       end
 
       def sizes
@@ -42,31 +41,10 @@ module Cult
                                         name: name)
         unless ssh_keys.find {|e| e[:fingerprint] == do_key.fingerprint }
           do_key = client.ssh_keys.create(do_key)
+          @ssh_keys = nil
         end
 
-        @ssh_keys = nil
         do_key
-      end
-
-      def size_norm(size_string)
-        units = {
-          mb: 1024 ** 1,
-          gb: 1024 ** 2,
-          tb: 1024 ** 3,
-          pb: 1024 ** 4,
-        }
-        _, v, unit = *(size_string.match(/^(\d+)([mgtp]b)/i))
-        v.to_i * units[unit.to_sym]
-      end
-
-      def distro_score(s)
-        distro_score = case s
-          when /^ubuntu/; 2
-          when /^debian/; 1
-          else ; 0
-        end
-        rest = s.gsub(/^[^-]*\-/, '')
-        [distro_score, rest]
       end
 
       def images
@@ -99,14 +77,6 @@ module Cult
         end
       end
 
-      def provision_defaults
-        {
-          private_networking: true,
-          ipv6: true
-        }
-      end
-
-
       def provision!(name:, size:, image:, zone:, ssh_key_files:, extra: {})
         fingerprints = Array(ssh_key_files).map do |file|
           upload_ssh_key(file: file).fingerprint
@@ -117,10 +87,11 @@ module Cult
           region:   zone,
           image:    image,
           size:     size,
-          ssh_keys: fingerprints
-        }
+          ssh_keys: fingerprints,
 
-        params = provision_defaults.merge(extra).merge(params)
+          private_networking: true,
+          ipv6: true
+        }
 
         droplet = DropletKit::Droplet.new(params)
         droplet = client.droplets.create(droplet)
@@ -162,29 +133,22 @@ module Cult
         puts
         puts "  #{url}"
         puts
-        print "Open browser? [Y/n]: "
 
-        Common.launch_browser(url) unless $stdin.gets.match(/^[Nn]/)
+        CLI.launch_browser(url) if CLI.yes_no("Open Browser?")
 
-        print "Access Token: "
-        access_token = $stdin.gets.chomp
-        unless access_token.match(/\A[0-9a-f]{64}\z/)
+        api_key = CLI.prompt("Access Token")
+        unless api_key.match(/\A[0-9a-f]{64}\z/)
           puts "That doesn't look like an access token, but we'll take it."
         end
 
-        inst = new(access_token: access_token)
+        inst = new(api_key: api_key)
 
         return {
-          access_token: access_token,
+          api_key: api_key,
           configurations: {
             sizes:  inst.sizes,
             zones:  inst.zones,
             images: inst.images,
-          },
-          default_node: {
-            size:  inst.sizes.sort_by(&inst.method(:size_norm))[0],
-            zone:  inst.zones.sample,
-            image: inst.images.sort_by(&inst.method(:distro_score)).last
           }
         }
       end
