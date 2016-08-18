@@ -70,7 +70,7 @@ module Cult
         end
       end
 
-      def provision!(name:, size:, image:, zone:, ssh_key_files:, extra: {})
+      def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         fingerprints = Array(ssh_key_files).map do |file|
           upload_ssh_key(file: file).fingerprint
         end

@@ -1,4 +1,6 @@
 require 'cult/driver'
+require 'cult/drivers/common'
+
 require 'net/ssh'
 require 'time'
 
@@ -109,7 +111,8 @@ module Cult
           existing = Vultr::SSHKey.create(name: "Cult: #{name}",
                                           ssh_key: data)[:result]
         end
-        return existing
+        existing["fingerprint"] = key.fingerprint
+        existing
       end
       with_api_key :upload_ssh_key
 
@@ -125,11 +128,6 @@ module Cult
           upload_ssh_key(file: filename)
         end
 
-        ssh_key_ids = keys.map do |v|
-          v["SSHKEYID"]
-        end.join(',')
-
-
         r = Vultr::Server.create(DCID: zones_map.fetch(zone),
                                  VPSPLANID: sizes_map.fetch(size),
                                  OSID: images_map.fetch(image),
@@ -137,7 +135,8 @@ module Cult
                                  enable_private_network: 'yes',
                                  label: name,
                                  hostname: name,
-                                 SSHKEYID: ssh_key_ids)
+                                 SSHKEYID: keys.map{|v| v["SSHKEYID"] }
+                                               .join(','))
 
         subid = r[:result]["SUBID"]
 
@@ -150,13 +149,8 @@ module Cult
         iplist4 = Vultr::Server.list_ipv4(SUBID: subid)[:result].values[0]
         iplist6 = Vultr::Server.list_ipv6(SUBID: subid)[:result].values[0]
 
-        ipv4_public  = fetch_ip(iplist4, :public)
-        ipv4_private = fetch_ip(iplist4, :private)
-
-        ipv6_public  = fetch_ip(iplist6, :public)
-        ipv6_private = fetch_ip(iplist6, :private)
-
-        ssh_spin(ipv4_public)
+        host = fetch_ip(iplist4, :public)
+        ssh_spin(host)
 
         return {
             name:          name,
@@ -164,16 +158,16 @@ module Cult
             zone:          zone,
             image:         image,
             ssh_key_files: ssh_key_files,
-            # ssh_keys:      fingerprints,
+            ssh_keys:      keys.map{|v| v["fingerprint"]},
             extra:         extra,
 
             id:           subid,
             created_at:   Time.now.iso8601,
-            host:         ipv4_public,
-            ipv4_public:  ipv4_public,
-            ipv4_private: ipv4_private,
-            ipv6_public:  ipv6_public,
-            ipv6_private: ipv6_private,
+            host:         host,
+            ipv4_public:  host,
+            ipv4_private: fetch_ip(iplist4, :private),
+            ipv6_public:  fetch_ip(iplist6, :public),
+            ipv6_private: fetch_ip(iplist6, :private),
             meta:         {}
         }
 

@@ -1,6 +1,7 @@
-require 'securerandom'
 require 'cult/driver'
 require 'cult/cli/common'
+
+require 'securerandom'
 require 'net/ssh'
 require 'time'
 
@@ -62,41 +63,32 @@ module Cult
         s.downcase.gsub(/[^a-z0-9]/, '-')
       end
 
-      # We wish we could just say '2gb', and Linode what it means, instead they
-      # have label: '2gb', somethingid: 23432, and we have to send them 23432.
-      #
-      # This lets us keep #sizes, #zones, etc, which are generated from a method
-      # that returns {slug => id...}  hashes.  If you want a list of zones, use
-      # #zones.  If you want the Linode id for a zone, use zone_map(slug).
-      # The linode ids shouldn't escape out of here.
-      def self.resource_with_id(name, &block)
-        @maps ||= {}
-        define_method("#{name}_map") do
-          @maps[name] ||= begin
-            yield
-          end
-        end
-        private "#{name}_map"
-
-        define_method(name) do
-          send("#{name}_map").keys
+      # Lets us write a method "something_map" that returns
+      # {'ident' => ... id}, and also get a function "something" that
+      # returns the keys.
+      def self.with_id_mapping(method_name)
+        new_method = method_name.to_s.sub(/_map\z/, '')
+        define_method(new_method) do
+          send(method_name).keys
         end
       end
 
-      resource_with_id :images do
+      def images_map
         client.avail.distributions.select(&:is64bit).map do |v|
           name = v.label
           [ slug(v.label), v.distributionid ]
         end.to_h
       end
+      with_id_mapping :images_map
 
-      resource_with_id :zones do
+      def zones_map
         client.avail.datacenters.map do |v|
           [ slug(v.abbr), v.datacenterid ]
         end.to_h
       end
+      with_id_mapping :zones_map
 
-      resource_with_id :sizes do
+      def sizes_map
         client.avail.linodeplans.map do |v|
           name = v.label.gsub(/^Linode /, '')
           if name.match(/^\d+$/)
@@ -110,6 +102,8 @@ module Cult
           [ slug(name), v.planid ]
         end.to_h
       end
+      with_id_mapping :sizes_map
+
 
       # We try to use the reasonable sizes that the web UI uses, although the
       # API lets us change it.
@@ -136,7 +130,7 @@ module Cult
         end.kernelid
       end
 
-      def provision!(name:, size:, image:, zone:, ssh_key_files:, extra: {})
+      def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         begin
           sizeid   = sizes_map.fetch size.to_s
           zoneid   = zones_map.fetch zone.to_s
