@@ -50,8 +50,11 @@ module Cult
 
     def ask(prompt)
       print "#{prompt}: "
-      gets.chomp
+      $stdin.gets.chomp
+    ensure
+      puts
     end
+    alias_method :prompt, :ask
 
     def password(prompt)
       STDIN.noecho do
