@@ -5,21 +5,24 @@ require 'net/ssh'
 require 'time'
 
 module Cult
-  # This has been submitted as a PR
+  # This has been submitted as a PR.  It lets us set a label and custom
+  # expiration length for an API key.
   #  See: https://github.com/rick/linode/pull/34
   module LinodeMonkeyPatch
-    def fetch_api_key(label: nil, expire_hours: :default)
+    def fetch_api_key(options = {})
       request = {
         api_action: 'user.getapikey',
         api_responseFormat: 'json',
-        username: self.username,
-        password: self.password
+        username: username,
+        password: password
       }
 
-      request[:label] = label if label
+      if options.key?(:label)
+        request[:label] = label
+      end
 
-      if expire_hours != :default
-        request[:expires] = expire_hours.nil? ? 0 : expire_hours
+      if options.key?(:expires)
+        request[:expires] = expires.nil? ? 0 : expires
       end
 
       response = post(request)
@@ -30,10 +33,11 @@ module Cult
       end
       reformat_response(response).api_key
     end
+    public :fetch_api_key
 
     module_function
     def install!
-      ::Linode.prepend(::Cult::LinodeMonkeyPatch)
+      ::Linode.prepend(self)
     end
   end
 end
@@ -44,6 +48,7 @@ module Cult
       self.required_gems = 'linode'
 
       include Common
+
       SWAP_SIZE = 256
 
       attr_reader :client
@@ -57,20 +62,41 @@ module Cult
         s.downcase.gsub(/[^a-z0-9]/, '-')
       end
 
-      def images
+      # We wish we could just say '2gb', and Linode what it means, instead they
+      # have label: '2gb', somethingid: 23432, and we have to send them 23432.
+      #
+      # This lets us keep #sizes, #zones, etc, which are generated from a method
+      # that returns {slug => id...}  hashes.  If you want a list of zones, use
+      # #zones.  If you want the Linode id for a zone, use zone_map(slug).
+      # The linode ids shouldn't escape out of here.
+      def self.resource_with_id(name, &block)
+        @maps ||= {}
+        define_method("#{name}_map") do
+          @maps[name] ||= begin
+            yield
+          end
+        end
+        private "#{name}_map"
+
+        define_method(name) do
+          send("#{name}_map").keys
+        end
+      end
+
+      resource_with_id :images do
         client.avail.distributions.select(&:is64bit).map do |v|
           name = v.label
           [ slug(v.label), v.distributionid ]
         end.to_h
       end
 
-      def zones
+      resource_with_id :zones do
         client.avail.datacenters.map do |v|
           [ slug(v.abbr), v.datacenterid ]
         end.to_h
       end
 
-      def sizes
+      resource_with_id :sizes do
         client.avail.linodeplans.map do |v|
           name = v.label.gsub(/^Linode /, '')
           if name.match(/^\d+$/)
@@ -112,9 +138,9 @@ module Cult
 
       def provision!(name:, size:, image:, zone:, ssh_key_files:, extra: {})
         begin
-          sizeid   = sizes.fetch size.to_s
-          zoneid   = zones.fetch zone.to_s
-          imageid  = images.fetch image.to_s
+          sizeid   = sizes_map.fetch size.to_s
+          zoneid   = zones_map.fetch zone.to_s
+          imageid  = images_map.fetch image.to_s
           disksize = disk_size_for_size(size)
         rescue KeyError
           msg = "Tried to create an instance with an unknown value: " +
@@ -227,7 +253,7 @@ module Cult
             password = CLI.password "Password"
             linode = Linode.new(username: username, password: password)
             begin
-              linode.send(:fetch_api_key, label: "Cult", expire_hours: nil)
+              linode.fetch_api_key(label: "Cult", expires: nil)
               api_key = linode.api_key
               fail RuntimeError if api_key.nil?
               puts "Got it!  In case you're curious: #{api_key}"
@@ -243,10 +269,8 @@ module Cult
           puts "You can obtain an API key for Cult at the following URL:"
           puts "  #{url}"
           puts
-          if CLI.yes_no("Open Browser?")
-            CLI.launch_browser(url)
-            api_key = CLI.ask("API Key")
-          end
+          CLI.launch_browser(url) if CLI.yes_no("Open Browser?")
+          api_key = CLI.prompt("API Key")
         end
 
         linode ||= Linode.new(api_key: api_key)
@@ -254,6 +278,17 @@ module Cult
         if resp.message != 'PING'
           raise "Didn't respond to ping.  Something went wrong."
         end
+
+        inst = new(api_key: api_key)
+
+        return {
+          api_key: api_key,
+          configurations: {
+            sizes:  inst.sizes,
+            zones:  inst.zones,
+            images: inst.images,
+          }
+        }
       end
 
     end
