@@ -64,16 +64,9 @@ module Cult
       end
 
       def await_creation(droplet)
-        wait = 3
-        mul = 1.2
-        loop do
-          begin
-            d = client.droplets.find(id: droplet.id)
-            return d if d.status == 'active'
-          rescue DropletKit::Error
-          end
-          sleep wait
-          wait *= mul
+        backoff_loop do
+          d = client.droplets.find(id: droplet.id)
+          throw :done if d.status == 'active'
         end
       end
 
