@@ -46,23 +46,34 @@ module Cult
         end
       end
 
-      def ssh_spin(host)
-        wait = 3
-        mul = 1.2
-        loop do
-          sock = nil
-          puts "loop"
-          begin
-            sock = connect_timeout(host, 22, 2)
-            return
-          rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED
+      def backoff_loop(wait = 3, scale = 1.2, &block)
+        times = 0
+        total_wait = 0.0
+
+        catch :done do
+          loop do
+            yield times, total_wait
             sleep wait
-            wait *= mul
+            times += 1
+            total_wait += wait
+            wait *= scale
+          end
+        end
+      end
+
+      def ssh_spin(host)
+        backoff_loop do
+          begin
+            sock = connect_timeout(host, 22, 1)
+            throw :done
+          rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED
+            # Nothing, these are expected
           ensure
             sock.close if sock
           end
         end
       end
+
     end
   end
 end
