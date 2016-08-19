@@ -1,4 +1,5 @@
 require 'cult/driver'
+require 'cult/named_array'
 
 module Cult
   module Drivers
@@ -14,13 +15,7 @@ module Cult
         Cult::Drivers.const_get(m)
       end.select do |cls|
         ::Cult::Driver > cls
-      end
-    end
-
-    def find(name)
-      all.find do |p|
-        p.driver_name == name
-      end
+      end.to_named_array
     end
   end
 end

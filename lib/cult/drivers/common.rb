@@ -7,7 +7,7 @@ module Cult
       module_function
       # Enter this block once a node has been created.  It makes sure it's
       # destroyed if there's an error later in the procedure.
-      def rollback_on_error(id: id, &block)
+      def rollback_on_error(id:, &block)
         begin
           yield
         rescue Exception => e

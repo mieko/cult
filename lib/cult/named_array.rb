@@ -54,6 +54,8 @@ module Cult
           key
         when Symbol
           key.to_s
+        when NilClass
+          return nil
         else
           fail ArgumentError
       end

@@ -28,7 +28,7 @@ module Cult
       end
 
       def inspect
-        "Cult::Driver/#{driver_name}"
+        self == Driver ? super : "#{super}/#{driver_name}"
       end
       alias_method :to_s, :inspect
 
@@ -47,23 +47,31 @@ module Cult
 
     # Attempts to loads all of the required gems before doing any real work
     def self.try_requires!
-      begin
-        Array(required_gems).each do |g|
-          require g
+      req = Array(required_gems).map do |gem|
+        begin
+          require gem
+          nil
+        rescue LoadError
+          gem
         end
-      rescue LoadError => e
-        raise GemNeededError.new(Array(required_gems))
+      end.compact
+
+      unless req.empty?
+        fail GemNeededError.new(req)
       end
     end
+
 
     def self.setup!
       try_requires!
     end
 
+
     def self.new(api_key:)
       try_requires!
       super
     end
+
 
     def self.for(project)
       conf = Definition.load(project.location_of('providers/default'))

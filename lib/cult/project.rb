@@ -3,7 +3,7 @@ require 'shellwords'
 
 require 'cult/config'
 require 'cult/role'
-require 'cult/named_array'
+require 'cult/provider'
 
 module Cult
   class Project
@@ -80,12 +80,12 @@ module Cult
       Role.all(self)
     end
 
-    def drivers
-      Cult::Drivers.all.to_named_array
+    def providers
+      Cult::Provider.all(self)
     end
 
-    def provider
-      @provider ||= VPS::Provider.for(self)
+    def drivers
+      Cult::Drivers.all
     end
 
     def self.locate(path)

@@ -46,7 +46,7 @@ module Cult
 
         run do |_, _|
           fmt = "%-20s %-20s\n"
-          printf(fmt, "name", "gems")
+          printf(fmt, "Name", "Gems")
           puts '-' * 76
           Cult::Drivers.all.each do |p|
             printf(fmt, p.driver_name, p.required_gems)
@@ -73,6 +73,13 @@ module Cult
           accounts at Mike's KVM Warehouse, you can specify a driver name with
           --driver, and an independent provider name.
         EOD
+
+        run do |opts, args, cmd|
+          driver = opts[:driver] || args[0]
+          driver = CLI.require_argument(driver, type: Driver, label: "driver")
+          name = args[0]
+          CLI.require_argument(name, type: Provider, label: "Name", exist: false)
+        end
       end
       provider.add_command(provider_create)
 
