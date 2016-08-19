@@ -167,6 +167,27 @@ We're going to put together a complete usage guide, tutorial, and example repo
 once Cult has settled down a bit.  It's still pre-1.0 software, and we still
 like breaking things to make it work better for us.
 
+### 👻 Spooky Secrets
+
+  * `cult console` is built to be really nice to use.  If you're not afraid of
+    Ruby, the method names are chosen to read almost like pseudo-code.  It
+    supports IRB, Pry, and Ripl with command-line flags.
+  * Anything that Cult keeps "an Array of", that you'd maybe want to reference
+    by name is stored in a NamedArray, which shares some features with a Hash.  
+    This is for convenience.  For example, in `cult console`, you can find the
+    first driver with `drivers[0]`, find it by name with `drivers['linode']`,
+    or (*get ready for fancy stuff:*) look it up by a Regexp with
+    `drivers[/ocean/i]``.
+  * The NamedArray stuff even works on the command-line with String arguments,
+    and will convert strings that start with '/' to Regexps to search by name.
+  * Although Cult will only *generate* JSON, not having comments and other
+    stuff is a pain.  If you don't care about JSON-readability of your
+    `node.json`s or `role.json`s, you can just rename it to `node.yaml` or
+    `node.yml` and it'll get parsed with a YAML parser.  Cult keeps transient
+    state in separate files for this reason: so it doesn't overwrite your
+    long-lived YAML replacements with JSON equivalents.
+
+
 ## Development
 
 ### History
@@ -215,5 +236,5 @@ the above items you away.
 
 ## License
 
-The Software is available as open source under the terms of the
+Cult is available as open source software under the terms of the
 [MIT License](http://opensource.org/licenses/MIT).
