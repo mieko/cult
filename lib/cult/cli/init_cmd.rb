@@ -70,7 +70,8 @@ module Cult
             FileUtils.mkdir_p(project.location_of("providers"))
             dst_file = File.join("providers", provider_conf[:name] + '.json')
 
-            File.write(project.location_of(dst_file), JSON.pretty_generate(vps_config))
+            File.write(project.location_of(dst_file),
+                       JSON.pretty_generate(vps_config))
           end
         end
 

@@ -1,7 +1,7 @@
 require 'cri'
 
 # This extends Cri::Command to, by default, require a project when a command
-# is run.  This can be overridden with no_project
+# is run.  This can be overridden with no_project.
 
 module Cult
   module CLI
@@ -21,15 +21,16 @@ module Cult
         end
         super
       end
+
+      Cri::Command.prepend(self)
     end
 
     module CommandDSLExtensions
       def no_project
         @command.project_required = false
       end
+
+      Cri::CommandDSL.prepend(self)
     end
   end
 end
-
-Cri::Command.prepend(Cult::CLI::CommandExtensions)
-Cri::CommandDSL.prepend(Cult::CLI::CommandDSLExtensions)

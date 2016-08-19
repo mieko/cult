@@ -8,6 +8,7 @@ module Cult
       task = Cri::Command.define do
         no_project
         name        'task'
+        aliases     'tasks'
         summary     'Task Manipulation'
         usage       'task [command]'
         description <<~EOD

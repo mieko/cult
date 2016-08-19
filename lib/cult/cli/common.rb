@@ -9,6 +9,7 @@ module Cult
 
     module_function
 
+    # This sets the global project based on a directory
     def set_project(path)
       Cult.project = Cult::Project.locate(path)
       if Cult.project.nil?
@@ -17,6 +18,7 @@ module Cult
       end
     end
 
+    # Quiet mode controls how verbose `say` is
     def quiet=(v)
       @quiet = v
     end
@@ -29,6 +31,7 @@ module Cult
       puts v unless @quiet
     end
 
+    # yes=true automatically answers yes to "yes_no" questions.
     def yes=(v)
       @yes = v
     end
@@ -37,10 +40,12 @@ module Cult
       @yes
     end
 
-    def yes_no(msg)
+    # Asks a yes or no question with promp.  The prompt defaults to "Yes".  If
+    # Cli.yes=true, true is returned without showing the prompt.
+    def yes_no(prompt)
       return true if yes?
       loop do
-        print "#{msg} #{Rainbow('Y').bright}/#{Rainbow('n').darkgray}: "
+        print "#{prompt} #{Rainbow('Y').bright}/#{Rainbow('n').darkgray}: "
         case $stdin.gets.chomp
           when '', /^[Yy]/
             return true
@@ -52,24 +57,29 @@ module Cult
       end
     end
 
+    # Asks the user a question, and returns the response.  Ensures a newline
+    # exists after the response.
     def ask(prompt)
       print "#{prompt}: "
       $stdin.gets.chomp
     ensure
       puts
     end
-    alias_method :prompt, :ask
 
+    def prompt(*args)
+      ask(*args)
+    end
+
+    # Disables echo to ask the user a password.
     def password(prompt)
       STDIN.noecho do
         ask(prompt)
       end
-    ensure
-      puts
     end
 
     # it's common for drivers to need the user to visit a URL to
-    # confirm an API key or similar.
+    # confirm an API key or similar.  This does this in the most
+    # compatable way I know.
     def launch_browser(url)
       case RUBY_PLATFORM
         when /darwin/
@@ -81,6 +91,17 @@ module Cult
       end
     end
 
+    # This is so complicated it probably shouldn't exist.
+    # v is an option or argv value from the users, label: is the name of it.
+    #
+    # This asserts that v is in the collections specified by type, e.g.,
+    # type: Role assures that project.roles contains an object identified
+    # by v and returns it.  UNLESS exist: true, where it makes sure it
+    # doesn't already exist.
+    #
+    # The goal is to get useful error messages without a lot of boilerplate in
+    # CLI handlers.
+    #
     def require_argument(v, type:, label:, project: Cult.project, exist: nil)
       collection = case
         when type == Role;   project.roles
@@ -159,6 +180,7 @@ module Cult
           end
         end
 
+        # Everything went fine, we need to retry the user-supplied block.
         Gem.refresh
         retry
       end

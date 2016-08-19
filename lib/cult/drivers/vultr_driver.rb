@@ -196,6 +196,7 @@ module Cult
         inst = new(api_key: api_key)
         return {
           api_key: api_key,
+          driver: driver_name,          
           configurations: {
             sizes:  inst.sizes,
             zones:  inst.zones,

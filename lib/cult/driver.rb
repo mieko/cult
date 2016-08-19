@@ -38,7 +38,7 @@ module Cult
     end
 
     def inspect
-      "\#<Cult::Driver \"#{self.class.driver_name}\">"
+      "\#<#{self.class.name} \"#{self.class.driver_name}\">"
     end
 
     def to_s

@@ -8,6 +8,7 @@ module Cult
       provider = Cri::Command.define do
         no_project
         name        'provider'
+        aliases     'providers'
         summary     'Provider Commands'
         description <<~EOD
           A provider is a VPS service.  Cult ships with drivers for quite a few

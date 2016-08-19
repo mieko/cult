@@ -18,7 +18,7 @@ module Cult
         Cult::CLI.send(m)
       end
     end
-    
+
   end
 end
 

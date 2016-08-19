@@ -5,6 +5,7 @@ module Cult
       role = Cri::Command.define do
         no_project
         name        'role'
+        aliases     'roles'
         summary     'Manage roles'
         description <<~EOD
           A role defines what a node does.  The easiest way to think about it is

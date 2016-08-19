@@ -9,6 +9,7 @@ module Cult
       node = Cri::Command.define do
         no_project
         name        'node'
+        aliases     'nodes'
         summary     'Manage nodes'
         description <<~EOD
           The node commands manipulate your local index of nodes.  A node is
