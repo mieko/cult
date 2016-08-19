@@ -13,18 +13,14 @@ module Cult
     end
 
     def name
-      definition['name'] || definition['driver']
+      File.basename(path)
     end
 
     def inspect
-      r = "\#<#{self.class.name} \"#{name}\""
-
+      prelude = "#{self.class.name} \"#{name}\""
       driver_name = driver.class.driver_name
-      if driver_name != name
-        r += "driver=\"#{driver.class.driver_name}\""
-      end
-      r += ">"
-      r
+      driver_string = (driver_name == name) ? '' : " driver=\"#{driver_name}\""
+      "\#<#{prelude}#{driver_string}>"
     end
 
     def driver
