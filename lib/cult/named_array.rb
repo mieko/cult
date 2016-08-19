@@ -3,9 +3,10 @@
 # painful in the console, where, e.g., nodes can only be referred to by index,
 # and you end up calling `find` a lot.
 #
-# NamedArray is an array, but overloads [] to also work with a string or symbol.
-# e.g., nodes[:something].  It works by finding the first item who responds
-# from `named_array_identifier` with the matching key.
+# NamedArray is an array, but overloads [] to also work with a String, Symbol,
+# Regexp, or a few other things. e.g., nodes[:something].  It works by finding
+# the first item who responds from `named_array_identifier` with the matching
+# key.
 #
 # By default named_array_identifier returns name, but this can be overridden.
 
@@ -43,6 +44,27 @@ module Cult
       end
     end
 
+
+    # It's unforunate that there's not a Regexp constructor that'll
+    # accept this string format with options.
+    def build_regexp_from_string(s)
+      fail RegexpError, "Isn't a Regexp: #{s}" if s[0] != '/'
+      options = extract_regexp_options(s)
+      Regexp.new(s[1 ... s.rindex('/')], options)
+    end
+    private :build_regexp_from_string
+
+    def extract_regexp_options(s)
+      offset = s.rindex('/')
+      fail RegexpError, "Unterminated Regexp: #{s}" if offset == 0
+
+      trailing = s[offset + 1 ... s.size]
+      re_string = "%r!!#{trailing}"
+      (eval re_string).options
+    end
+    private :extract_regexp_options
+
+
     # Returns all keys that match if method == :select, the first if
     # method == :find
     def all(key, method = :select)
@@ -50,7 +72,9 @@ module Cult
         when Integer
           # Fallback to default behavior
           return super
-        when String, Regexp, Proc, Range
+        when String
+          key[0] == '/' ? build_regexp_from_string(key) : key
+        when Regexp, Proc, Range
           key
         when Symbol
           key.to_s
