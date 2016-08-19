@@ -73,19 +73,27 @@ module Cult
     end
 
     def nodes
-      Node.all(self)
+      @nodes ||= begin
+        Node.all(self)
+      end
     end
 
     def roles
-      Role.all(self)
+      @roles ||= begin
+        Role.all(self)
+      end
     end
 
     def providers
-      Cult::Provider.all(self)
+      @providers ||= begin
+        Cult::Provider.all(self)
+      end
     end
 
     def drivers
-      Cult::Drivers.all
+      @drivers ||= begin
+        Cult::Drivers.all
+      end
     end
 
     def self.locate(path)

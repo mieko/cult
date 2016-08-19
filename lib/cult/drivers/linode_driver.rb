@@ -2,7 +2,6 @@ require 'cult/driver'
 require 'cult/cli/common'
 
 require 'securerandom'
-require 'net/ssh'
 require 'time'
 
 module Cult
@@ -19,10 +18,11 @@ module Cult
       }
 
       if options.key?(:label)
-        request[:label] = label
+        request[:label] = options[:label]
       end
 
       if options.key?(:expires)
+        expires = options[:expires]
         request[:expires] = expires.nil? ? 0 : expires
       end
 
@@ -59,34 +59,25 @@ module Cult
         @client = Linode.new(api_key: api_key)
       end
 
-      def slug(s)
-        s.downcase.gsub(/[^a-z0-9]/, '-')
-      end
-
-      # Lets us write a method "something_map" that returns
-      # {'ident' => ... id}, and also get a function "something" that
-      # returns the keys.
-      def self.with_id_mapping(method_name)
-        new_method = method_name.to_s.sub(/_map\z/, '')
-        define_method(new_method) do
-          send(method_name).keys
-        end
-      end
 
       def images_map
         client.avail.distributions.select(&:is64bit).map do |v|
           name = v.label
-          [ slug(v.label), v.distributionid ]
+          [ slugify(distro_name(v.label)), v.distributionid ]
         end.to_h
       end
+      memoize         :images_map
       with_id_mapping :images_map
+
 
       def zones_map
         client.avail.datacenters.map do |v|
-          [ slug(v.abbr), v.datacenterid ]
+          [ slugify(v.abbr), v.datacenterid ]
         end.to_h
       end
+      memoize         :zones_map
       with_id_mapping :zones_map
+
 
       def sizes_map
         client.avail.linodeplans.map do |v|
@@ -99,9 +90,10 @@ module Cult
               name = "#{mb / 1024}gb"
             end
           end
-          [ slug(name), v.planid ]
+          [ slugify(name), v.planid ]
         end.to_h
       end
+      memoize         :sizes_map
       with_id_mapping :sizes_map
 
 
@@ -122,6 +114,7 @@ module Cult
         }.fetch(size.to_s)
       end
 
+
       # I've been told by Linode support that this literal will always mean
       # "Latest x86".  But in case that changes...
       def latest_kernel_id
@@ -130,9 +123,11 @@ module Cult
         end.kernelid
       end
 
+
       def destroy!(id:)
         client.linode.delete(linodeid: id, skipchecks: true)
       end
+
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         begin
@@ -157,14 +152,14 @@ module Cult
           client.linode.update(linodeid: linodeid, label: name)
           client.linode.ip.addprivate(linodeid: linodeid)
 
-          authorized_keys = Array(ssh_key_files).map do |file|
-            File.read(file)
-          end.join("\n")
+          ssh_keys = Array(ssh_key_files).map do |file|
+            ssh_key_info(file: file)
+          end
 
           # You shouldn't run meaningful swap, but this makes the Web UI not
-          # scare you, and apparently Linux runs better with ANY swap, regardless
-          # of how small.  We've matched the small size the Linode Web UI does by
-          # default.
+          # scare you, and apparently Linux runs better with ANY swap,
+          # regardless of how small.  We've matched the small size the Linode
+          # Web UI does by default.
           swapid = client.linode.disk.create(linodeid: linodeid,
                                              label: "Cult: #{name}-swap",
                                              type: "swap",
@@ -178,9 +173,10 @@ module Cult
             # Linode's max length is 128, generates longer than that to
             # no get the fixed == and truncates.
             rootpass: SecureRandom.base64(100)[0...128],
-            rootsshkey: authorized_keys,
+            rootsshkey: ssh_keys.map {|k| k[:data] }.join("\n"),
             size: disksize - SWAP_SIZE
           }
+
           diskid = client.linode.disk.createfromdistribution(params).diskid
 
 
@@ -205,10 +201,6 @@ module Cult
           ipv6_public  = nil
           ipv6_private = nil
 
-          fingerprints = Array(ssh_key_files).map do |keyfile|
-            Net::SSH::KeyFactory.load_public_key(keyfile).fingerprint
-          end
-
           await_ssh(ipv4_public)
 
           return {
@@ -216,8 +208,8 @@ module Cult
               size:          size,
               zone:          zone,
               image:         image,
-              ssh_key_files: ssh_key_files,
-              ssh_keys:      fingerprints,
+              ssh_key_files: ssh_keys.map{|k| k[:file]},
+              ssh_keys:      ssh_keys.map{|k| k[:fingerprint]},
               extra:         extra,
 
               id:           linodeid,
@@ -232,10 +224,12 @@ module Cult
         end
       end
 
+
       def self.interrupts
         # I hate IRB.
         [Interrupt] + (defined?(IRB) ? [IRB::Abort] : [])
       end
+
 
       def self.setup!
         super
@@ -283,7 +277,7 @@ module Cult
 
         return {
           api_key: api_key,
-          driver: driver_name,          
+          driver: driver_name,
           configurations: {
             sizes:  inst.sizes,
             zones:  inst.zones,

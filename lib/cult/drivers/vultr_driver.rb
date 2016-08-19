@@ -7,13 +7,16 @@ require 'time'
 module Cult
   module Drivers
     class VultrDriver < ::Cult::Driver
-      include Common
       self.required_gems = 'vultr'
 
+      include Common
+
       attr_reader :api_key
+
       def initialize(api_key:)
         @api_key = api_key
       end
+
 
       # This sets the Vultr API key to this instance's api key for the duration
       # of a method call and restores it afterwards.
@@ -31,41 +34,32 @@ module Cult
         end
       end
 
-      # Lets us write a method "something_map" that returns
-      # {'ident' => ... id}, and also get a function "something" that
-      # returns the keys.
-      def self.with_id_mapping(method_name)
-        new_method = method_name.to_s.sub(/_map\z/, '')
-        define_method(new_method) do
-          send(method_name).keys
-        end
-      end
-
-      def slugify(s)
-        s.gsub(/[^a-z0-9]+/i, '-').gsub(/(^\-)|(-\z)/, '').downcase
-      end
 
       def zones_map
         Vultr::Region.list[:result].map do |k, v|
           [slugify(v["regioncode"]), v["DCID"]]
         end.to_h
       end
+      memoize         :zones_map
       with_id_mapping :zones_map
-      with_api_key :zones_map
+      with_api_key    :zones_map
+
 
       def images_map
         Vultr::OS.list[:result].select do |k, v|
           # Doing our part to kill x86/32
           v['arch'] == 'x64'
         end.map do |k,v|
-          [slugify(v["name"]), v["OSID"]]
+          [slugify(distro_name(v["name"])), v["OSID"]]
         end.reject do |k,v|
           %w(custom snapshot backup application).include?(k) ||
           k.match(/^windows/)
         end.to_h
       end
+      memoize         :images_map
       with_id_mapping :images_map
-      with_api_key :images_map
+      with_api_key    :images_map
+
 
       def sizes_map
         Vultr::Plan.list[:result].values.select do |v|
@@ -91,30 +85,34 @@ module Cult
           end
         end.compact.to_h
       end
+      memoize         :sizes_map
       with_id_mapping :sizes_map
-      with_api_key :sizes_map
+      with_api_key    :sizes_map
+
 
       def ssh_keys
         Vultr::SSHKey.list[:result].values
       end
+      memoize      :ssh_keys
       with_api_key :ssh_keys
 
+
       def upload_ssh_key(file:)
-        data = File.read(file).chomp
+        key = ssh_key_info(file: file)
 
-        fields = data.split(/ /)
-        name = fields[-1]
-
-        key = Net::SSH::KeyFactory.load_data_public_key(data, file)
-        existing = ssh_keys.find {|e| e["ssh_key"] == data }
-        if existing.nil?
-          existing = Vultr::SSHKey.create(name: "Cult: #{name}",
-                                          ssh_key: data)[:result]
+        vkey = if (exist = ssh_keys.find {|e| e["ssh_key"] == key[:data] })
+          exist
+        else
+          ssh_keys_dememo!
+          Vultr::SSHKey.create(name: "Cult: #{key[:name]}",
+                               ssh_key: key[:data])[:result]
         end
-        existing["fingerprint"] = key.fingerprint
-        existing
+
+        vkey["fingerprint"] = key[:fingerprint]
+        vkey
       end
       with_api_key :upload_ssh_key
+
 
       def fetch_ip(list, type)
         goal = (type == :public ? "main_ip" : "private")
@@ -122,10 +120,12 @@ module Cult
         r.nil? ? nil : r["ip"]
       end
 
+
       def destroy!(id:)
         Vultr::Server.destroy(SUBID: id)
       end
       with_api_key :destroy!
+
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         keys = Array(ssh_key_files).map do |filename|
@@ -177,8 +177,8 @@ module Cult
           }
         end
       end
-
       with_api_key :provision!
+
 
       def self.setup!
         super
@@ -193,10 +193,15 @@ module Cult
         CLI.launch_browser(url) if CLI.yes_no("Launch browser?")
 
         api_key = CLI.prompt("API Key")
+
+        unless api_key.match(/^[A-Z2-7]{36}$/)
+          puts "That doesn't look like an API key, but I'll trust you"
+        end
+
         inst = new(api_key: api_key)
         return {
           api_key: api_key,
-          driver: driver_name,          
+          driver: driver_name,
           configurations: {
             sizes:  inst.sizes,
             zones:  inst.zones,

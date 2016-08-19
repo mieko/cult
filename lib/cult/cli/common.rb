@@ -62,8 +62,6 @@ module Cult
     def ask(prompt)
       print "#{prompt}: "
       $stdin.gets.chomp
-    ensure
-      puts
     end
 
     def prompt(*args)
@@ -73,7 +71,11 @@ module Cult
     # Disables echo to ask the user a password.
     def password(prompt)
       STDIN.noecho do
-        ask(prompt)
+        begin
+          ask(prompt)
+        ensure
+          puts
+        end
       end
     end
 

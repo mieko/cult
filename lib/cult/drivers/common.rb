@@ -1,10 +1,69 @@
 require 'socket'
+require 'net/ssh'
 
 module Cult
   module Drivers
-    module Common
 
-      module_function
+    module Common
+      module ClassMethods
+
+        # Lets us write a method "something_map" that returns {'ident' => ...},
+        # and also get a function "something" that returns the keys.
+        def with_id_mapping(method_name)
+          new_method = method_name.to_s.sub(/_map\z/, '')
+          define_method(new_method) do
+            send(method_name).keys
+          end
+        end
+
+
+        def memoize(method_name)
+          old_method_name = "#{method_name}_unmemoized".to_sym
+
+          alias_method old_method_name, method_name
+
+          var_name = "@#{method_name}".to_sym
+
+          define_method(method_name) do
+            if !instance_variable_defined?(var_name)
+              instance_variable_set(var_name, send(old_method_name))
+            end
+            instance_variable_get(var_name)
+          end
+
+          define_method("#{method_name}_unmemo!") do
+            remove_instance_variable(var_name)
+          end
+        end
+      end
+
+
+      def self.included(cls)
+        cls.extend(ClassMethods)
+      end
+
+
+      def ssh_key_info(data: nil, file: nil)
+        if data.nil?
+          fail ArgumentError if file.nil?
+          data = File.read(file)
+        else
+          fail ArgumentError unless file.nil?
+        end
+
+        data = data.chomp
+        key = Net::SSH::KeyFactory.load_data_public_key(data, file)
+
+        fields = data.split(/ /)
+        return {
+          name:        fields[-1],
+          fingerprint: key.fingerprint,
+          data:        data,
+          file:        file
+        }
+      end
+
+
       # Enter this block once a node has been created.  It makes sure it's
       # destroyed if there's an error later in the procedure.
       def rollback_on_error(id:, &block)
@@ -18,6 +77,23 @@ module Cult
           end
         end
       end
+
+
+      def slugify(s)
+        s.gsub(/[^a-z0-9]+/i, '-').gsub(/(^\-)|(-\z)/, '').downcase
+      end
+
+
+      def distro_name(s)
+        s = s.gsub(/\bx64\b/i, '')
+        # People sometimes add "LTS" to the name of Ubuntu LTS releases
+        s = s.gsub(/\blts\b/i, '') if s.match(/ubuntu/i)
+
+        # We don't particularly need the debian codename
+        s = s.gsub(/(\d)[\s-]+(\S+)/, '\1') if s.match(/^debian/i)
+        s
+      end
+
 
       # Does back-off retrying.  Defaults to not-exponential.
       # Block must throw :done to signal they are done.
@@ -35,6 +111,23 @@ module Cult
           end
         end
       end
+
+
+      # Waits until SSH is available at host.  "available" jsut means
+      # "listening"/acceping connections.
+      def await_ssh(host)
+        backoff_loop do
+          begin
+            sock = connect_timeout(host, 22, 1)
+            throw :done
+          rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED
+            # Nothing, these are expected
+          ensure
+            sock.close if sock
+          end
+        end
+      end
+
 
       # This should not be needed, but it is:
       # https://spin.atomicobject.com/2013/09/30/socket-connection-timeout-ruby/
@@ -73,21 +166,6 @@ module Cult
               socket.close
               raise Errno::ETIMEDOUT
             end
-          end
-        end
-      end
-
-      # Waits until SSH is available at host.  "available" jsut means
-      # "listening"/acceping connections.
-      def await_ssh(host)
-        backoff_loop do
-          begin
-            sock = connect_timeout(host, 22, 1)
-            throw :done
-          rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED
-            # Nothing, these are expected
-          ensure
-            sock.close if sock
           end
         end
       end

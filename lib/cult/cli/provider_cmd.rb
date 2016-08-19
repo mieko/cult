@@ -1,4 +1,4 @@
-require 'cult/drivers/all'
+require 'cult/drivers/load'
 
 module Cult
   module CLI

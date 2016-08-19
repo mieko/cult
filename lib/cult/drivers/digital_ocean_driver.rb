@@ -10,58 +10,64 @@ module Cult
 
       include Common
 
-      attr_reader :access_token
       attr_reader :client
 
       def initialize(api_key:)
-        @access_token = api_key
-        @client = DropletKit::Client.new(access_token: access_token)
+        @client = DropletKit::Client.new(access_token: api_key)
       end
 
-      def sizes
-        @sizes ||= begin
-          client.sizes.all.to_a.map(&:slug)
-        end
+
+      def sizes_map
+        client.sizes.all.to_a.map do |s|
+          [s.slug, s.slug]
+        end.to_h
       end
+      memoize :sizes_map
+      with_id_mapping :sizes_map
+
+
+      def images_map
+        distros = %w(ubuntu coreos centos freebsd fedora debian).join '|'
+        re = /^(#{distros})\-.*\-x64$/
+        client.images.all.to_a.select do |image|
+          image.public && image.slug && image.slug.match(re)
+        end.map do |image|
+          [slugify(distro_name(image.slug)), image.slug]
+        end.to_h
+      end
+      memoize :images_map
+      with_id_mapping :images_map
+
+
+      def zones_map
+        client.regions.all.map do |zone|
+          [zone.slug, zone.slug]
+        end.to_h
+      end
+      memoize :zones_map
+      with_id_mapping :zones_map
+
 
       def ssh_keys
-        @ssh_keys ||= begin
-          client.ssh_keys.all.to_a.map(&:to_h)
-        end
+        client.ssh_keys.all.to_a.map(&:to_h)
       end
+      memoize :ssh_keys
+
 
       def upload_ssh_key(file:)
-        data = File.read(file).chomp
-        fields = data.split(/ /)
-        name = fields[-1]
-
-        key = Net::SSH::KeyFactory.load_data_public_key(data, file)
-        do_key = DropletKit::SSHKey.new(fingerprint: key.fingerprint,
-                                        public_key: data,
-                                        name: name)
-        unless ssh_keys.find {|e| e[:fingerprint] == do_key.fingerprint }
-          do_key = client.ssh_keys.create(do_key)
-          @ssh_keys = nil
-        end
-
-        do_key
-      end
-
-      def images
-        @images ||= begin
-          distros = %w(ubuntu coreos centos freebsd fedora debian).join '|'
-          re = /^(#{distros})\-.*\-x64$/
-          client.images.all.to_a.select do |image|
-            image.public && image.slug && image.slug.match(re)
-          end.map(&:slug)
+        key = ssh_key_info(file: file)
+        # If we already have one with this fingerprint, use it.
+        if (exist = ssh_keys.find {|dk| dk[:fingerprint] == key[:fingerprint]})
+          exist
+        else
+          ssh_keys_dememo!
+          client.ssh_keys.create \
+            DropletKit::SSHKey.new(fingerprint: key[:fingerprint],
+                                   public_key: key[:data],
+                                   name: key[:name])
         end
       end
 
-      def zones
-        @zones ||= begin
-          client.regions.all.map(&:slug)
-        end
-      end
 
       def await_creation(droplet)
         d = nil
@@ -72,13 +78,15 @@ module Cult
         return d
       end
 
+
       def destroy!(id:)
         client.droplets.delete(id: id)
       end
 
+
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         fingerprints = Array(ssh_key_files).map do |file|
-          upload_ssh_key(file: file).fingerprint
+          upload_ssh_key(file: file)[:fingerprint]
         end
 
         params = {
@@ -117,17 +125,19 @@ module Cult
               ssh_keys:      fingerprints,
               extra:         extra,
 
-              id:           droplet.id,
-              created_at:   droplet.created_at,
-              host:         ipv4_public&.ip_address,
-              ipv4_public:  ipv4_public&.ip_address,
-              ipv4_private: ipv4_private&.ip_address,
-              ipv6_public:  ipv6_public&.ip_address,
-              ipv6_private: ipv6_private&.ip_address,
-              meta:         JSON.parse(droplet.to_json)
+              id:            droplet.id,
+              created_at:    droplet.created_at,
+              host:          ipv4_public&.ip_address,
+              ipv4_public:   ipv4_public&.ip_address,
+              ipv4_private:  ipv4_private&.ip_address,
+              ipv6_public:   ipv6_public&.ip_address,
+              ipv6_private:  ipv6_private&.ip_address,
+              # Get rid of magic in droplet.
+              meta:          JSON.parse(droplet.to_json)
           }
         end
       end
+
 
       def self.setup!
         super

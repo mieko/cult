@@ -1,7 +1,9 @@
 require 'cult/definition'
+require 'cult/drivers/common'
 
 module Cult
   class Driver
+
     # This is raised when a Driver is instantiated,  but the required
     # gems are not installed.
     class GemNeededError < RuntimeError
@@ -60,6 +62,12 @@ module Cult
         fail GemNeededError.new(req)
       end
     end
+
+
+    # These are helpers that most implementations will need, but Driver itself
+    # doesn't depend on.  Things like exponential back-off, awaiting an SSH
+    # port to open, etc.
+    include ::Cult::Drivers::Common
 
 
     def self.setup!

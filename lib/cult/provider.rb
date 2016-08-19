@@ -1,8 +1,13 @@
 require 'cult/named_array'
 require 'cult/definition'
 
+require 'forwardable'
+
 module Cult
   class Provider
+    extend Forwardable
+
+    def_delegators :driver, :sizes, :images, :zones, :provision!, :destroy!
 
     attr_reader :project
     attr_reader :path
