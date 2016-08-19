@@ -125,6 +125,7 @@ module Cult
       def destroy!(id:)
         Vultr::Server.destroy(SUBID: id)
       end
+      with_api_key :destroy!
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         keys = Array(ssh_key_files).map do |filename|

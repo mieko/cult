@@ -64,10 +64,12 @@ module Cult
       end
 
       def await_creation(droplet)
+        d = nil
         backoff_loop do
           d = client.droplets.find(id: droplet.id)
           throw :done if d.status == 'active'
         end
+        return d
       end
 
       def destroy!(id:)
@@ -91,6 +93,10 @@ module Cult
         }
 
         droplet = DropletKit::Droplet.new(params)
+
+        if droplet.nil?
+          fail "Droplet was nil: #{params.inspect}"
+        end
 
         rollback_on_error(id: droplet.id) do
           droplet = client.droplets.create(droplet)

@@ -145,7 +145,7 @@ module Cult
                 "size #{size}(aka #{sizeid}), " +
                 "zone #{zone}(aka #{zoneid}), " +
                 "image #{image}(aka #{imageid}), " +
-                "disksize #{disksize / 1024}gb"
+                "disksize #{disksize}"
           fail ArgumentError, msg
         end
         linodeid = client.linode.create(datacenterid: zoneid,

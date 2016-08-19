@@ -10,9 +10,12 @@ module Cult
       def rollback_on_error(id: id, &block)
         begin
           yield
-        rescue
-          destroy!(id: id)
-          raise
+        rescue Exception => e
+          begin
+            destroy!(id: id)
+          ensure
+            raise e
+          end
         end
       end
 
