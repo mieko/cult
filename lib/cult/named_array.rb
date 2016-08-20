@@ -1,4 +1,4 @@
-# A lot of times, we want a sequential array, of objects, but it'd still be
+# A lot of times, we want a sequential array of objects, but it'd still be
 # really convenient to refer to things by their name.  This is particularly
 # painful in the console, where, e.g., nodes can only be referred to by index,
 # and you end up calling `find` a lot.
