@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 NODE=<%= node.name.sq %>
 ROLES=<%= node.roles.map(&:name).sq %>
