@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -e
+
+# This will be the first (normal) Task to be ran on your new server.  Rename
+# it, and make it do something useful.
+#
+# This file will be processed by ERB right before it's shipped to a Node, so
+# you can customize it based on the node, roles, project, etc.
+#
+# The ERB helper has quite a few helpers for shell-escaping, for example:
+
+# The "q" method quotes a string with double-quotes.
+echo <%= node.name.q %>
+
+# The "sq" method single-quotes the string.
+echo <%= node.name.sq %>
+
+# "slash" does shell slash-escaping
+echo <%= node.name.slash %>
+
+# The same methods work on Array, and have an optional separator argument,
+# which defaults to ' '
+echo <%= node.roles.sq %>
+
+# This script executes in the task directory, so files are accessible as
+# "files/something".  Text files are also pre-processed through IRB, with the
+# same context.

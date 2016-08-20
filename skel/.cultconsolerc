@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 
 # This file is loaded right before `cult console` is launched. You have access
-# to the same scope as the console. 
+# to the same scope as the console.
