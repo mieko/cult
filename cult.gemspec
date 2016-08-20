@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["mike@meter.md"]
 
   spec.summary       = "Fleet Management like its 1990"
-  spec.homepage      = "https://github.com/mieko/cult"
+  spec.homepage      = "https://github.com/metermd/cult"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'

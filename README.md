@@ -62,8 +62,8 @@ command should handle everything:
 
 Most provider drivers require outside gems, for example, the Linode driver
 requires the Linode API gem, the DigitalOcean driver requires DropletKit,
-etc. Cult will ask, and then install these required gems only when you go to use
-the driver.
+etc. Cult will ask, and then install these required gems only when you go to
+use the driver.
 
 Cult requires nothing to be installed on each node, other than an operating SSH
 server and Bourne Shell. If you know you've got Bash on the other end, feel
@@ -177,7 +177,7 @@ like breaking things to make it work better for us.
     This is for convenience. For example, in `cult console`, you can find the
     first driver with `drivers[0]`, find it by name with `drivers['linode']`,
     or (*get ready for fancy stuff:*) look it up by a Regexp with
-    `drivers[/ocean/i]``.
+    `drivers[/ocean/i]`.
   * The NamedArray stuff even works on the command-line with String arguments,
     and will convert strings that start with '/' to Regexps to search by name.
   * Although Cult will only *generate* JSON, not having comments and other
@@ -202,8 +202,8 @@ the reason Cult exists. Some of the limitations are designed to force a
 certain mindset I think is healthy for building resilient systems. In
 particular:
 
-  1. Exercising the server bring-up process from bottom-up as the normal mode of
-     operation. This is why Cult makes you bring up a node from provision/
+  1. Exercising the server bring-up process from bottom-up as the normal mode
+     of operation. This is why Cult makes you bring up a node from provision/
      bootstrap each time, instead of using snapshots, a feature virtually every
      VPS provider supports.
   2. Making it less reasonable to have nodes hanging around that have ended up
