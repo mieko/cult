@@ -15,8 +15,8 @@ module Cult
 
         EOD
 
+        arguments 0
         run do |opts, args, cmd|
-          CLI.require_args(args, 0)
           puts cmd.help
           exit
         end
@@ -48,9 +48,8 @@ module Cult
           This command respects the global --yes flag.
         EOD
 
+        arguments 0
         run do |opts, args, cmd|
-          CLI.require_args(args, 0)
-
           if opts[:all] && Array(opts[:role]).size != 0
             fail CLIError, "can't supply -A and also a list of roles"
           end

@@ -49,8 +49,8 @@ module Cult
           to all.
         EOD
 
+        arguments 0
         run do |opts, args, cmd|
-          CLI.require_args(args, 0)
           puts cmd.help
           exit 0;
         end
@@ -70,8 +70,8 @@ module Cult
         required :r, :roles, 'this role depends on another role',
                  multiple: true
 
+        arguments 1
         run do |opts, args, cmd|
-          CLI.require_args(args, 1)
           name = CLI.fetch_item(args[0], from: Role, exist: false)
 
           role = Role.by_name(Cult.project, name)
@@ -105,9 +105,8 @@ module Cult
           Destroys all roles specified.
         EOD
 
+        arguments 1..-1
         run do |opts, args, cmd|
-          CLI.require_args(args, 1..-1)
-
           roles = args.map do |role_name|
             CLI.fetch_items(role_name, from: Role)
           end.flatten
@@ -132,8 +131,8 @@ module Cult
           more ROLES are specified, only lists those
         EOD
 
+        arguments 0..-1
         run do |opts, args, cmd|
-          CLI.require_args(args, 0..-1)
           roles = Cult.project.roles
           unless args.empty?
             roles = args.map do |role_name|

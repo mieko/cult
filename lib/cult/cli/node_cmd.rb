@@ -16,8 +16,8 @@ module Cult
           conceptually description of a server.
         EOD
 
+        arguments 0
         run do |opts, args, cmd|
-          CLI.require_args(args, 0)
           puts cmd.help
           exit 0;
         end
@@ -28,9 +28,8 @@ module Cult
         usage   'ssh NODE'
         summary 'Starts an interactive SSH shell to NODE'
 
+        arguments 1
         run do |opts, args, cmd|
-          CLI.require_args(args, 1)
-
           node = fetch_item(args[0], from: Node)
           exec "ssh", "#{node.user}@#{node.host}"
         end
@@ -50,9 +49,8 @@ module Cult
         bootstraps a node from the ground up.
         EOD
 
+        arguments 1..-1
         run do |opts, args, cmd|
-          CLI.require_args(args, 1..-1)
-
           nodes = args.map { |a| CLI.fetch_items(a, from: Node) }.flatten
 
           nodes.each do |node|
@@ -128,10 +126,8 @@ module Cult
 
         required :r, :role, 'List only nodes which include <value>'
 
-
+        arguments 0..1
         run do |opts, args, cmd|
-          CLI.require_args(args, 0..1)
-
           nodes = Cult.project.nodes
 
           # Filter by names

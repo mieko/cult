@@ -46,9 +46,8 @@ module Cult
         required :p, :provider, 'VPS driver/provider'
         required :d, :driver,   'Specify a driver.  Not ususally needed'
 
+        arguments 1
         run do |ops, args, cmd|
-          CLI.require_args(args 1)
-
           project = Project.new(args[0])
           skel = Skel.new(project)
           skel.copy!

@@ -167,32 +167,6 @@ module Cult
       fetch_item(v, method: :all, **kw)
     end
 
-    def require_args(args, count)
-      count = (count..count) if count.is_a?(Integer)
-      if count.end == -1
-        count = count.begin .. Float::INFINITY
-      end
-
-      unless count.cover?(args.size)
-        msg = case
-          when count.size == 1 && count.begin == 0
-            "accepts no arguments"
-          when count.size == 1 && count.begin == 1
-            "accepts one argument"
-          when count.begin == count.end
-            "accepts exactly #{count.begin} arguments"
-          else
-            if count.end == Float::INFINITY
-              "requires #{count.begin}+ arguments"
-            else
-              "accepts #{count} arguments"
-            end
-        end
-        fail CLIError, "Command #{msg}"
-      end
-    end
-
-
     # This intercepts GemNeededError and does the installation dance.  It looks
     # a bit hairy because it has a few resumption points, e.g., attempts user
     # gem install, and if that fails, tries the sudo gem install.
