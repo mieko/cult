@@ -194,7 +194,7 @@ module Cult
         puts "  #{url}"
         puts
 
-        CLI.launch_browser(url) if CLI.yes_no("Launch browser?")
+        CLI.launch_browser(url) if CLI.yes_no?("Launch browser?")
 
         api_key = CLI.prompt("API Key")
 

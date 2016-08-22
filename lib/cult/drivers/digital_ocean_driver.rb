@@ -154,7 +154,7 @@ module Cult
         puts "  #{url}"
         puts
 
-        CLI.launch_browser(url) if CLI.yes_no("Open Browser?")
+        CLI.launch_browser(url) if CLI.yes_no?("Open Browser?")
 
         api_key = CLI.prompt("Access Token")
         unless api_key.match(/\A[0-9a-f]{64}\z/)

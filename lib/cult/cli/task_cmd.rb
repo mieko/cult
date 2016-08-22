@@ -90,7 +90,7 @@ module Cult
               end
             end
 
-            if Cult::CLI.yes_no("Execute renames?")
+            if Cult::CLI.yes_no?("Execute renames?")
               renames.each do |src, dst|
                 FileUtils.mv(src.path, dst.path)
                 if opts[:'git-add']

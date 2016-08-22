@@ -245,7 +245,7 @@ module Cult
               puts "Got it!  In case you're curious: #{api_key}"
             rescue RuntimeError
               puts "Linode disagreed with your password."
-              next if CLI.yes_no("Try again?")
+              next if CLI.yes_no?("Try again?")
             end
             break
           end
@@ -255,7 +255,7 @@ module Cult
           puts "You can obtain an API key for Cult at the following URL:"
           puts "  #{url}"
           puts
-          CLI.launch_browser(url) if CLI.yes_no("Open Browser?")
+          CLI.launch_browser(url) if CLI.yes_no?("Open Browser?")
           api_key = CLI.prompt("API Key")
         end
 

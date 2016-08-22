@@ -42,17 +42,39 @@ module Cult
 
     # Asks a yes or no question with promp.  The prompt defaults to "Yes".  If
     # Cli.yes=true, true is returned without showing the prompt.
-    def yes_no(prompt)
+    def yes_no?(prompt, default: true)
       return true if yes?
+
+      default = case default
+        when :y, :yes
+          true
+        when :n, :no
+          false
+        when true, false
+          default
+        else
+          fail ArgumentError, "invalid :default"
+      end
+
       loop do
-        print "#{prompt} #{Rainbow('Y').bright}/#{Rainbow('n').darkgray}: "
-        case $stdin.gets.chomp
-          when '', /^[Yy]/
-            return true
-          when /^[Nn]/
-            return false
-          else
-            $stderr.puts "Unrecognized response"
+        y =  default ? Rainbow('Y').bright : Rainbow('y').darkgray
+        n = !default ? Rainbow('N').bright : Rainbow('n').darkgray
+
+        begin
+          print "#{prompt} #{y}/#{n}: "
+          case $stdin.gets.chomp
+            when ''
+              return default
+            when /^[Yy]/
+              return true
+            when /^[Nn]/
+              return false
+            else
+              $stderr.puts "Unrecognized response"
+          end
+        rescue Interrupt
+          puts
+          raise
         end
       end
     end
@@ -185,7 +207,7 @@ module Cult
             Cult can install them for you.
           EOD
         end
-        yes_no("Install?")
+        yes_no?("Install?")
       end
 
       try_install = ->(gem, sudo: false) do
@@ -214,7 +236,7 @@ module Cult
                   raise
                 else
                   puts "It doesn't look like that went well."
-                  if yes_no("Retry with sudo?")
+                  if yes_no?("Retry with sudo?")
                     throw :sudo_attempt, true
                   end
                   raise
