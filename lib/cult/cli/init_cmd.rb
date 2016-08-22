@@ -8,7 +8,9 @@ module Cult
     def init_cmd
       Cri::Command.define do
         drivers = Cult::Drivers.all.map{|d| "  > #{d.driver_name}"}.join "\n"
-        no_project
+
+        optional_project
+
         name        'init'
         usage       'init DIRECTORY'
         summary     'Create a new Cult project'

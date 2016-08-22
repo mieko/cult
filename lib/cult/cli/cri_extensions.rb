@@ -26,7 +26,7 @@ module Cult
     end
 
     module CommandDSLExtensions
-      def no_project
+      def optional_project
         @command.project_required = false
       end
 

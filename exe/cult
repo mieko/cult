@@ -11,7 +11,7 @@ require 'cult/cli/load'
 require 'cult/drivers/load'
 
 cult = Cri::Command.define do
-  no_project
+  optional_project
   name        'cult'
   usage       'cult [options] [command [options...]]'
   summary     'Control a Fleet of Obedient Zomboid Machines'

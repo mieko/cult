@@ -6,7 +6,7 @@ module Cult
 
     def role_cmd
       role = Cri::Command.define do
-        no_project
+        optional_project
         name        'role'
         aliases     'roles'
         summary     'Manage roles'

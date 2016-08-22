@@ -6,7 +6,7 @@ module Cult
     module_function
     def task_cmd
       task = Cri::Command.define do
-        no_project
+        optional_project
         name        'task'
         aliases     'tasks'
         summary     'Task Manipulation'

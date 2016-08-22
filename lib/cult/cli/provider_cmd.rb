@@ -6,7 +6,7 @@ module Cult
     module_function
     def provider_cmd
       provider = Cri::Command.define do
-        no_project
+        optional_project
         name        'provider'
         aliases     'providers'
         summary     'Provider Commands'
@@ -70,7 +70,7 @@ module Cult
       provider.add_command(provider_list)
 
       provider_avail = Cri::Command.define do
-        no_project
+        optional_project
         name       'drivers'
         summary    'list available drivers'
         description <<~EOD
