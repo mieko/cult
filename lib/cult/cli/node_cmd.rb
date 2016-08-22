@@ -16,7 +16,8 @@ module Cult
           conceptually description of a server.
         EOD
 
-        run do |_, _, cmd|
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
           puts cmd.help
           exit 0;
         end
@@ -28,9 +29,9 @@ module Cult
         summary 'Starts an interactive SSH shell to NODE'
 
         run do |opts, args, cmd|
-          node_name = args[0]
+          CLI.require_args(args, 1)
 
-          node = Cult.project.nodes.find {|n| n.name == node_name}
+          node = fetch_item(args[0], from: Node)
           exec "ssh", "#{node.user}@#{node.host}"
         end
       end
@@ -50,8 +51,11 @@ module Cult
         EOD
 
         run do |opts, args, cmd|
-          args.each do |node_name|
-            node = Cult.project.nodes.find {|n| n.name == node_name}
+          CLI.require_args(args, 1..-1)
+
+          nodes = args.map { |a| CLI.fetch_items(a, from: Node) }.flatten
+
+          nodes.each do |node|
             ctrl = Commander.new(project: Cult.project, node: node)
             ctrl.bootstrap!
           end
@@ -88,12 +92,13 @@ module Cult
         EOD
 
         required :r, :role,      'Specify possibly multiple roles',
-                 multiple: true
+                                  multiple: true
         flag     :p, :provision, 'Provision created node'
         flag     :b, :bootstrap, 'Provision and bootstrap created node'
         required :n, :count,     'Generates <value> number of nodes'
 
-        run do |opts, args|
+        # FIXME
+        run do |opts, args, cmd|
           opts[:bootstrap] = true if opts[:migrate]
           opts[:provision] = true if opts[:bootstrap]
           puts "creating node #{args.inspect} with roles #{opts[:roles].inspect}"
@@ -125,7 +130,21 @@ module Cult
 
 
         run do |opts, args, cmd|
-          Cult.project.nodes.each do |node|
+          CLI.require_args(args, 0..1)
+
+          nodes = Cult.project.nodes
+
+          # Filter by names
+          if args[0]
+            nodes = nodes.all(args[0])
+          end
+
+          if opts[:role]
+            role = CLI.fetch_item(opts[:role], from: Role)
+            nodes = nodes.select {|n| n.has_role?(role) }
+          end
+
+          nodes.each do |node|
             puts "Node: #{node.inspect}"
           end
         end

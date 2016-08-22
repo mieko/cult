@@ -15,7 +15,8 @@ module Cult
           some of its functionality.
         EOD
 
-        run do |_, _|
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
           shell.run
         end
       end
@@ -24,7 +25,8 @@ module Cult
         name        'welcome'
         summary     'Displays the ui welcome page'
 
-        run do |_, _|
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
           shell.doc('welcome')
         end
       end
@@ -34,7 +36,8 @@ module Cult
         name        'panel'
         summary     'Displays the node/role selection panel'
 
-        run do |_,_|
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
           shell.panel
         end
       end
@@ -45,8 +48,8 @@ module Cult
         summary     'Display information about a node'
         usage       'node-info NODENAME'
 
-        run do |_, argv|
-          Cult::UI::RoleInfo.new(argv).run
+        run do |opts, args, cmd|
+          Cult::UI::RoleInfo.new(args).run
         end
       end
       ui.add_command(ui_node_info)

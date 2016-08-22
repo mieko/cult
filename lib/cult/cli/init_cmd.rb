@@ -44,8 +44,8 @@ module Cult
         required :p, :provider, 'VPS driver/provider'
         required :d, :driver,   'Specify a driver.  Not ususally needed'
 
-        run do |ops, args|
-          fail ArgumentError, 'DIRECTORY required' if args.size != 1
+        run do |ops, args, cmd|
+          CLI.require_args(args 1)
 
           project = Project.new(args[0])
           skel = Skel.new(project)

@@ -30,11 +30,44 @@ module Cult
           a driver of the same name.
         EOD
 
-        run do |_, _, cmd|
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
           puts cmd.help
           exit 0;
         end
       end
+
+      provider_list = Cri::Command.define do
+        name        'list'
+        summary     'List Providers'
+        description <<~EOD
+          Lists Providers for this project.  If --driver is specified, it only
+          lists Providers which employ that driver.
+        EOD
+        required :d, :driver, "Restrict list to providers using DRIVER"
+
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0..1)
+
+          providers = Cult.project.providers
+
+          # Filtering
+          providers = providers.all(args[0]) if args[0]
+
+          if opts[:driver]
+            driver_cls = Cult.project.drivers[opts[:driver]]
+            providers = providers.select do |p|
+              p.driver.is_a?(driver_cls)
+            end
+          end
+
+          providers.each do |p|
+            printf "%-20s %-s\n", p.name, Cult.project.relative_path(p.path)
+          end
+
+        end
+      end
+      provider.add_command(provider_list)
 
       provider_avail = Cri::Command.define do
         no_project
@@ -45,12 +78,10 @@ module Cult
           gem dependencies.
         EOD
 
-        run do |_, _|
-          fmt = "%-20s %-20s\n"
-          printf(fmt, "Name", "Gems")
-          puts '-' * 76
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
           Cult::Drivers.all.each do |p|
-            printf(fmt, p.driver_name, p.required_gems)
+            printf "%-20s %-s\n", p.driver_name, p.required_gems
           end
         end
       end
@@ -76,10 +107,13 @@ module Cult
         EOD
 
         run do |opts, args, cmd|
-          driver = opts[:driver] || args[0]
-          driver = CLI.require_argument(driver, type: Driver, label: "driver")
-          name = args[0]
-          CLI.require_argument(name, type: Provider, label: "Name", exist: false)
+          CLI.require_args(args, 1)
+
+          name, _ = *args
+          driver = CLI.fetch_item(opts[:driver] || name, from: Driver)
+          name = CLI.fetch_item(name, from: Provider, exist: false)
+
+          puts [driver, name].inspect
         end
       end
       provider.add_command(provider_create)

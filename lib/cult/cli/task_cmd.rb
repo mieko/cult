@@ -15,7 +15,8 @@ module Cult
 
         EOD
 
-        run do |_, _, cmd|
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
           puts cmd.help
           exit
         end
@@ -48,27 +49,20 @@ module Cult
         EOD
 
         run do |opts, args, cmd|
-          unless args.empty?
-            $stderr.puts cmd.help
-            $stderr.puts "This command takes no arguments"
-            exit 1
-          end
+          CLI.require_args(args, 0)
 
           if opts[:all] && Array(opts[:role]).size != 0
-            $stderr.puts "#{$0}: can't supply -A and also a list of roles"
-            exit 1
+            fail CLIError, "can't supply -A and also a list of roles"
           end
+
           roles = if opts[:all]
             Cult.project.roles
           elsif opts[:role]
-            opts[:role].map do |name|
-              Cult.project.roles.find do |r|
-                r.name == name
-              end || (fail RoleNotFoundError.new(name))
-            end
+            opts[:role].map do |role_name|
+              CLI.fetch_items(role_name, from: Role)
+            end.flatten
           else
-            $stderr.puts "#{$0}: No roles specified with -r, or -A"
-            exit 1
+            fail CLIError, "no roles specified with --role or --all"
           end
 
           roles.each do |role|

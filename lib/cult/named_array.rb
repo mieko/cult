@@ -60,7 +60,11 @@ module Cult
 
       trailing = s[offset + 1 ... s.size]
       re_string = "%r!!#{trailing}"
-      (eval re_string).options
+      begin
+        (eval re_string).options
+      rescue SyntaxError => e
+        fail RegexpError, "invalid Regexp options: #{trailing}"
+      end
     end
     private :extract_regexp_options
 
@@ -100,6 +104,8 @@ module Cult
     def key?(key)
       !! all(key, :find)
     end
+
+    alias_method :exist?, :key?
 
     def keys
       map(&:named_array_identifier)

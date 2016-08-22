@@ -1,6 +1,7 @@
 module Cult
   module CLI
     module_function
+
     def role_cmd
       role = Cri::Command.define do
         no_project
@@ -8,8 +9,8 @@ module Cult
         aliases     'roles'
         summary     'Manage roles'
         description <<~EOD
-          A role defines what a node does.  The easiest way to think about it is
-          just a directory full of scripts (tasks).
+          A role defines what a node does.  The easiest way to think about it
+          is just a directory full of scripts (tasks).
 
           A role can include an arbitrary number of other roles.  For example,
           you may have two roles `rat-site' and `tempo-site', which both depend
@@ -27,17 +28,18 @@ module Cult
           that roles are written in a way to compose well with each other if
           they find themselves on the same node.  That is not always possible,
           (thus the `conflicts' key exists in `role.json'), but is the goal.
-          You should write tasks with that in mind.  For example, dropping files
-          into `/etc/your-httpd.d` instead of re-writing `/etc/your-httpd.conf`.
-          With this setup, a node could include both `rat-site` and `tempo-site`
-          roles and be happily serving both sites.
+          You should write tasks with that in mind.  For example, dropping
+          files into `/etc/your-httpd.d` instead of re-writing
+          `/etc/your-httpd.conf`. With this setup, a node could include both
+          `rat-site` and `tempo-site` roles and be happily serving both sites.
 
           By default, `cult init` generates two root roles that don't depend on
           anything else: `all` and `bootstrap`.  The `bootstrap` role exists
-          to get a node from a clean OS install to a configuration to be managed
-          by the settings in `all'.  Theoretically, if you're happy doing all
-          deploys as the root user, you don't need a `bootstrap` role at all:
-          Delete it and set the `user` key in `all/role.json` to "root".
+          to get a node from a clean OS install to a configuration to be
+          managed by the settings in `all'.  Theoretically, if you're happy
+          doing all deploys as the root user, you don't need a `bootstrap` role
+          at all: Delete it and set the `user` key in `all/role.json` to
+          "root".
 
           The tasks in the `all` role are considered shared amongst all roles.
           However, the only thing special about the `all` role is that Cult
@@ -45,11 +47,13 @@ module Cult
           to all.
         EOD
 
-        run do |_, _, cmd|
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
           puts cmd.help
           exit 0;
         end
       end
+
 
       role_create = Cri::Command.define do
         name        'create'
@@ -64,12 +68,44 @@ module Cult
         required :i, :includes, 'this role depends on another role',
                  multiple: true
 
-        run do |ops, args, cmd|
-          fail ArgumentError, "NAME required" if args.size != 1
-          puts "create new role #{args}, includes: #{ops[:includes]}"
+        run do |opts, args, cmd|
+          CLI.require_args(args, 1)
+          role = CLI.fetch_item(args[0], from: Role, exist: false)
+          puts "create new role #{role}, includes: #{ops[:includes]}"
         end
       end
       role.add_command role_create
+
+
+      role_list = Cri::Command.define do
+        name        'list'
+        usage       'list [ROLES...]'
+        summary     'List existing roles'
+        description <<~EOD
+          Lists roles in this project.  By default, lists all roles.  If one or
+          more ROLES are specified, only lists those
+        EOD
+
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0..-1)
+          roles = Cult.project.roles
+          unless args.empty?
+            roles = args.map do |role_name|
+              CLI.fetch_items(role_name, from: Role)
+            end.flatten
+          end
+
+          roles.each do |r|
+            fmt = "%-20s %s\n"
+            printf fmt, r.name, r.build_order.map(&:name).join(', ')
+          end
+
+        end
+      end
+      role.add_command(role_list)
+
+
+      role
     end
   end
 end

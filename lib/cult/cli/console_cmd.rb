@@ -74,7 +74,9 @@ module Cult
         flag :p,  :pry,    'Pry'
         flag nil, :reexec, 'Console has been exec\'d for a reload'
 
-        run do |opts, args|
+        run do |opts, args, cmd|
+          CLI.require_args(args, 0)
+
           context = ConsoleContext.new(Cult.project, ARGV)
           if opts[:reexec]
             $stderr.puts "Reloaded."

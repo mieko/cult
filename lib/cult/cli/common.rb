@@ -4,7 +4,7 @@ require 'shellwords'
 module Cult
   module CLI
 
-    class CliError < RuntimeError
+    class CLIError < RuntimeError
     end
 
     module_function
@@ -93,35 +93,80 @@ module Cult
       end
     end
 
-    # This is so complicated it probably shouldn't exist.
-    # v is an option or argv value from the users, label: is the name of it.
+    # v is an option or argv value from a user, label: is the name of it.
     #
-    # This asserts that v is in the collections specified by type, e.g.,
-    # type: Role assures that project.roles contains an object identified
-    # by v and returns it.  UNLESS exist: true, where it makes sure it
-    # doesn't already exist.
+    # This asserts that `v` is in the collection `from`, and returns it.
+    # if `exist` is false, it verifies that v is NOT in the collection and
+    # returns v.
     #
-    # The goal is to get useful error messages without a lot of boilerplate in
-    # CLI handlers.
+    # As a convenience, `from` can be a class like Role, which will imply
+    # 'Cult.project.roles'
     #
-    def require_argument(v, type:, label:, project: Cult.project, exist: nil)
-      collection = case
-        when type == Role;   project.roles
-        when type == Node;   project.nodes
-        when type == Driver; project.drivers
+    # CLIError is raised if these invariants are violated
+    def fetch_item(v, from:, label: nil, exist: true, method: :fetch)
+      implied_from = case
+        when from == Driver;   Cult.project.drivers
+        when from == Provider; Cult.project.providers
+        when from == Role;     Cult.project.roles
+        when from == Node;     Cult.project.nodes
+        else;                  nil
       end
 
-      if exist == false
-        unless collection[v].nil?
-          fail CliError, "#{label} is already an existing #{type.name}"
-        end
-        true
-      else
+      label ||= implied_from ? from.name.split('::')[-1].downcase : nil
+      from = implied_from
+
+      fail ArgumentError, "label cannot be implied" if label.nil?
+
+      unless [:fetch, :all].include?(method)
+        fail ArgumentError, "method must be :fetch or :all"
+      end
+
+      # We got no argument
+      fail CLIError, "Expected #{label}" if v.nil?
+
+      if exist
         begin
-          return collection.fetch(v)
+          from.send(method, v).tap do |r|
+            # Make sure
+            fail KeyError if method == :all && r.empty?
+          end
         rescue KeyError
-          fail CliError, "Expected #{label} to be a #{type.name}"
+          fail CLIError, "#{label} does not exist: #{v}"
         end
+      else
+        if from.key?(v)
+          fail CLIError, "#{label} already exists: #{v}"
+        end
+        v
+      end
+    end
+
+    def fetch_items(v, **kw)
+      fetch_item(v, method: :all, **kw)
+    end
+
+    def require_args(args, count)
+      count = (count..count) if count.is_a?(Integer)
+      if count.end == -1
+        count = count.begin .. Float::INFINITY
+      end
+
+      unless count.cover?(args.size)
+        msg = case
+          when count.size == 1 && count.begin == 0
+            "accepts no arguments"
+          when count.size == 1 && count.begin == 1
+            "accepts one argument"
+          when count.begin == count.end
+            "accepts exactly #{count.begin} arguments"
+          else
+            if count.end == Float::INFINITY
+              "requires #{count.begin}+ arguments"
+            else
+              "accepts #{count} arguments"
+            end
+        end
+        fail CLIError, "Command #{msg}"
       end
     end
 
