@@ -89,16 +89,20 @@ module Cult
           upload_ssh_key(file: file)[:fingerprint]
         end
 
-        params = {
-          name:     name,
-          region:   zone,
-          image:    image,
-          size:     size,
-          ssh_keys: fingerprints,
+        begin
+          params = {
+            name:     name,
+            size:     fetch_mapped(name: :size, from: sizes_map, key: size),
+            image:    fetch_mapped(name: :image, from: images_map, key: image),
+            region:   fetch_mapped(name: :zone, from: zones_map, key: zone),
+            ssh_keys: fingerprints,
 
-          private_networking: true,
-          ipv6: true
-        }
+            private_networking: true,
+            ipv6: true
+          }
+        rescue KeyError => e
+          fail ArgumentError, "Invalid argument: #{e.message}"
+        end
 
         droplet = DropletKit::Droplet.new(params)
 

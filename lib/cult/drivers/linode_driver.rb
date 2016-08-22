@@ -130,19 +130,11 @@ module Cult
 
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
-        begin
-          sizeid   = sizes_map.fetch size.to_s
-          zoneid   = zones_map.fetch zone.to_s
-          imageid  = images_map.fetch image.to_s
-          disksize = disk_size_for_size(size)
-        rescue KeyError
-          msg = "Tried to create an instance with an unknown value: " +
-                "size #{size}(aka #{sizeid}), " +
-                "zone #{zone}(aka #{zoneid}), " +
-                "image #{image}(aka #{imageid}), " +
-                "disksize #{disksize}"
-          fail ArgumentError, msg
-        end
+        sizeid  = fetch_mapped(name: :size, from: sizes_map, key: size)
+        imageid = fetch_mapped(name: :image, from: images_map, key: image)
+        zoneid  = fetch_mapped(name: :zone, from: zones_map, key: zone)
+        disksize = disk_size_for_size(size)
+
         linodeid = client.linode.create(datacenterid: zoneid,
                                         planid: sizeid).linodeid
 
