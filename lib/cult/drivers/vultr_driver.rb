@@ -132,9 +132,13 @@ module Cult
           upload_ssh_key(file: filename)
         end
 
-        r = Vultr::Server.create(DCID: zones_map.fetch(zone),
-                                 VPSPLANID: sizes_map.fetch(size),
-                                 OSID: images_map.fetch(image),
+        sizeid  = fetch_mapped(name: :size, from: sizes_map, key: size)
+        imageid = fetch_mapped(name: :image, from: images_map, key: image)
+        zoneid  = fetch_mapped(name: :zone, from: zones_map, key: zone)
+
+        r = Vultr::Server.create(DCID: zoneid,
+                                 OSID: imageid,
+                                 VPSPLANID: sizeid,
                                  enable_ipv6: 'yes',
                                  enable_private_network: 'yes',
                                  label: name,

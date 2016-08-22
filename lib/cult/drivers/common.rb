@@ -6,7 +6,6 @@ module Cult
 
     module Common
       module ClassMethods
-
         # Lets us write a method "something_map" that returns {'ident' => ...},
         # and also get a function "something" that returns the keys.
         def with_id_mapping(method_name)
@@ -40,6 +39,23 @@ module Cult
 
       def self.included(cls)
         cls.extend(ClassMethods)
+      end
+
+      # works with with_id_mapping to convert a human-readible/normalized key
+      # to the id the backend service expects.  Allows '=value' to force a
+      # literal value, and gives better error messages.
+      def fetch_mapped(name:, from:, key:)
+        # Allow for the override.
+        key = key.to_s
+        return key[1..-1] if key[0] == '='
+
+        begin
+          from.fetch(key)
+        rescue KeyError => e
+          raise ArgumentError, "Invalid #{name}: \"#{key}\".  " +
+                               "Use \"=#{key}\" to force, or use one of: " +
+                               from.keys.inspect
+        end
       end
 
 
