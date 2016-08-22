@@ -1,5 +1,7 @@
 require 'securerandom'
 require 'shellwords'
+require 'json'
+require 'yaml'
 
 require 'cult/config'
 require 'cult/role'
@@ -23,18 +25,22 @@ module Cult
       end
     end
 
+
     def name
       File.basename(path)
     end
+
 
     def inspect
       "\#<#{self.class.name} name=#{name.inspect} path=#{path.inspect}>"
     end
     alias_method :to_s, :inspect
 
+
     def location_of(file)
       File.join(path, file)
     end
+
 
     def relative_path(obj_path)
       prefix = "#{path}/"
@@ -46,13 +52,16 @@ module Cult
       fail ArgumentError, "#{path} isn't in the project"
     end
 
+
     def remote_path
       "cult"
     end
 
+
     def constructed?
       File.exist?(cult_file)
     end
+
 
     def construct!
       FileUtils.mkdir_p(path) unless Dir.exist?(path)
@@ -60,9 +69,11 @@ module Cult
       create_cult_file!
     end
 
+
     def create_cult_file!
       File.write(cult_file, SecureRandom.hex(8))
     end
+
 
     def cult_id
       @cult_id ||= begin
@@ -72,11 +83,13 @@ module Cult
       end
     end
 
+
     def nodes
       @nodes ||= begin
         Node.all(self)
       end
     end
+
 
     def roles
       @roles ||= begin
@@ -84,17 +97,20 @@ module Cult
       end
     end
 
+
     def providers
       @providers ||= begin
         Cult::Provider.all(self)
       end
     end
 
+
     def drivers
       @drivers ||= begin
         Cult::Drivers.all
       end
     end
+
 
     def self.locate(path)
       path = File.expand_path(path)
@@ -111,9 +127,11 @@ module Cult
       end
     end
 
+
     def self.from_cwd
       locate Dir.getwd
     end
+
 
     def git_branch
       res = %x(git -C #{Shellwords.escape(path)} branch --no-color)
@@ -121,6 +139,22 @@ module Cult
         return m[1].chomp
       end
     end
+
+
+    def dump_yaml?
+      !! (ENV['CULT_DUMP'] || '').match(/^yaml$/i)
+    end
+
+
+    def dump_object(obj)
+      dump_yaml? ? YAML.dump(obj) : JSON.pretty_generate(obj)
+    end
+
+
+    def dump_name(basename)
+      basename + (dump_yaml? ? '.yml' : '.json')
+    end
+
 
     def env
       ENV['CULT_ENV'] || begin
@@ -131,6 +165,7 @@ module Cult
         end
       end
     end
+
 
     def development?
       env == 'development'

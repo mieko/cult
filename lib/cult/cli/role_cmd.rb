@@ -1,3 +1,5 @@
+require 'fileutils'
+
 module Cult
   module CLI
     module_function
@@ -65,16 +67,60 @@ module Cult
           $CULT_PROJECT/roles/$NAME
         EOD
 
-        required :i, :includes, 'this role depends on another role',
+        required :r, :roles, 'this role depends on another role',
                  multiple: true
 
         run do |opts, args, cmd|
           CLI.require_args(args, 1)
-          role = CLI.fetch_item(args[0], from: Role, exist: false)
-          puts "create new role #{role}, includes: #{ops[:includes]}"
+          name = CLI.fetch_item(args[0], from: Role, exist: false)
+
+          role = Role.by_name(Cult.project, name)
+          data = {}
+
+          if opts[:roles]
+            includes = opts[:roles].map do |inc_name|
+              CLI.fetch_items(inc_name, from: Role)
+            end.flatten
+            data[:includes] = includes.map(&:name)
+          end
+          FileUtils.mkdir_p(role.path)
+          File.write(Cult.project.dump_name(role.definition_file),
+                     Cult.project.dump_object(data))
+
+          FileUtils.mkdir_p(File.join(role.path, "files"))
+          File.write(File.join(role.path, "files", ".keep"), '')
+
+          FileUtils.mkdir_p(File.join(role.path, "tasks"))
+          File.write(File.join(role.path, "tasks", ".keep"), '')
         end
       end
       role.add_command role_create
+
+      role_destroy = Cri::Command.define do
+        name        'destroy'
+        aliases     'delete', 'rm'
+        usage       'destroy ROLES...'
+        summary     'Destroy role ROLE'
+        description <<~EOD
+          Destroys all roles specified.
+        EOD
+
+        run do |opts, args, cmd|
+          CLI.require_args(args, 1..-1)
+
+          roles = args.map do |role_name|
+            CLI.fetch_items(role_name, from: Role)
+          end.flatten
+
+          roles.each do |role|
+            if CLI.yes_no?("Delete role #{role.name} (#{role.path})?",
+                           default: :no)
+              FileUtils.rm_rf(role.path)
+            end
+          end
+        end
+      end
+      role.add_command(role_destroy)
 
 
       role_list = Cri::Command.define do

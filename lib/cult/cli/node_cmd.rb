@@ -107,7 +107,7 @@ module Cult
             node = nil
             if opts[:provision]
               provdata = Cult.project.provider.provision!(name: arg, spec_name: 'small')
-              node = Cult::Node.create_from_provision!(Cult.project, provdata)
+              node = Node.create_from_provision!(Cult.project, provdata)
             end
 
             if opts[:bootstrap]

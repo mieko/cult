@@ -10,8 +10,8 @@ module Cult
 
       data = provision_data.dup
       extra = data.delete(:extra)
-      File.write(node.definition_file + '.json', JSON.pretty_generate(data))
-      File.write(node.extra_file + '.json', JSON.pretty_generate(extra))
+      File.write(project.dump_name(node.definition_file), project.dump_object(data))
+      File.write(project.dump_name(node.extra_file), project.dump_object(extra))
       return node
     end
 

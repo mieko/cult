@@ -68,10 +68,11 @@ module Cult
             provider_conf.merge!(driver_conf)
 
             FileUtils.mkdir_p(project.location_of("providers"))
-            dst_file = File.join("providers", provider_conf[:name] + '.json')
+            dst_file = File.join("providers",
+                                 Cult.project.dump_name(provider_conf[:name]))
 
             File.write(project.location_of(dst_file),
-                       JSON.pretty_generate(vps_config))
+                       Cult.project.dump_object(vps_config))
           end
         end
 

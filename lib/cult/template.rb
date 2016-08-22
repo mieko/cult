@@ -1,4 +1,5 @@
 require 'erb'
+require 'json'
 
 module Cult
   class Template
@@ -10,11 +11,19 @@ module Cult
         def squote(s)
           "'" + s.gsub("'", "\\\\\'") + "'"
         end
+
+        def quote(s)
+          s.to_json
+        end
+
+        def slash(s)
+          Shellwords.escape(s)
+        end
       end
 
       refine String do
         def quote
-          to_json
+          Util.quote(self)
         end
         alias_method :q, :quote
 
@@ -24,13 +33,13 @@ module Cult
         alias_method :sq, :squote
 
         def slash
-          Shellwords.escape(self)
+          Util.slash(self)
         end
       end
 
       refine Array do
         def quote(sep = ' ')
-          map(&:to_json).join(sep)
+          map {|v| Util.quote(v) }.join(sep)
         end
         alias_method :q, :quote
 
@@ -40,7 +49,7 @@ module Cult
         alias_method :sq, :squote
 
         def slash
-          Shellwords.join(self)
+          map {|v| Util.slash(v) }.join(' ')
         end
       end
     end

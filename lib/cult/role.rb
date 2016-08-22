@@ -7,17 +7,6 @@ require 'cult/definition'
 require 'cult/named_array'
 
 module Cult
-  class RoleNotFoundError < RuntimeError
-    attr_reader :name
-    def initialize(name)
-      @name = name
-    end
-
-    def message
-      "Role not found: #{name}"
-    end
-  end
-
   class Role
     attr_accessor :project
     attr_accessor :path
