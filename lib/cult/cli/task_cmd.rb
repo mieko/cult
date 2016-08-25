@@ -57,9 +57,7 @@ module Cult
           roles = if opts[:all]
             Cult.project.roles
           elsif opts[:role]
-            opts[:role].map do |role_name|
-              CLI.fetch_items(role_name, from: Role)
-            end.flatten
+            CLI.fetch_items(opts[:role], from: Role)
           else
             fail CLIError, "no roles specified with --role or --all"
           end

@@ -163,8 +163,13 @@ module Cult
       end
     end
 
-    def fetch_items(v, **kw)
-      fetch_item(v, method: :all, **kw)
+    # Takes a list of keys and returns an array of objects that correspond
+    # to any of them.  If required is true, each key must correspond to at
+    # least one object.
+    def fetch_items(*keys, **kw)
+      keys.map do |key|
+        fetch_item(key, method: :all, **kw)
+      end.flatten
     end
 
     # This intercepts GemNeededError and does the installation dance.  It looks

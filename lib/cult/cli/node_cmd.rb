@@ -19,7 +19,7 @@ module Cult
         arguments 0
         run do |opts, args, cmd|
           puts cmd.help
-          exit 0;
+          exit 0
         end
       end
 
@@ -51,7 +51,7 @@ module Cult
 
         arguments 1..-1
         run do |opts, args, cmd|
-          nodes = args.map { |a| CLI.fetch_items(a, from: Node) }.flatten
+          nodes = CLI.fetch_items(*args, from: Node)
 
           nodes.each do |node|
             ctrl = Commander.new(project: Cult.project, node: node)
@@ -124,20 +124,19 @@ module Cult
           This command lists the nodes in the project.
         EOD
 
-        required :r, :role, 'List only nodes which include <value>'
+        required :r, :role, 'List only nodes which include <value>',
+                     multiple: true
 
         arguments 0..1
         run do |opts, args, cmd|
-          nodes = Cult.project.nodes
-
-          # Filter by names
-          if args[0]
-            nodes = nodes.all(args[0])
-          end
+          nodes = args.empty? ? Cult.project.nodes
+                              : CLI.fetch_items(*args, from: Node)
 
           if opts[:role]
-            role = CLI.fetch_item(opts[:role], from: Role)
-            nodes = nodes.select {|n| n.has_role?(role) }
+            roles = CLI.fetch_items(opts[:role], from: Role)
+            nodes = nodes.select do |n|
+              roles.any? { |role| n.has_role?(role) }
+            end
           end
 
           nodes.each do |node|

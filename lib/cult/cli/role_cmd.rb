@@ -78,10 +78,8 @@ module Cult
           data = {}
 
           if opts[:roles]
-            includes = opts[:roles].map do |inc_name|
-              CLI.fetch_items(inc_name, from: Role)
-            end.flatten
-            data[:includes] = includes.map(&:name)
+            data[:includes] = CLI.fetch_items(opts[:roles],
+                                              from: Role).map(&:name)
           end
           FileUtils.mkdir_p(role.path)
           File.write(Cult.project.dump_name(role.definition_file),
@@ -135,9 +133,7 @@ module Cult
         run do |opts, args, cmd|
           roles = Cult.project.roles
           unless args.empty?
-            roles = args.map do |role_name|
-              CLI.fetch_items(role_name, from: Role)
-            end.flatten
+            roles = CLI.fetch_items(*args, from: Role)
           end
 
           roles.each do |r|
