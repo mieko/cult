@@ -13,8 +13,7 @@ module Cult
     def set_project(path)
       Cult.project = Cult::Project.locate(path)
       if Cult.project.nil?
-        $stderr.puts "#{$0}: '#{path}' does not contain a valid cult project."
-        exit 1
+        fail CLIError, "#{path} does not contain a valid Cult project"
       end
     end
 
