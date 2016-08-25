@@ -10,7 +10,7 @@ module Cult
         name        'provider'
         aliases     'providers'
         summary     'Provider Commands'
-        description <<~EOD
+        description <<~EOD.format_description
           A provider is a VPS service.  Cult ships with drivers for quite a few
           services, (which can be listed with `cult provider drivers`).
 
@@ -40,7 +40,7 @@ module Cult
         name        'list'
         aliases     'ls'
         summary     'List Providers'
-        description <<~EOD
+        description <<~EOD.format_description
           Lists Providers for this project.  If --driver is specified, it only
           lists Providers which employ that driver.
         EOD
@@ -72,7 +72,7 @@ module Cult
         optional_project
         name       'drivers'
         summary    'list available drivers'
-        description <<~EOD
+        description <<~EOD.format_description
           Displays a list of all available drivers, by their name, and list of
           gem dependencies.
         EOD
@@ -92,7 +92,7 @@ module Cult
         usage       'create NAME'
         summary     'creates a new provider for your project'
         required    :d, :driver, 'Specify driver, if different than NAME'
-        description <<~EOD
+        description <<~EOD.format_description
           Creates a new provider for the project.  There are a few ways this
           can be specified, for example
 

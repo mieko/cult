@@ -14,7 +14,7 @@ module Cult
         name        'init'
         usage       'init DIRECTORY'
         summary     'Create a new Cult project'
-        description <<~EOD.gsub(/(\S)\n(\S)/m, '\1 \2')
+        description <<~EOD.format_description
           Generates a new Cult project, based on a project skeleton.
 
           The most useful option is --provider, which specifies both a driver

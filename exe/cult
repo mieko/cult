@@ -15,12 +15,12 @@ cult = Cri::Command.define do
   name        'cult'
   usage       'cult [options] [command [options...]]'
   summary     'Control a Fleet of Obedient Zomboid Machines'
-  description <<~EOD
+  description <<~EOD.format_description
     Cult is a tool for creating and then managing a fleet of servers you
     control.  It operates on a few simple concepts:
 
-      * Nodes: actual servers out there somewhere.  The purpose of using Cult is
-        to end up with nodes doing useful work for you.
+      * Nodes: actual servers out there somewhere.  The purpose of using Cult
+        is to end up with nodes doing useful work for you.
 
       * Roles: Every node has one or more roles, things it plans on being.
         Roles are composed of...
@@ -55,7 +55,7 @@ cult = Cri::Command.define do
     puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
   end
 
-  run do |_, _, cmd|
+  run do |opts, args, cmd|
     puts cmd.help
   end
 end

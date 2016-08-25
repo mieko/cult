@@ -62,7 +62,7 @@ module Cult
       Cri::Command.define do
         name        'console'
         summary     'Launch an REPL with you project loaded'
-        description <<~EOD
+        description <<~EOD.format_description
           The Cult console loads your project, and starts a Ruby REPL.  This can
           be useful for troubleshooting, or just poking around the project.
 

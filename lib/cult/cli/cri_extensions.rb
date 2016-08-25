@@ -2,6 +2,14 @@ require 'cri'
 
 module Cult
   module CLI
+
+    class ::String
+      def format_description
+        gsub(/(\S)\n(\S)/m, '\1 \2')
+      end
+    end
+
+
     module CommandExtensions
       def project_required?
         defined?(@project_required) ? @project_required : true

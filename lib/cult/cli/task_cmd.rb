@@ -11,7 +11,7 @@ module Cult
         aliases     'tasks'
         summary     'Task Manipulation'
         usage       'task [command]'
-        description <<~EOD
+        description <<~EOD.format_description
 
         EOD
 
@@ -31,7 +31,7 @@ module Cult
         required :r,  :role,            'Roles to resequence (multiple)',
                       multiple: true
 
-        description <<~EOD
+        description <<~EOD.format_description
           Resequences the serial numbers in each task provided with --roles,
           or all roles with --all.  You cannot supply both --all and specify
           --roles.
@@ -103,7 +103,7 @@ module Cult
       task_sanity = Cri::Command.define do
         name        'sanity'
         summary     'checks task files for numbering sanity'
-        description <<~EOD
+        description <<~EOD.format_description
           TODO: Document (and do something!)
         EOD
 
@@ -118,7 +118,7 @@ module Cult
         aliases     'new'
         usage       'create [options] DESCRIPTION'
         summary     'create a new task for ROLE with a proper serial'
-        description <<~EOD
+        description <<~EOD.format_description
         EOD
 
         required :r, :role, 'role for task.  defaults to "all"'

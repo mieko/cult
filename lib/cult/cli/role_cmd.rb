@@ -10,7 +10,7 @@ module Cult
         name        'role'
         aliases     'roles'
         summary     'Manage roles'
-        description <<~EOD
+        description <<~EOD.format_description
           A role defines what a node does.  The easiest way to think about it
           is just a directory full of scripts (tasks).
 
@@ -61,7 +61,7 @@ module Cult
         aliases     'new'
         summary     'creates a new role'
         usage       'create [options] NAME'
-        description <<~EOD
+        description <<~EOD.format_description
           Creates a new role names NAME, which will then be available under
           $CULT_PROJECT/roles/$NAME
         EOD
@@ -98,7 +98,7 @@ module Cult
         aliases     'delete', 'rm'
         usage       'destroy ROLES...'
         summary     'Destroy role ROLE'
-        description <<~EOD
+        description <<~EOD.format_description
           Destroys all roles specified.
         EOD
 
@@ -124,7 +124,7 @@ module Cult
         aliases     'ls'
         usage       'list [ROLES...]'
         summary     'List existing roles'
-        description <<~EOD
+        description <<~EOD.format_description
           Lists roles in this project.  By default, lists all roles.  If one or
           more ROLES are specified, only lists those
         EOD
@@ -144,7 +144,6 @@ module Cult
         end
       end
       role.add_command(role_list)
-
 
       role
     end

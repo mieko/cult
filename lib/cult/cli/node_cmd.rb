@@ -11,7 +11,7 @@ module Cult
         name        'node'
         aliases     'nodes'
         summary     'Manage nodes'
-        description <<~EOD
+        description <<~EOD.format_description
           The node commands manipulate your local index of nodes.  A node is
           conceptually description of a server.
         EOD
@@ -23,9 +23,11 @@ module Cult
       end
 
       node_ssh = Cri::Command.define do
-        name    'ssh'
-        usage   'ssh NODE'
-        summary 'Starts an interactive SSH shell to NODE'
+        name        'ssh'
+        usage       'ssh NODE'
+        summary     'Starts an interactive SSH shell to NODE'
+        description <<~EOD.format_description
+        EOD
 
         arguments 1
         run do |opts, args, cmd|
@@ -39,13 +41,13 @@ module Cult
         name        'bootstrap'
         usage       'bootstrap NODE'
         summary     'Executes bootstrap tasks on NODE'
-        description <<~EOD
-        'cult node bootstrap NODE' takes an existing node (which has been
-        provisioned), and runs all tasks in the "bootstrap" role on it.
+        description <<~EOD.format_description
+          'cult node bootstrap NODE' takes an existing node (which has been
+          provisioned), and runs all tasks in the "bootstrap" role on it.
 
-        This command is used primarily for testing the bootstrap process in
-        isolation, as 'cult node create -p NAME' creates, provisions, and then
-        bootstraps a node from the ground up.
+          This command is used primarily for testing the bootstrap process in
+          isolation, as 'cult node create -p NAME' creates, provisions, and then
+          bootstraps a node from the ground up.
         EOD
 
         arguments 1..-1
@@ -65,7 +67,7 @@ module Cult
         aliases     'new'
         usage       'create [options] NAME...'
         summary     'Create a new node'
-        description <<~EOD
+        description <<~EOD.format_description
           This command creates a new node specification.  With --bootstrap,
           it'll also provision it, so it'll actually exist out there.
 
@@ -121,7 +123,7 @@ module Cult
         name        'list'
         aliases     'ls'
         summary     'List nodes'
-        description <<~EOD
+        description <<~EOD.format_description
           This command lists the nodes in the project.
         EOD
 
