@@ -19,14 +19,18 @@ module Cult
 
       attr_accessor :argument_spec
 
-      def run_this(args, opts)
-        if project_required? && Cult.project.nil?
-          fail CLIError, "command '#{name}' requires a Cult project"
+      # This function returns a wrapped version of the block passed to
+      # #run
+      def block
+        lambda do |opts, args, cmd|
+          if project_required? && Cult.project.nil?
+            fail CLIError, "command '#{name}' requires a Cult project"
+          end
+
+          check_argument_spec!(args, argument_spec) if argument_spec
+
+          super.call(opts, args, cmd)
         end
-
-        check_argument_spec!(args, argument_spec) if argument_spec
-
-        super
       end
 
       def check_argument_spec!(args, range)
