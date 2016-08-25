@@ -9,15 +9,13 @@ require 'cult/provider'
 
 module Cult
   class Project
-    CULT_FILENAME = '.cult'
+    CULT_RC = '.cultrc'
 
     attr_reader :path
-    attr_reader :cult_file
+    attr_accessor :cult_version
 
     def initialize(path)
-      fail if path.match /\.cult/
       @path = path
-      @cult_file = File.join(self.path, CULT_FILENAME)
 
       if Cult.immutable?
         self.provider
@@ -28,6 +26,16 @@ module Cult
 
     def name
       File.basename(path)
+    end
+
+
+    def cultrc
+      location_of(CULT_RC)
+    end
+
+
+    def execute_cultrc
+      load(cultrc)
     end
 
 
@@ -59,30 +67,9 @@ module Cult
 
 
     def constructed?
-      File.exist?(cult_file)
+      File.exist?(cultrc)
     end
-
-
-    def construct!
-      FileUtils.mkdir_p(path) unless Dir.exist?(path)
-      FileUtils.cp_r()
-      create_cult_file!
-    end
-
-
-    def create_cult_file!
-      File.write(cult_file, SecureRandom.hex(8))
-    end
-
-
-    def cult_id
-      @cult_id ||= begin
-        File.read(cult_file).chomp
-      rescue
-        nil
-      end
-    end
-
+    alias_method :exist?, :constructed?
 
     def nodes
       @nodes ||= begin
@@ -121,7 +108,7 @@ module Cult
           path = File.dirname(path)
         end
 
-        candidate = File.join(path, CULT_FILENAME)
+        candidate = File.join(path, CULT_RC)
         return new(path) if File.exist?(candidate)
         path = File.dirname(path)
       end

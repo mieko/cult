@@ -55,7 +55,7 @@ module Cult
 
       print "  Creating #{display_name}"
       if File.exist?(dst)
-        puts "exists, skipped."
+        puts " exists, skipped."
         return
       end
 
