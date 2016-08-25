@@ -30,8 +30,7 @@ module Cult
           a driver of the same name.
         EOD
 
-        arguments 0
-        run do |opts, args, cmd|
+        run(arguments: 0) do |opts, args, cmd|
           puts cmd.help
         end
       end
@@ -46,8 +45,7 @@ module Cult
         EOD
         required :d, :driver, "Restrict list to providers using DRIVER"
 
-        arguments 0..1
-        run do |opts, args, cmd|
+        run(arguments: 0..1) do |opts, args, cmd|
           providers = Cult.project.providers
 
           # Filtering
@@ -77,8 +75,7 @@ module Cult
           gem dependencies.
         EOD
 
-        arguments 0
-        run do |opts, args, cmd|
+        run(arguments: 0) do |opts, args, cmd|
           Cult::Drivers.all.each do |p|
             printf "%-20s %-s\n", p.driver_name, p.required_gems
           end
@@ -106,8 +103,7 @@ module Cult
           --driver, and an independent provider name.
         EOD
 
-        arguments 1
-        run do |opts, args, cmd|
+        run(arguments: 1) do |opts, args, cmd|
           name, _ = *args
           driver = CLI.fetch_item(opts[:driver] || name, from: Driver)
           name = CLI.fetch_item(name, from: Provider, exist: false)

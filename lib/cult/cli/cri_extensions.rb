@@ -19,8 +19,7 @@ module Cult
 
       attr_accessor :argument_spec
 
-      # This function returns a wrapped version of the block passed to
-      # #run
+      # This function returns a wrapped version of the block passed to `run`
       def block
         lambda do |opts, args, cmd|
           if project_required? && Cult.project.nil?
@@ -66,8 +65,9 @@ module Cult
         @command.project_required = false
       end
 
-      def arguments(range)
-        @command.argument_spec = range
+      def run(arguments: nil, &block)
+        @command.argument_spec = arguments if arguments
+        super(&block)
       end
 
       Cri::CommandDSL.prepend(self)

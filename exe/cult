@@ -55,7 +55,7 @@ cult = Cri::Command.define do
     puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
   end
 
-  run do |opts, args, cmd|
+  run(arguments: 0) do |opts, args, cmd|
     puts cmd.help
   end
 end
