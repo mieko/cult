@@ -91,6 +91,11 @@ module Cult
       end
     end
 
+    attr_writer :default_provider
+    def default_provider
+      @default_provider ||= providers[0]
+    end
+
 
     def drivers
       @drivers ||= begin
@@ -119,6 +124,8 @@ module Cult
       locate Dir.getwd
     end
 
+    attr_accessor :git_integration
+    alias_method :git?, :git_integration
 
     def git_branch
       res = %x(git -C #{Shellwords.escape(path)} branch --no-color)

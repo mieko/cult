@@ -7,18 +7,18 @@ module Cult
     module_function
     def init_cmd
       Cri::Command.define do
-        drivers = Cult::Drivers.all.map{|d| "  > #{d.driver_name}"}.join "\n"
+        drivers = Cult::Drivers.all.map{|d| d.driver_name }.join ", "
 
         optional_project
-
         name        'init'
+        aliases     'new'
         usage       'init DIRECTORY'
         summary     'Create a new Cult project'
         description <<~EOD.format_description
           Generates a new Cult project, based on a project skeleton.
 
-          The most useful option is --provider, which specifies both a driver
-          and sets up a provider of the same name.  This will make sure the
+          The most useful option is --driver, which both specifies a driver and
+          sets up a provider of the same name.  This will make sure the
           dependencies for using the driver are install, and any bookkeeping
           required to start interacting with your VPS provider is handled.
 
@@ -32,7 +32,7 @@ module Cult
 
           Cult knows about the following providers:
 
-          #{drivers}
+          > #{drivers}
 
           The init process just gets you started, and it's nothing that couldn't
           be accomplished by hand, so if you want to change anything later, it's
@@ -43,37 +43,62 @@ module Cult
           in each node's MOTD.
         EOD
 
-        required :p, :provider, 'VPS driver/provider'
-        required :d, :driver,   'Specify a driver.  Not ususally needed'
+        required :d, :driver,   'Driver with which to create your provider'
+        required :p, :provider, 'Specify an explicit provider name'
+        flag     :g, :git,      'Enable Git integration'
 
         run(arguments: 1) do |opts, args, cmd|
           project = Project.new(args[0])
+          if project.exist?
+            fail CLIError, "a Cult project already exists in #{project.path}"
+          end
+
+          project.git_integration = opts[:git]
+
+          driver_cls = if !opts[:provider] && !opts[:driver]
+            opts[:provider] ||= 'scripts'
+            CLI.fetch_item(opts[:provider], from: Driver)
+          elsif opts[:provider] && !opts[:driver]
+            CLI.fetch_item(opts[:provider], from: Driver)
+          elsif opts[:driver] && !opts[:provider]
+            CLI.fetch_item(opts[:driver], from: Driver).tap do |dc|
+              opts[:provider] = dc.driver_name
+            end
+          elsif opts[:driver]
+            CLI.fetch_item(opts[:driver], from: Driver)
+          end
+
+          fail CLIError, "Hmm, no driver class" if driver_cls.nil?
+
           skel = Skel.new(project)
           skel.copy!
 
-          ops[:provider] ||= 'scripts'
-
           provider_conf = {
-            name: ops[:provider],
-            driver: ops[:driver] || ops[:provider]
+            name: opts[:provider],
+            driver: driver_cls.driver_name
           }
 
-          offer_gem_install do
-            driver_cls = Cult::Drivers.find(ops[:driver])
-            if driver_cls.nil?
-              fail ArgumentError "#{driver_cls} isn't a driver"
-            end
-
+          CLI.offer_gem_install do
             driver_conf = driver_cls.setup!
             provider_conf.merge!(driver_conf)
 
             FileUtils.mkdir_p(project.location_of("providers"))
-            dst_file = File.join("providers",
-                                 Cult.project.dump_name(provider_conf[:name]))
+            dst_file = File.join("providers", provider_conf[:name],
+                                 project.dump_name('provider'))
+            FileUtils.mkdir_p(project.location_of(File.dirname(dst_file)))
 
             File.write(project.location_of(dst_file),
-                       Cult.project.dump_object(vps_config))
+                       project.dump_object(provider_conf))
           end
+
+          if opts[:git]
+            Dir.chdir(project.path) do
+              `git init .`
+              `git add -A`
+              `git commit -m "[Cult] Created new project"`
+            end
+          end
+
         end
 
       end

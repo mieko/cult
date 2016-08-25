@@ -1,6 +1,8 @@
 require 'cult/skel'
 require 'cult/commander'
 
+require 'SecureRandom'
+
 module Cult
   module CLI
 
@@ -90,8 +92,7 @@ module Cult
 
         required :r, :role,      'Specify possibly multiple roles',
                                   multiple: true
-        flag     :p, :provision, 'Provision created node'
-        flag     :b, :bootstrap, 'Provision and bootstrap created node'
+        required :p, :provider,  'Provider'
         required :n, :count,     'Generates <value> number of nodes'
 
         run(arguments: 0..-1) do |opts, args, cmd|
@@ -102,11 +103,58 @@ module Cult
             rescue CLIError
               retry
             end
+          end
 
-            if opts[:bootstrap]
-              control = Cult::Commander.new(project: Cult.project, node: node)
-              control.bootstrap!
+          generate_sequenced_names = ->(name, n) do
+            result = []
+            result.push(random_suffix.(name)) until result.size == n
+            result
+          end
+
+          unless opts[:count].nil? || opts[:count].match(/^\d+$/)
+            fail CLIError, "--count must be an integer"
+          end
+
+          names = args.dup
+
+          roles = opts[:role] ? CLI.fetch_items(opts[:role], from: Role) : []
+
+          if roles.empty?
+            roles = CLI.fetch_items('all', from: Role)
+            if names.empty?
+              begin
+                names.push CLI.fetch_item('node', from: Node, exist: false)
+              rescue
+                names.push random_suffix.('node')
+              end
             end
+          end
+
+          if names.size > 1 && opts[:count]
+            fail CLIError, "cannot specify both --count and more than one name"
+          end
+
+          if names.empty? && !roles.empty?
+            names.push roles.map(&:name).sort.join('-')
+          end
+
+          if opts[:count]
+            names = generate_sequenced_names.(names[0], opts[:count].to_i)
+          end
+
+          # Makes sure they're all new.
+          names = names.map do |name|
+            CLI.fetch_item(name, from: Node, exist: false)
+          end
+
+          provider = if opts.key?(:provider)
+            CLI.fetch_item(opts[:provider], from: Provider)
+          else
+            Cult.project.default_provider
+          end
+
+          nodes = names.map do |name|
+            puts [name, roles, provider].inspect
           end
         end
       end
