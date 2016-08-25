@@ -39,6 +39,7 @@ module Cult
 
       provider_list = Cri::Command.define do
         name        'list'
+        aliases     'ls'
         summary     'List Providers'
         description <<~EOD
           Lists Providers for this project.  If --driver is specified, it only
@@ -88,6 +89,7 @@ module Cult
 
       provider_create = Cri::Command.define do
         name        'create'
+        aliases     'new'
         usage       'create NAME'
         summary     'creates a new provider for your project'
         required    :d, :driver, 'Specify driver, if different than NAME'

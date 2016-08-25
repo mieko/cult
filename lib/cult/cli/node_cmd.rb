@@ -63,6 +63,7 @@ module Cult
 
       node_create = Cri::Command.define do
         name        'create'
+        aliases     'new'
         usage       'create [options] NAME...'
         summary     'Create a new node'
         description <<~EOD
@@ -119,6 +120,7 @@ module Cult
 
       node_list = Cri::Command.define do
         name        'list'
+        aliases     'ls'
         summary     'List nodes'
         description <<~EOD
           This command lists the nodes in the project.

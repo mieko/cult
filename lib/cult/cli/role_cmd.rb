@@ -122,6 +122,7 @@ module Cult
 
       role_list = Cri::Command.define do
         name        'list'
+        aliases     'ls'
         usage       'list [ROLES...]'
         summary     'List existing roles'
         description <<~EOD
