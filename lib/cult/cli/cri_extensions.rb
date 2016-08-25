@@ -15,8 +15,7 @@ module Cult
 
       def run_this(args, opts)
         if project_required? && Cult.project.nil?
-          $stderr.puts "#{$0}: command '#{name}' requires a cult project"
-          exit 1
+          fail CLIError, "command '#{name}' requires a Cult project"
         end
 
         check_argument_spec!(args, argument_spec) if argument_spec

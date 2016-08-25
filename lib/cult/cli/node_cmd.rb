@@ -19,7 +19,6 @@ module Cult
         arguments 0
         run do |opts, args, cmd|
           puts cmd.help
-          exit 0
         end
       end
 
