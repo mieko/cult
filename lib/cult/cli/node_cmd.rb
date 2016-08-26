@@ -31,35 +31,11 @@ module Cult
         EOD
 
         run(arguments: 1) do |opts, args, cmd|
-          node = fetch_item(args[0], from: Node)
+          node = CLI.fetch_item(args[0], from: Node)
           exec "ssh", "#{node.user}@#{node.host}"
         end
       end
       node.add_command(node_ssh)
-
-      node_bootstrap = Cri::Command.define do
-        name        'bootstrap'
-        usage       'bootstrap NODE'
-        summary     'Executes bootstrap tasks on NODE'
-        description <<~EOD.format_description
-          'cult node bootstrap NODE' takes an existing node (which has been
-          provisioned), and runs all tasks in the "bootstrap" role on it.
-
-          This command is used primarily for testing the bootstrap process in
-          isolation, as 'cult node create -p NAME' creates, provisions, and then
-          bootstraps a node from the ground up.
-        EOD
-
-        run(arguments: 1..-1) do |opts, args, cmd|
-          nodes = CLI.fetch_items(*args, from: Node)
-
-          nodes.each do |node|
-            ctrl = Commander.new(project: Cult.project, node: node)
-            ctrl.bootstrap!
-          end
-        end
-      end
-      node.add_command(node_bootstrap)
 
       node_create = Cri::Command.define do
         name        'create'

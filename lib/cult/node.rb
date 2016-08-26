@@ -21,8 +21,18 @@ module Cult
     end
 
 
-    def definition_path
+    def node_path
       File.join(path, 'node')
+    end
+
+
+    def state_path
+      File.join(path, 'state')
+    end
+
+
+    def definition_path
+      [ node_path, state_path ]
     end
 
 
@@ -40,15 +50,6 @@ module Cult
       definition.direct('roles') || super
     end
 
-
-    def host
-      definition['host']
-    end
-
-
-    def user
-      definition['user']
-    end
 
     alias_method :roles, :parent_roles
   end

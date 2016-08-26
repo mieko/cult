@@ -27,23 +27,17 @@ module Cult
     alias_method :to_s, :inspect
 
 
-    def candidates
-      [ "#{definition_path}.yaml", "#{definition_path}.yml",
-        "#{definition_path}.json" ]
-    end
-
-
-    # Finds the first existing file in the candidate list
-    def filename
-      @filename ||= begin
-        results = candidates.select do |candidate|
-          File.exist?(candidate)
+    def filenames
+      Array(definition_path).map do |dp|
+        attempt = [ "#{dp}.yaml", "#{dp}.yml", "#{dp}.json" ]
+        existing = attempt.select do |filename|
+          File.exist?(filename)
         end
-        if results.size > 1
-          raise RuntimeError, "conflicting definition files: #{result.inspect}"
+        if existing.size > 1
+          raise RuntimeError, "conflicting definition files: #{existing}"
         end
-        results[0]
-      end
+        existing[0]
+      end.compact
     end
 
 
@@ -65,13 +59,13 @@ module Cult
 
     def bag
       @bag ||= begin
-        if filename.nil?
-          {}
-        else
+        result = {}
+        filenames.each do |filename|
           erb = Template.new(definition_parameters)
           contents = erb.process(File.read(filename))
-          decoder_for(filename).call(contents)
+          result.merge! decoder_for(filename).call(contents)
         end
+        result
       end
     end
     alias_method :to_h, :bag
