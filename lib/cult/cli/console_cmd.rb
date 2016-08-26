@@ -22,8 +22,7 @@ module Cult
       end
 
       private def exit(*)
-        # IRB tries to alias this.
-        # And it must be private, or it warns.
+        # IRB tries to alias this. And it must be private, or it warns.  WTF.
         super
       end
 
@@ -73,7 +72,7 @@ module Cult
 
                 => #{context.inspect}
 
-              Useful methods: nodes, roles, providers, drivers
+              Useful methods: nodes, roles, providers
 
             EOD
           end
