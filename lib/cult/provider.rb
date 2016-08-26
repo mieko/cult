@@ -12,14 +12,17 @@ module Cult
     attr_reader :project
     attr_reader :path
 
+
     def initialize(project, path)
       @project = project
       @path = path
     end
 
+
     def name
       File.basename(path)
     end
+
 
     def inspect
       prelude = "#{self.class.name} \"#{name}\""
@@ -28,6 +31,7 @@ module Cult
       "\#<#{prelude}#{driver_string}>"
     end
 
+
     def driver
       @driver ||= begin
         cls = project.drivers[definition['driver']]
@@ -35,25 +39,33 @@ module Cult
       end
     end
 
+
     def definition
-      @definition ||= begin
-        Definition.load(definition_file, project: project)
-      end
+      @definition ||= Definition.new(self)
     end
 
-    def definition_file
+
+    def definition_path
       File.join(path, "provider")
     end
+
+
+    def definition_parameters
+      { project: self.project }
+    end
+
 
     def self.path(project)
       project.location_of("providers")
     end
+
 
     def self.all_files(project)
       Dir.glob(File.join(path(project), "*")).select do |file|
         Dir.exist?(file)
       end
     end
+
 
     def self.all(project)
       all_files(project).map do |filename|

@@ -1,57 +1,113 @@
 require 'yaml'
 require 'json'
+require 'forwardable'
+
 require 'cult/template'
 
 module Cult
   class Definition
-    attr_reader :path
-    attr_reader :file
-    attr_reader :decoder
+    attr_reader :object
+    attr_reader :bag
 
-    def initialize(path)
-      @path = path
-      @file = locate_file
-      @decoder = decoder_for(@file)
+    extend Forwardable
+    def_delegators :object, :definition_parameters, :definition_path,
+                            :definition_parents
+
+    def initialize(object)
+      @object = object
     end
 
-    # Finds the first existing file in the candidate list
-    def locate_file
-      candidates.find do |candidate|
-        File.exist?(candidate)
-      end
+    def inspect
+      "\#<#{self.class.name} " +
+        "object: #{object.inspect}, " +
+        "params: #{definition_parameters}, " +
+        "parents: #{definition_parents}, " +
+        "direct_values: #{bag}>"
     end
+    alias_method :to_s, :inspect
+
 
     def candidates
-      [ path, "#{path}.yaml", "#{path}.yml", "#{path}.json" ]
+      [ "#{definition_path}.yaml", "#{definition_path}.yml",
+        "#{definition_path}.json" ]
     end
 
-    def decoder_for(file)
-      case file
-        when nil
-          nil
-        when /\.json\z/
-          JSON.method(:parse)
-        when /\.ya?ml\z/
-          YAML.method(:safe_load)
+
+    # Finds the first existing file in the candidate list
+    def filename
+      @filename ||= begin
+        results = candidates.select do |candidate|
+          File.exist?(candidate)
+        end
+        if results.size > 1
+          raise RuntimeError, "conflicting definition files: #{result.inspect}"
+        end
+        results[0]
+      end
+    end
+
+
+    def decoder_for(filename)
+      @decoder_for ||= begin
+        case filename
+          when nil
+            nil
+          when /\.json\z/
+            JSON.method(:parse)
+          when /\.ya?ml\z/
+            YAML.method(:safe_load)
+          else
+            fail RuntimeError, "No decoder for file type: #{filename}"
+        end
+      end
+    end
+
+
+    def bag
+      @bag ||= begin
+        if filename.nil?
+          {}
         else
-          fail RuntimeError, "No decoder for file type: #{file}"
+          erb = Template.new(definition_parameters)
+          contents = erb.process(File.read(filename))
+          decoder_for(filename).call(contents)
+        end
       end
     end
+    alias_method :to_h, :bag
 
-    def process(**kw)
-      if file
-        contents = File.read(file)
-        erb = Template.new(kw)
-        contents = erb.process(contents)
-        decoder_for(file).call(contents)
+    def direct(k)
+      fail "Use string keys" unless k.is_a?(String)
+      bag[k]
+    end
+
+    def [](k)
+      fail "Use string keys" unless k.is_a?(String)
+      if bag.key?(k)
+        bag[k]
       else
-        {}
+        parent_responses = definition_parents.map do |p|
+          [p, p.definition[k]]
+        end.reject do |k, v|
+          v.nil?
+        end
+        consensus = parent_responses.group_by(&:last)
+        if consensus.empty?
+          return nil
+        elsif consensus.size != 1
+          msg = "#{object.inspect}: I didn't have key '#{k}', and " +
+                "my parents had conflicting answers: " +
+                "[answer, parents]: #{consensus}"
+          fail KeyError, msg
+        end
+        consensus.keys[0]
       end
     end
 
-    def self.load(path, **kw)
-      new(path).process(kw)
+    def []=(k, v)
+      fail "Use string keys" unless k.is_a?(String)
+      bag[k] = v
     end
-  end
 
+  end
 end
