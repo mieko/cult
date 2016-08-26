@@ -157,9 +157,9 @@ module Cult
           socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
           begin
-            # Initiate the socket connection in the background. If it doesn't fail
-            # immediately it will raise an IO::WaitWritable (Errno::EINPROGRESS)
-            # indicating the connection is in progress.
+            # Initiate the socket connection in the background. If it doesn't
+            # fail immediately it will raise an IO::WaitWritable
+            # (Errno::EINPROGRESS) indicating the connection is in progress.
             socket.connect_nonblock(sockaddr)
 
           rescue IO::WaitWritable
@@ -177,8 +177,8 @@ module Cult
                 raise
               end
             else
-              # IO.select returns nil when the socket is not ready before timeout
-              # seconds have elapsed
+              # IO.select returns nil when the socket is not ready before
+              # timeout seconds have elapsed
               socket.close
               raise Errno::ETIMEDOUT
             end

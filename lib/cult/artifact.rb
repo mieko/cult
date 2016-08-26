@@ -2,6 +2,8 @@ require 'cult/transferable'
 require 'cult/named_array'
 
 module Cult
+  # I'd love to just call this "File", but the ambiguity with ::File would
+  # make it a pain.
   class Artifact
     include Transferable
 

@@ -79,15 +79,5 @@ module Cult
       try_requires!
       super
     end
-
-
-    def self.for(project)
-      conf = Definition.load(project.location_of('providers/default'))
-      if (cls = Cult::VPS.find(conf['adapter']))
-        cls.new(conf)
-      end
-    rescue Errno::ENOENT
-      nil
-    end
   end
 end
