@@ -85,7 +85,7 @@ module Cult
       end
 
 
-      def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
+      def provision!(name:, size:, zone:, image:, ssh_key_files:)
         fingerprints = Array(ssh_key_files).map do |file|
           upload_ssh_key(file: file)[:fingerprint]
         end
@@ -128,7 +128,6 @@ module Cult
               image:         image,
               ssh_key_files: ssh_key_files,
               ssh_keys:      fingerprints,
-              extra:         extra,
 
               id:            droplet.id,
               created_at:    droplet.created_at,

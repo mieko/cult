@@ -129,7 +129,7 @@ module Cult
       end
 
 
-      def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
+      def provision!(name:, size:, zone:, image:, ssh_key_files:)
         sizeid  = fetch_mapped(name: :size, from: sizes_map, key: size)
         imageid = fetch_mapped(name: :image, from: images_map, key: image)
         zoneid  = fetch_mapped(name: :zone, from: zones_map, key: zone)
@@ -202,7 +202,6 @@ module Cult
               image:         image,
               ssh_key_files: ssh_keys.map{|k| k[:file]},
               ssh_keys:      ssh_keys.map{|k| k[:fingerprint]},
-              extra:         extra,
 
               id:           linodeid,
               created_at:   Time.now.iso8601,

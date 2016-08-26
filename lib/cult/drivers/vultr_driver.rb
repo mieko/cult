@@ -127,7 +127,7 @@ module Cult
       with_api_key :destroy!
 
 
-      def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
+      def provision!(name:, size:, zone:, image:, ssh_key_files:)
         keys = Array(ssh_key_files).map do |filename|
           upload_ssh_key(file: filename)
         end
@@ -168,7 +168,6 @@ module Cult
               image:         image,
               ssh_key_files: ssh_key_files,
               ssh_keys:      keys.map{|v| v["fingerprint"]},
-              extra:         extra,
 
               id:           subid,
               created_at:   Time.now.iso8601,
