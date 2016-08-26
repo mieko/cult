@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+# This file is loaded every time the cult command is run in the project
+# directory.  If there's any special setup you'd like to do, this is the place
+# to do it.
+
+# Note: This file MUST exist, even if you're not doing anything with it.  It's
+# how the Cult tool decides whether a directory is a project or not.
+
+
+Cult.project.instance_eval do
+  # In this this scope, you're in a context very similar to the console, where
+  # `nodes`, `roles`, `providers` etc, work as you'd expect.
+
+  # This marks the version of Cult the project was created with.  If future
+  # versions of Cult have backward-incompatible changes, it'll know you expect
+  # the behavior of this version.
+  self.cult_version = <%= Cult::VERSION.sq %>
+
+  # Git integration is great, it basically makes sure you stay in sync.  If
+  # this was enabled with the generator (it <%=project.git? ? 'was' : "wasn\'t" %>), you've already got a Git
+  # project and everything was committed.
+  self.git_integration = <%= !! project.git_integration %>
+
+  # If you don't set this, the project's default_provider will be nil until one
+  # is created, and otherwise, the first one.  This really only comes into play
+  # when you're using multiple providers.
+  # self.default_provider = providers[/my-vps/]
+end

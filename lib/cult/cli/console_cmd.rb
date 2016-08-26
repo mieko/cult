@@ -36,22 +36,6 @@ module Cult
         system $0, *argv
       end
 
-      def ecult(*argv)
-        exec $0, *argv
-      end
-
-      def reload!
-        Array(@before_reload).each do |p|
-          p.call
-        end
-        exec *original_argv, '--reexec'
-      end
-
-      def before_reload(&block)
-        @before_reload ||= []
-        @before_reload.push(block)
-      end
-
       def binding
         super
       end
@@ -74,10 +58,9 @@ module Cult
         flag :p,  :pry,    'Pry'
         flag nil, :reexec, 'Console has been exec\'d for a reload'
 
-        arguments 0
-
-        run do |opts, args, cmd|
+        run(arguments: 0) do |opts, args, cmd|
           context = ConsoleContext.new(Cult.project, ARGV)
+
           if opts[:reexec]
             $stderr.puts "Reloaded."
           else
@@ -100,18 +83,11 @@ module Cult
           if opts[:ripl]
             require 'ripl'
             ARGV.clear
-
             # Look, something reasonable:
-            context.before_reload do
-              Ripl.shell.write_history
-            end
             Ripl.start(binding: context.binding)
 
           elsif opts[:pry]
             require 'pry'
-            context.before_reload do
-              # NOTHING REASONABLE.
-            end
             context.binding.pry
           else
             # irb: This is ridiculous.
@@ -125,11 +101,6 @@ module Cult
 
             trap("SIGINT") do
               irb.signal_handle
-            end
-
-            context.before_reload do
-              # Doesn't work.  IRB is a mess.
-              IRB::irb_at_exit
             end
 
             begin

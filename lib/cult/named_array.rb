@@ -85,9 +85,12 @@ module Cult
         when NilClass
           return nil
         else
-          fail ArgumentError
+          fail KeyError, "#{key} did not resolve to an object"
       end
-      send(method) { |v| key === v.named_array_identifier }
+
+      send(method) do |v|
+        key === v.named_array_identifier
+      end
     end
 
     # first matching item

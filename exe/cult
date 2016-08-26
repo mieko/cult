@@ -55,7 +55,7 @@ cult = Cri::Command.define do
     puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
   end
 
-  run do |opts, args, cmd|
+  run(arguments: 0) do |opts, args, cmd|
     puts cmd.help
   end
 end
@@ -71,14 +71,15 @@ else
 end
 
 if Cult.project
-  cultrc = Cult.project.location_of(".cultrc")
-  load(cultrc) if File.exist?(cultrc)
+  Cult.project.execute_cultrc
 end
+
+ERROR_CULT = Rainbow("#{File.basename($0)}:").red
 
 begin
   cult.run(ARGV)
 rescue Cult::CLI::CLIError, RegexpError => e
-  $stderr.puts "#{File.basename($0)}: #{e.message}"
+  $stderr.puts "#{ERROR_CULT} #{e.message}"
   exit 1
 rescue Interrupt
   exit 1

@@ -1,12 +1,10 @@
+require 'cult/cli/cli_error'
+
 require 'io/console'
 require 'shellwords'
 
 module Cult
   module CLI
-
-    class CLIError < RuntimeError
-    end
-
     module_function
 
     # This sets the global project based on a directory
@@ -114,6 +112,21 @@ module Cult
       end
     end
 
+    # We actually want "base 47", so we have to generate substantially more
+    # characters than len.  The method already generates 1.25*len characters,
+    # but is offset by _ and - that we discard.  With the other characters we
+    # discard, we usethe minimum multiplier which makes a retry "rare" (every
+    # few thousand ids at 6 len), then handle that case.
+    def unique_id(len = 8)
+      @uniq_id_disallowed ||= /[^abcdefhjkmnpqrtvwxyzABCDEFGHJKMNPQRTVWXY2346789]/
+      candidate = SecureRandom.urlsafe_base64((len * 2.1).ceil)
+                              .gsub(@uniq_id_disallowed, '')
+      fail RangeError if candidate.size < len
+      candidate[0...len]
+    rescue RangeError
+      retry
+    end
+
     # v is an option or argv value from a user, label: is the name of it.
     #
     # This asserts that `v` is in the collection `from`, and returns it.
@@ -126,7 +139,7 @@ module Cult
     # CLIError is raised if these invariants are violated
     def fetch_item(v, from:, label: nil, exist: true, method: :fetch)
       implied_from = case
-        when from == Driver;   Cult.project.drivers
+        when from == Driver;   Cult::Drivers.all
         when from == Provider; Cult.project.providers
         when from == Role;     Cult.project.roles
         when from == Node;     Cult.project.nodes
@@ -162,11 +175,12 @@ module Cult
       end
     end
 
+
     # Takes a list of keys and returns an array of objects that correspond
     # to any of them.  If required is true, each key must correspond to at
     # least one object.
     def fetch_items(*keys, **kw)
-      keys.map do |key|
+      keys.flatten.map do |key|
         fetch_item(key, method: :all, **kw)
       end.flatten
     end

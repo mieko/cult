@@ -15,8 +15,7 @@ module Cult
 
         EOD
 
-        arguments 0
-        run do |opts, args, cmd|
+        run(arguments: 0) do |opts, args, cmd|
           puts cmd.help
           exit
         end
@@ -48,8 +47,7 @@ module Cult
           This command respects the global --yes flag.
         EOD
 
-        arguments 0
-        run do |opts, args, cmd|
+        run(arguments: 0) do |opts, args, cmd|
           if opts[:all] && Array(opts[:role]).size != 0
             fail CLIError, "can't supply -A and also a list of roles"
           end
@@ -107,7 +105,7 @@ module Cult
           TODO: Document (and do something!)
         EOD
 
-        run do |args, ops, cmd|
+        run do |opts, args, cmd|
           puts 'checking sanity...'
         end
       end

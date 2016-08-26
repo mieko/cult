@@ -2,13 +2,12 @@ require 'cri'
 
 module Cult
   module CLI
-
     class ::String
       def format_description
-        gsub(/(\S)\n(\S)/m, '\1 \2')
+        self.gsub(/(\S)\n(\S)/m, '\1 \2')
+            .gsub(/\.[ ]{2}(\S)/m, '. \1')
       end
     end
-
 
     module CommandExtensions
       def project_required?
@@ -21,14 +20,17 @@ module Cult
 
       attr_accessor :argument_spec
 
-      def run_this(args, opts)
-        if project_required? && Cult.project.nil?
-          fail CLIError, "command '#{name}' requires a Cult project"
+      # This function returns a wrapped version of the block passed to `run`
+      def block
+        lambda do |opts, args, cmd|
+          if project_required? && Cult.project.nil?
+            fail CLIError, "command '#{name}' requires a Cult project"
+          end
+
+          check_argument_spec!(args, argument_spec) if argument_spec
+
+          super.call(opts, args, cmd)
         end
-
-        check_argument_spec!(args, argument_spec) if argument_spec
-
-        super
       end
 
       def check_argument_spec!(args, range)
@@ -64,8 +66,9 @@ module Cult
         @command.project_required = false
       end
 
-      def arguments(range)
-        @command.argument_spec = range
+      def run(arguments: nil, &block)
+        @command.argument_spec = arguments if arguments
+        super(&block)
       end
 
       Cri::CommandDSL.prepend(self)

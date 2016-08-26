@@ -1,6 +1,8 @@
 require 'cult/skel'
 require 'cult/commander'
 
+require 'SecureRandom'
+
 module Cult
   module CLI
 
@@ -16,8 +18,7 @@ module Cult
           conceptually description of a server.
         EOD
 
-        arguments 0
-        run do |opts, args, cmd|
+        run(arguments: 0) do |opts, args, cmd|
           puts cmd.help
         end
       end
@@ -29,8 +30,7 @@ module Cult
         description <<~EOD.format_description
         EOD
 
-        arguments 1
-        run do |opts, args, cmd|
+        run(arguments: 1) do |opts, args, cmd|
           node = fetch_item(args[0], from: Node)
           exec "ssh", "#{node.user}@#{node.host}"
         end
@@ -50,8 +50,7 @@ module Cult
           bootstraps a node from the ground up.
         EOD
 
-        arguments 1..-1
-        run do |opts, args, cmd|
+        run(arguments: 1..-1) do |opts, args, cmd|
           nodes = CLI.fetch_items(*args, from: Node)
 
           nodes.each do |node|
@@ -93,27 +92,69 @@ module Cult
 
         required :r, :role,      'Specify possibly multiple roles',
                                   multiple: true
-        flag     :p, :provision, 'Provision created node'
-        flag     :b, :bootstrap, 'Provision and bootstrap created node'
+        required :p, :provider,  'Provider'
         required :n, :count,     'Generates <value> number of nodes'
 
-        # FIXME
-        run do |opts, args, cmd|
-          opts[:bootstrap] = true if opts[:migrate]
-          opts[:provision] = true if opts[:bootstrap]
-          puts "creating node #{args.inspect} with roles #{opts[:roles].inspect}"
-
-          args.each do |arg|
-            node = nil
-            if opts[:provision]
-              provdata = Cult.project.provider.provision!(name: arg, spec_name: 'small')
-              node = Node.create_from_provision!(Cult.project, provdata)
+        run(arguments: 0..-1) do |opts, args, cmd|
+          random_suffix = ->(basename) do
+            begin
+              suffix = CLI.unique_id
+              CLI.fetch_item("#{basename}-#{suffix}", from: Node, exist: false)
+            rescue CLIError
+              retry
             end
+          end
 
-            if opts[:bootstrap]
-              control = Cult::Commander.new(project: Cult.project, node: node)
-              control.bootstrap!
+          generate_sequenced_names = ->(name, n) do
+            result = []
+            result.push(random_suffix.(name)) until result.size == n
+            result
+          end
+
+          unless opts[:count].nil? || opts[:count].match(/^\d+$/)
+            fail CLIError, "--count must be an integer"
+          end
+
+          names = args.dup
+
+          roles = opts[:role] ? CLI.fetch_items(opts[:role], from: Role) : []
+
+          if roles.empty?
+            roles = CLI.fetch_items('all', from: Role)
+            if names.empty?
+              begin
+                names.push CLI.fetch_item('node', from: Node, exist: false)
+              rescue
+                names.push random_suffix.('node')
+              end
             end
+          end
+
+          if names.size > 1 && opts[:count]
+            fail CLIError, "cannot specify both --count and more than one name"
+          end
+
+          if names.empty? && !roles.empty?
+            names.push roles.map(&:name).sort.join('-')
+          end
+
+          if opts[:count]
+            names = generate_sequenced_names.(names[0], opts[:count].to_i)
+          end
+
+          # Makes sure they're all new.
+          names = names.map do |name|
+            CLI.fetch_item(name, from: Node, exist: false)
+          end
+
+          provider = if opts.key?(:provider)
+            CLI.fetch_item(opts[:provider], from: Provider)
+          else
+            Cult.project.default_provider
+          end
+
+          nodes = names.map do |name|
+            puts [name, roles, provider].inspect
           end
         end
       end
@@ -130,8 +171,7 @@ module Cult
         required :r, :role, 'List only nodes which include <value>',
                      multiple: true
 
-        arguments 0..1
-        run do |opts, args, cmd|
+        run(arguments: 0..1) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
                               : CLI.fetch_items(*args, from: Node)
 
