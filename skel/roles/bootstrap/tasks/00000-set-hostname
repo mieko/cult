@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+
+# We make sure this node has a valid hostname.  Different VPS providers handle
+# this differently, and sudo will be weird if it can't resolve its hostname.
+
+NODE_NAME=<%= node.name.q %>
+
+echo "$NODE_NAME" > /etc/hostname
+hostname "$NODE_NAME"
+
+HOSTS=$(cat /etc/hosts | sed -e 's/#.*//g' | sed -e 's/\t/ /g' | tr -s ' ' | \
+        grep -v '^\s*$' | cut -d' ' -f2-)
+
+# See if we're in hosts
+if ! echo "$HOSTS" | grep -q "$NODE_NAME" ; then
+  echo "127.0.1.1 $NODE_NAME" >> /etc/hosts
+  echo "::1 $NODE_NAME" >> /etc/hosts
+fi
+
+# Make the SSH experience a little nicer with the full hostname in the prompt
+echo "export PS1='\u@\H:\w\$ '" > /etc/bash.bashrc
