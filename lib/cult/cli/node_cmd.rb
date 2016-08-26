@@ -161,7 +161,7 @@ module Cult
 
                 c = Commander.new(project: Cult.project, node: node)
                 c.bootstrap!
-                c.install!(node, user: node.definition["user"])
+                c.install!(node)
               end
             end
           end

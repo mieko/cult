@@ -1,6 +1,7 @@
 require 'net/ssh'
 require 'net/scp'
 require 'shellwords'
+require 'rainbow'
 
 module Cult
   class Commander
@@ -16,17 +17,10 @@ module Cult
       Shellwords.escape(s)
     end
 
-    def host
-      node.host
-    end
-
-    def user
-      node.definition['user'] || 'cult'
-    end
-
     def send_file(ssh, role, transferable)
       src, dst = transferable.path, transferable.remote_path
-      data = StringIO.new(transferable.contents(project, role, node, pwd: role.path))
+      data = StringIO.new(transferable.contents(project, role, node,
+                                                pwd: role.path))
       puts "Sending file: #{dst}"
 
       scp = Net::SCP.new(ssh)
@@ -38,10 +32,10 @@ module Cult
       raise
     end
 
-    def install!(role, user: nil)
+    def install!(role)
       role.build_order.each do |r|
-        puts "DOING #{r}"
-        connect(user: user) do |ssh|
+        puts "Installing role: #{Rainbow(r.name).blue}"
+        connect(user: r.definition['user']) do |ssh|
           (r.artifacts + r.tasks).each do |f|
             send_file(ssh, r, f)
           end
@@ -67,11 +61,11 @@ module Cult
 
     def bootstrap!
       bootstrap_role = CLI.fetch_item('bootstrap', from: Role)
-      install!(bootstrap_role, user: bootstrap_role.definition['user'])
+      install!(bootstrap_role)
     end
 
-    def connect(user: nil, &block)
-      connection = Net::SSH.start(host, user || self.user) do |ssh|
+    def connect(user:, &block)
+      Net::SSH.start(node.host, user) do |ssh|
         yield ssh
       end
     end
