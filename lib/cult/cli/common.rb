@@ -1,10 +1,12 @@
-require 'cult/cli/cli_error'
-
 require 'io/console'
 require 'shellwords'
 
 module Cult
   module CLI
+
+    class CLIError < RuntimeError
+    end
+
     module_function
 
     # This sets the global project based on a directory
