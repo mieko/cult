@@ -68,8 +68,14 @@ module Cult
 
         required :r, :role,      'Specify possibly multiple roles',
                                   multiple: true
-        required :p, :provider,  'Provider'
         required :n, :count,     'Generates <value> number of nodes'
+
+        required :p, :provider,  'Provider'
+        required :Z, :zone,      'Provider zone'
+        required :I, :image,     'Provider image'
+        required :S, :size,      'Provider instance size'
+
+        flag     :b, :bootstrap, 'Bring up node'
 
         run(arguments: 0..-1) do |opts, args, cmd|
           random_suffix = ->(basename) do
@@ -129,9 +135,37 @@ module Cult
             Cult.project.default_provider
           end
 
+          # Use --size if it was specified, otherwise pull the
+          # provider's default.
+          node_spec = %i(size image zone).map do |m|
+            value = opts[m] || provider.definition["default_#{m}"]
+            fail CLIError, "No #{m} specified (and no default)" if value.nil?
+            [m, value]
+          end.to_h
+
           nodes = names.map do |name|
-            puts [name, roles, provider].inspect
+            data = {
+              name: name,
+              roles: roles.map(&:name)
+            }
+
+            Node.from_data!(Cult.project, data).tap do |node|
+              if opts[:bootstrap]
+                prov_data = provider.provision!(name: node.name,
+                                                image: node_spec[:image],
+                                                size: node_spec[:size],
+                                                zone: node_spec[:zone],
+                                                ssh_key_files: '/Users/mike/.ssh/id_rsa.pub')
+                File.write(Cult.project.dump_name(node.state_path),
+                           Cult.project.dump_object(prov_data))
+
+                c = Commander.new(project: Cult.project, node: node)
+                c.bootstrap!
+                c.install!(node, user: node.definition["user"])
+              end
+            end
           end
+
         end
       end
       node.add_command node_create

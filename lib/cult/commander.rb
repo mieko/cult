@@ -65,9 +65,9 @@ module Cult
       end
     end
 
-    def bootstrap!(role = nil)
-      role ||= project.roles.find { |r| r.name == 'bootstrap' }
-      install!(role, user: 'root')
+    def bootstrap!
+      bootstrap_role = CLI.fetch_item('bootstrap', from: Role)
+      install!(bootstrap_role, user: bootstrap_role.definition['user'])
     end
 
     def connect(user: nil, &block)

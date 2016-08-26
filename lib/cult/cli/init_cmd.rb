@@ -82,13 +82,21 @@ module Cult
             driver_conf = driver_cls.setup!
             provider_conf.merge!(driver_conf)
 
-            FileUtils.mkdir_p(project.location_of("providers"))
-            dst_file = File.join("providers", provider_conf[:name],
-                                 project.dump_name('provider'))
-            FileUtils.mkdir_p(project.location_of(File.dirname(dst_file)))
 
-            File.write(project.location_of(dst_file),
-                       project.dump_object(provider_conf))
+            provider_dir = File.join(project.location_of("providers"),
+                                     provider_conf[:name])
+            FileUtils.mkdir_p(provider_dir)
+
+
+            provider_file = File.join(provider_dir,
+                                      project.dump_name("provider"))
+            File.write(provider_file, project.dump_object(provider_conf))
+
+
+            defaults_file = File.join(provider_dir,
+                                      project.dump_name("defaults"))
+            defaults = Provider.generate_defaults(provider_conf)
+            File.write(defaults_file, project.dump_object(defaults))
           end
 
           if opts[:git]

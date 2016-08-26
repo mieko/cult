@@ -3,16 +3,22 @@ require 'fileutils'
 
 module Cult
   class Node < Role
-    def self.create_from_provision!(project, provision_data)
-      node = by_name(project, provision_data[:name])
+    def self.from_data!(project, data)
+      node = by_name(project, data[:name])
       raise Errno::EEXIST if node.exist?
-      FileUtils.mkdir_p(node.path)
 
-      data = provision_data.dup
-      extra = data.delete(:extra)
-      File.write(project.dump_name(node.definition_file), project.dump_object(data))
-      File.write(project.dump_name(node.extra_file), project.dump_object(extra))
-      return node
+      FileUtils.mkdir_p(node.path)
+      File.write(project.dump_name(node.node_path),
+                 project.dump_object(data))
+      return by_name(project, data[:name])
+    end
+
+    # These are convenience methods for templates, etc.
+    # delegate them to the definition.
+    %i(user host ipv4_public ipv4_private ipv6_public ipv6_private).each do |m|
+      define_method(m) do
+        definition[m.to_s]
+      end
     end
 
 
