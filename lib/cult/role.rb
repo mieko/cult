@@ -69,33 +69,38 @@ module Cult
       Task.all_for_role(project, self)
     end
 
+
     def artifacts
       Artifact.all_for_role(project, self)
     end
     alias_method :files, :artifacts
 
+
+    def definition
+      @definition ||= Definition.new(self)
+    end
+
+
+    def definition_path
+      File.join(path, "role")
+    end
+
+
     def definition_parameters
       { project: project, role: self }
     end
 
-    def definition
-      @definition ||= begin
-        Cult::Definition.load(definition_file, definition_parameters)
-      end
-    end
 
-    def definition_file
-      File.join(path, "role")
+    def definition_parents
+      parent_roles
     end
 
     def includes
-      definition['includes'] || definition['include'] ||
-       (exist? ? ['all'] : [])
+      definition.direct('includes') || ['all']
     end
 
-
     def parent_roles
-      includes.map do |name|
+      Array(includes).map do |name|
         Role.by_name(project, name)
       end.to_named_array
     end
