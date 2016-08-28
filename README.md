@@ -1,3 +1,4 @@
+![Cult][logo]
 # Cult
 
 ## Introduction
@@ -238,3 +239,5 @@ the above items you away.
 
 Cult is available as open source software under the terms of the
 [MIT License](http://opensource.org/licenses/MIT).
+
+[logo]: ./doc/images/masthead@0.5x.png "Cult Logo"
