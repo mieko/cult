@@ -181,7 +181,7 @@ module Cult
 
 
     def build_order
-      all_items = self.tree
+      all_items = [self] + parent_roles
 
       each_node = ->(&block) {
         all_items.each(&block)
@@ -191,7 +191,7 @@ module Cult
         node.parent_roles.each(&block)
       }
 
-      TSort.tsort(each_node, each_child).uniq.to_named_array
+      TSort.tsort(each_node, each_child).to_named_array
     end
 
     def has_role?(role)
