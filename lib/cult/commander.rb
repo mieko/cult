@@ -58,7 +58,7 @@ module Cult
       scp = Net::SCP.new(ssh)
       io.rewind
       scp.upload!(io, filename)
-      ssh.exec! "tar xf #{esc(filename)} && rm #{esc(filename)}"
+      ssh.exec! "tar -xf #{esc(filename)} && rm #{esc(filename)}"
     end
 
     def install!(role)
