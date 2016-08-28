@@ -17,27 +17,33 @@ module Cult
       end
     end
 
+
     # Quiet mode controls how verbose `say` is
     def quiet=(v)
       @quiet = v
     end
 
+
     def quiet?
       @quiet
     end
 
+
     def say(v)
       puts v unless @quiet
     end
+
 
     # yes=true automatically answers yes to "yes_no" questions.
     def yes=(v)
       @yes = v
     end
 
+
     def yes?
       @yes
     end
+
 
     # Asks a yes or no question with promp.  The prompt defaults to "Yes".  If
     # Cli.yes=true, true is returned without showing the prompt.
@@ -78,6 +84,7 @@ module Cult
       end
     end
 
+
     # Asks the user a question, and returns the response.  Ensures a newline
     # exists after the response.
     def ask(prompt)
@@ -85,9 +92,11 @@ module Cult
       $stdin.gets.chomp
     end
 
+
     def prompt(*args)
       ask(*args)
     end
+
 
     # Disables echo to ask the user a password.
     def password(prompt)
@@ -99,6 +108,7 @@ module Cult
         end
       end
     end
+
 
     # it's common for drivers to need the user to visit a URL to
     # confirm an API key or similar.  This does this in the most
@@ -114,6 +124,7 @@ module Cult
       end
     end
 
+
     # We actually want "base 47", so we have to generate substantially more
     # characters than len.  The method already generates 1.25*len characters,
     # but is offset by _ and - that we discard.  With the other characters we
@@ -128,6 +139,7 @@ module Cult
     rescue RangeError
       retry
     end
+
 
     # v is an option or argv value from a user, label: is the name of it.
     #
@@ -186,6 +198,7 @@ module Cult
         fetch_item(key, method: :all, **kw)
       end.flatten
     end
+
 
     # This intercepts GemNeededError and does the installation dance.  It looks
     # a bit hairy because it has a few resumption points, e.g., attempts user

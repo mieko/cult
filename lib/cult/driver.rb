@@ -18,6 +18,7 @@ module Cult
       end
     end
 
+
     class << self
       attr_accessor :required_gems
 
@@ -29,10 +30,12 @@ module Cult
             .downcase
       end
 
+
       def inspect
         self == Driver ? super : "#{super}/#{driver_name}"
       end
       alias_method :to_s, :inspect
+
 
       def named_array_identifier
         driver_name
@@ -43,9 +46,11 @@ module Cult
       "\#<#{self.class.name} \"#{self.class.driver_name}\">"
     end
 
+
     def to_s
       self.class.driver_name
     end
+
 
     # Attempts to loads all of the required gems before doing any real work
     def self.try_requires!

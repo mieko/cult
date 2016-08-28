@@ -12,9 +12,11 @@ module Cult
           "'" + s.gsub("'", "\\\\\'") + "'"
         end
 
+
         def quote(s)
           s.to_json
         end
+
 
         def slash(s)
           Shellwords.escape(s)
@@ -27,10 +29,12 @@ module Cult
         end
         alias_method :q, :quote
 
+
         def squote
           Util.squote(self)
         end
         alias_method :sq, :squote
+
 
         def slash
           Util.slash(self)
@@ -43,10 +47,12 @@ module Cult
         end
         alias_method :q, :quote
 
+
         def squote(sep = ' ')
           map {|v| Util.squote(v) }.join(sep)
         end
         alias_method :sq, :squote
+
 
         def slash
           map {|v| Util.slash(v) }.join(' ')
@@ -64,6 +70,7 @@ module Cult
         end
       end
 
+
       def _process(template)
         Dir.chdir(@pwd || Dir.pwd) do
           ::ERB.new(template).result(binding)
@@ -71,12 +78,15 @@ module Cult
       end
     end
 
+
     def initialize(pwd: nil, **kw)
       @context = Context.new(pwd: pwd, **kw)
     end
 
+
     def process(text)
       @context._process(text)
     end
+
   end
 end

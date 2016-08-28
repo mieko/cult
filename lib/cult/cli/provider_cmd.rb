@@ -35,6 +35,7 @@ module Cult
         end
       end
 
+
       provider_list = Cri::Command.define do
         name        'list'
         aliases     'ls'
@@ -66,6 +67,7 @@ module Cult
       end
       provider.add_command(provider_list)
 
+
       provider_avail = Cri::Command.define do
         optional_project
         name       'drivers'
@@ -82,6 +84,7 @@ module Cult
         end
       end
       provider.add_command(provider_avail)
+
 
       provider_create = Cri::Command.define do
         name        'create'
@@ -112,6 +115,7 @@ module Cult
         end
       end
       provider.add_command(provider_create)
+
 
       provider
     end

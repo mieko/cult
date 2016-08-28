@@ -20,6 +20,7 @@ module Cult
       ::Array.include(self)
     end
 
+
     # This maps #named_array_identifier to #name by default
     module ObjectExtensions
       def named_array_identifier
@@ -28,9 +29,11 @@ module Cult
       ::Object.include(self)
     end
 
+
     def to_named_array
       self
     end
+
 
     # Wrap any non-mutating methods that can return an Array,
     # and wrap the result with a NamedArray.  This is why NamedArray.select
@@ -53,6 +56,7 @@ module Cult
       Regexp.new(s[1 ... s.rindex('/')], options)
     end
     private :build_regexp_from_string
+
 
     def extract_regexp_options(s)
       offset = s.rindex('/')
@@ -93,26 +97,30 @@ module Cult
       end
     end
 
+
     # first matching item
     def [](key)
       return super if key.is_a?(Integer)
       all(key, :find)
     end
 
+
     # first matching item, or raises KeyError
     def fetch(key)
       all(key, :find) or raise KeyError
     end
 
+
     def key?(key)
       !! all(key, :find)
     end
-
     alias_method :exist?, :key?
+
 
     def keys
       map(&:named_array_identifier)
     end
+
 
     def values
       self

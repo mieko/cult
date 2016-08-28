@@ -7,12 +7,14 @@ module Cult
     class ConsoleContext < SimpleDelegator
       attr_accessor :original_argv
 
+
       def initialize(project, argv)
         super(project)
 
         @original_argv = [$0, *argv]
         ENV['CULT_PROJECT'] = self.path
       end
+
 
       def load_rc
         consolerc = project.location_of(".cultconsolerc")
@@ -21,19 +23,23 @@ module Cult
         eval File.read(consolerc) if File.exist?(consolerc)
       end
 
+
       private def exit(*)
         # IRB tries to alias this. And it must be private, or it warns.  WTF.
         super
       end
+
 
       # Gives us an escape hatch to get the real, non-decorated object
       def project
         __getobj__
       end
 
+
       def cult(*argv)
         system $0, *argv
       end
+
 
       def binding
         super

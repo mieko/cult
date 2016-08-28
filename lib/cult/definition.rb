@@ -13,9 +13,11 @@ module Cult
     def_delegators :object, :definition_parameters, :definition_path,
                             :definition_parents
 
+
     def initialize(object)
       @object = object
     end
+
 
     def inspect
       "\#<#{self.class.name} " +
@@ -70,10 +72,12 @@ module Cult
     end
     alias_method :to_h, :bag
 
+
     def direct(k)
       fail "Use string keys" unless k.is_a?(String)
       bag[k]
     end
+
 
     def [](k)
       fail "Use string keys" unless k.is_a?(String)
@@ -97,6 +101,7 @@ module Cult
         consensus.keys[0]
       end
     end
+
 
     def []=(k, v)
       fail "Use string keys" unless k.is_a?(String)

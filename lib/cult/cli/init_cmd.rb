@@ -4,6 +4,7 @@ require 'cult/drivers/load'
 
 module Cult
   module CLI
+
     module_function
     def init_cmd
       Cri::Command.define do

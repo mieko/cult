@@ -58,6 +58,7 @@ module Cult
       []
     end
 
+
     # Chooses the smallest size setup with Ubuntu > Debian > Redhat,
     # and a random zone.
     def self.generate_defaults(definition)

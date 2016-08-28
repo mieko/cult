@@ -76,7 +76,7 @@ module Cult
                 if [ ! -f ./#{esc(task_bin)}.success ]; then  \
                   touch ./#{esc(task_bin)}.attempt && \
                   ./#{esc(task_bin)} && \
-                  touch ./#{esc(task_bin)}.success ; \
+                  mv ./#{esc(task_bin)}.attempt ./#{esc(task_bin)}.success; \
                 fi
             BASH
             unless res.empty?
