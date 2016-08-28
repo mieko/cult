@@ -22,27 +22,33 @@ module Cult
       end
     end
 
+
     def exist?
       Dir.exist?(path)
     end
 
+
     def name
       File.basename(path)
     end
+
 
     def collection_name
       class_name = self.class.name.split('::')[-1]
       class_name.downcase + 's'
     end
 
+
     def remote_path
       File.join(project.remote_path, collection_name, name)
     end
+
 
     def relative_path(obj_path)
       fail unless obj_path.start_with?(path)
       obj_path[path.size + 1 .. -1]
     end
+
 
     def inspect
       if Cult.immutable?
@@ -95,9 +101,11 @@ module Cult
       parent_roles
     end
 
+
     def includes
       definition.direct('includes') || ['all']
     end
+
 
     def parent_roles
       Array(includes).map do |name|
@@ -152,12 +160,14 @@ module Cult
         return nil
       end
 
+
       def self.cache_put(obj, *args)
         @singletons ||= {}
         key = [obj.class, *args]
         @singletons[key] = obj
         obj
       end
+
 
       def self.new(*args)
         if (result = cache_get(self, *args))
@@ -181,7 +191,7 @@ module Cult
 
 
     def build_order
-      all_items = self.tree
+      all_items = [self] + parent_roles
 
       each_node = ->(&block) {
         all_items.each(&block)
@@ -191,11 +201,13 @@ module Cult
         node.parent_roles.each(&block)
       }
 
-      TSort.tsort(each_node, each_child).uniq.to_named_array
+      TSort.tsort(each_node, each_child).to_named_array
     end
+
 
     def has_role?(role)
       ! tree[role].nil?
     end
+
   end
 end

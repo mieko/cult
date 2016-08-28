@@ -21,6 +21,7 @@ module Cult
         end
       end
 
+
       task_reserial = Cri::Command.define do
         name        'resequence'
         summary     'Resequences task serial numbers'
@@ -46,6 +47,7 @@ module Cult
 
           This command respects the global --yes flag.
         EOD
+
 
         run(arguments: 0) do |opts, args, cmd|
           if opts[:all] && Array(opts[:role]).size != 0
@@ -98,6 +100,7 @@ module Cult
       end
       task.add_command(task_reserial)
 
+
       task_sanity = Cri::Command.define do
         name        'sanity'
         summary     'checks task files for numbering sanity'
@@ -110,6 +113,7 @@ module Cult
         end
       end
       task.add_command task_sanity
+
 
       task_create = Cri::Command.define do
         name        'create'

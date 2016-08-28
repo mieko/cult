@@ -11,9 +11,11 @@ module Cult
       @project = project
     end
 
+
     def template
       @erb ||= Template.new(project: project)
     end
+
 
     # Skeleton files are files that are copied over for a new project.
     # We allow template files to live in the skeleton directory too, but
@@ -24,15 +26,18 @@ module Cult
       end
     end
 
+
     def template_file(name)
       File.join(SKEL_DIR, name)
     end
+
 
     def copy_template(name, dst)
       src = template_file(name)
       dst = project.location_of(dst)
       process_file(src, dst)
     end
+
 
     def process_file(src, dst = nil)
       dst ||= begin
@@ -66,6 +71,7 @@ module Cult
       File.chmod(File.stat(src).mode, dst)
       puts
     end
+
 
     def copy!
       puts "Creating project from skeleton..."

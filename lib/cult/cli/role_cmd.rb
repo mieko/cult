@@ -91,6 +91,7 @@ module Cult
       end
       role.add_command role_create
 
+
       role_destroy = Cri::Command.define do
         name        'destroy'
         aliases     'delete', 'rm'
@@ -140,6 +141,7 @@ module Cult
         end
       end
       role.add_command(role_list)
+
 
       role
     end

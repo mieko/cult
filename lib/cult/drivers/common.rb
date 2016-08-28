@@ -41,6 +41,7 @@ module Cult
         cls.extend(ClassMethods)
       end
 
+
       # works with with_id_mapping to convert a human-readible/normalized key
       # to the id the backend service expects.  Allows '=value' to force a
       # literal value, and gives better error messages.

@@ -11,9 +11,11 @@ module Cult
       "files"
     end
 
+
     def relative_path
       name
     end
+
 
     attr_reader :path
     attr_reader :role
@@ -28,6 +30,7 @@ module Cult
       "\#<#{self.class.name} role:#{role&.name.inspect} name:#{name.inspect}>"
     end
     alias_method :to_s, :inspect
+
 
     def self.all_for_role(project, role)
       Dir.glob(File.join(role.path, "files", "**/*")).map do |filename|

@@ -2,8 +2,33 @@ require 'net/ssh'
 require 'net/scp'
 require 'shellwords'
 require 'rainbow'
+require 'rubygems/package'
+require 'rubygems/package/tar_writer'
 
 module Cult
+
+  class Bundle
+    attr_reader :tar
+    def initialize(io, &block)
+      @tar = Gem::Package::TarWriter.new(io)
+      if block_given?
+        begin
+          yield self
+        ensure
+          @tar.close
+          @tar = nil
+        end
+      end
+    end
+
+    def add_file(project, role, node, transferable)
+      data = transferable.contents(project, role, node, pwd: role.path)
+      tar.add_file(transferable.remote_path, transferable.file_mode) do |io|
+        io.write(data)
+      end
+    end
+  end
+
   class Commander
     attr_reader :project
     attr_reader :node
@@ -17,31 +42,32 @@ module Cult
       Shellwords.escape(s)
     end
 
-    def send_file(ssh, role, transferable)
-      src, dst = transferable.path, transferable.remote_path
-      data = StringIO.new(transferable.contents(project, role, node,
-                                                pwd: role.path))
-      puts "Sending file: #{dst}"
+    def send_bundle(ssh, role)
+      io = StringIO.new
+      Bundle.new(io) do |bundle|
+        puts "Building bundle..."
+        role.build_order.each do |r|
+          (r.artifacts + r.tasks).each do |transferable|
+            bundle.add_file(project, r, node, transferable)
+          end
+        end
+      end
+      filename = "cult-#{role.name}.tar"
+      puts "Uploading bundle #{filename}..."
 
       scp = Net::SCP.new(ssh)
-      ssh.exec! "mkdir -p #{esc(File.dirname(dst))}"
-      scp.upload!(data, dst)
-      ssh.exec!("chmod 0#{transferable.file_mode.to_s(8)} #{esc(dst)}")
-    rescue
-      $stderr.puts "fail: #{role.inspect}, #{transferable.inspect}"
-      raise
+      io.rewind
+      scp.upload!(io, filename)
+      ssh.exec! "tar -xf #{esc(filename)} && rm #{esc(filename)}"
     end
 
     def install!(role)
-      role.build_order.each do |r|
-        puts "Installing role: #{Rainbow(r.name).blue}"
-        connect(user: r.definition['user']) do |ssh|
-          (r.artifacts + r.tasks).each do |f|
-            send_file(ssh, r, f)
-          end
+      connect(user: role.definition['user']) do |ssh|
+        send_bundle(ssh, role)
 
+        role.build_order.each do |r|
+          puts "Installing role: #{Rainbow(r.name).blue}"
           working_dir = r.remote_path
-
           r.tasks.each do |t|
             puts "Executing: #{t.remote_path}"
             task_bin = r.relative_path(t.path)
@@ -50,10 +76,12 @@ module Cult
                 if [ ! -f ./#{esc(task_bin)}.success ]; then  \
                   touch ./#{esc(task_bin)}.attempt && \
                   ./#{esc(task_bin)} && \
-                  touch ./#{esc(task_bin)}.success ; \
+                  mv ./#{esc(task_bin)}.attempt ./#{esc(task_bin)}.success; \
                 fi
             BASH
-            puts res unless res.empty?
+            unless res.empty?
+              puts Rainbow(res.gsub(/^/, '    ')).darkgray.italic
+            end
           end
         end
       end
@@ -65,6 +93,7 @@ module Cult
     end
 
     def connect(user:, &block)
+      puts "Connecting with user=#{user}"
       Net::SSH.start(node.host, user) do |ssh|
         yield ssh
       end

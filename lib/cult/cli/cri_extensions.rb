@@ -9,16 +9,20 @@ module Cult
       end
     end
 
+
     module CommandExtensions
       def project_required?
         defined?(@project_required) ? @project_required : true
       end
 
+
       def project_required=(v)
         @project_required = v
       end
 
+
       attr_accessor :argument_spec
+
 
       # This function returns a wrapped version of the block passed to `run`
       def block
@@ -32,6 +36,7 @@ module Cult
           super.call(opts, args, cmd)
         end
       end
+
 
       def check_argument_spec!(args, range)
         range = (range..range) if range.is_a?(Integer)
@@ -61,10 +66,12 @@ module Cult
       Cri::Command.prepend(self)
     end
 
+
     module CommandDSLExtensions
       def optional_project
         @command.project_required = false
       end
+
 
       def run(arguments: nil, &block)
         @command.argument_spec = arguments if arguments

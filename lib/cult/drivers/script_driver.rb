@@ -11,9 +11,11 @@ module Cult
         fail NotImplementedError
       end
 
+
       def provision!(name:, size:, zone:, image:, ssh_key_files:, extra: {})
         fail NotImplementedError
       end
+
 
       def self.setup!
         super

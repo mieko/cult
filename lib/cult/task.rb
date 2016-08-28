@@ -13,6 +13,7 @@ module Cult
     LEADING_ZEROS = 5
     BASENAME_RE = /\A(\d{#{LEADING_ZEROS},})-([\w-]+)(\..+)?\z/i
 
+
     def initialize(role, path)
       @role = role
       @path = path
@@ -26,14 +27,17 @@ module Cult
       end
     end
 
+
     def self.from_serial_and_name(role, serial:, name:)
       basename = sprintf("%0#{LEADING_ZEROS}d-%s", serial, name)
       new(role, File.join(role.path, collection_name, basename))
     end
 
+
     def relative_path
       File.basename(path)
     end
+
 
     def inspect
       "\#<#{self.class.name} role:#{role&.name.inspect} " +
@@ -41,9 +45,11 @@ module Cult
     end
     alias_method :to_s, :inspect
 
+
     def file_mode
       super | 0100
     end
+
 
     def self.all_for_role(project, role)
       Dir.glob(File.join(role.path, "tasks", "*")).map do |filename|
