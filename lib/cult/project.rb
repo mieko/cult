@@ -3,7 +3,6 @@ require 'shellwords'
 require 'json'
 require 'yaml'
 
-require 'cult/config'
 require 'cult/role'
 require 'cult/provider'
 

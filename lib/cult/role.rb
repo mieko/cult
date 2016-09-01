@@ -2,7 +2,6 @@ require 'tsort'
 
 require 'cult/task'
 require 'cult/artifact'
-require 'cult/config'
 require 'cult/definition'
 require 'cult/named_array'
 require 'cult/singleton_instances'

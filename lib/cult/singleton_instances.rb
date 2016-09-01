@@ -9,7 +9,7 @@ module Cult
 
 
       def cache_get(cls, *args)
-        singletons[[cls, *args]])
+        singletons[[cls, *args]]
       end
 
 
@@ -22,7 +22,9 @@ module Cult
       def new(*args)
         return super unless Cult.singletons?
 
-        return result if (result = cache_get(self, *args))
+        if (result = cache_get(self, *args))
+          return result
+        end
 
         super.tap do |result|
           cache_put(result, *args)
