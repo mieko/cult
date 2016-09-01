@@ -1,9 +1,11 @@
 require 'cult/transferable'
 require 'cult/named_array'
+require 'cult/singleton_instances'
 
 module Cult
   class Task
     include Transferable
+    include SingletonInstances
 
     attr_reader :path
     attr_reader :role

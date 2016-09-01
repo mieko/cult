@@ -5,21 +5,18 @@ require 'cult/artifact'
 require 'cult/config'
 require 'cult/definition'
 require 'cult/named_array'
+require 'cult/singleton_instances'
 
 module Cult
   class Role
+    include SingletonInstances
+
     attr_accessor :project
     attr_accessor :path
 
     def initialize(project, path)
       @project = project
       @path = path
-
-      if Cult.immutable?
-        definition
-        parent_roles
-        self.freeze
-      end
     end
 
 
@@ -51,11 +48,7 @@ module Cult
 
 
     def inspect
-      if Cult.immutable?
-        "\#<#{self.class.name} id:#{object_id.to_s(36)} #{name.inspect}>"
-      else
-        "\#<#{self.class.name} #{name.inspect}>"
-      end
+      "\#<#{self.class.name} id:#{object_id.to_s(36)} #{name.inspect}>"
     end
     alias_method :to_s, :inspect
 
@@ -144,39 +137,6 @@ module Cult
     def self.all_files(project)
       Dir.glob(File.join(path(project), "*")).select do |file|
         Dir.exist?(file)
-      end
-    end
-
-
-    if Cult.immutable?
-      def self.cache_get(cls, *args)
-        @singletons ||= {}
-        key = [cls, *args]
-
-        if (rval = @singletons[key])
-          return rval
-        end
-
-        return nil
-      end
-
-
-      def self.cache_put(obj, *args)
-        @singletons ||= {}
-        key = [obj.class, *args]
-        @singletons[key] = obj
-        obj
-      end
-
-
-      def self.new(*args)
-        if (result = cache_get(self, *args))
-          return result
-        else
-          result = super
-          cache_put(result, *args)
-          return result
-        end
       end
     end
 

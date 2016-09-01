@@ -1,11 +1,13 @@
 require 'cult/transferable'
 require 'cult/named_array'
+require 'cult/singleton_instances'
 
 module Cult
   # I'd love to just call this "File", but the ambiguity with ::File would
   # make it a pain.
   class Artifact
     include Transferable
+    include SingletonInstances
 
     def self.collection_name
       "files"

@@ -16,11 +16,6 @@ module Cult
 
     def initialize(path)
       @path = path
-
-      if Cult.immutable?
-        self.provider
-        self.freeze
-      end
     end
 
 
