@@ -73,27 +73,36 @@ module Cult
     private :extract_regexp_options
 
 
+    # Most of the named-array predicates are meant to be useful for user input
+    # or an interactive session.  We give special behavior to certain strings
+    # the user might enter to convert them to a regexp, etc.
+    def expand_predicate(predicate)
+      case predicate
+        when String
+          predicate[0] == '/' ? build_regexp_from_string(predicate) : predicate
+        when Regexp, Proc, Range
+          predicate
+        when Symbol
+          predicate.to_s
+        when NilClass
+          nil
+        else
+          fail KeyError, "Invalid predicate: #{predicate.inspect}"
+      end
+    end
+    private :expand_predicate
+
+
     # Returns all keys that match if method == :select, the first if
     # method == :find
     def all(key, method = :select)
-      key = case key
-        when Integer
-          # Fallback to default behavior
-          return super
-        when String
-          key[0] == '/' ? build_regexp_from_string(key) : key
-        when Regexp, Proc, Range
-          key
-        when Symbol
-          key.to_s
-        when NilClass
-          return nil
-        else
-          fail KeyError, "#{key} did not resolve to an object"
-      end
+      return super if key.is_a?(Integer)
+      return nil if key.nil?
+
+      predicate = expand_predicate(key)
 
       send(method) do |v|
-        key === v.named_array_identifier
+        predicate === v.named_array_identifier
       end
     end
 
@@ -146,9 +155,11 @@ module Cult
     # end
     #
     def with(**kw)
-      fail ArgumentError, "with only accepts one predicate" if kw.size != 1
+      fail ArgumentError, "with requires exactly one predicate" if kw.size != 1
 
       method, predicate = kw.first
+      predicate = expand_predicate(predicate)
+
       select do |candidate|
         method = ["names_for_#{method}", method].find do |m|
           candidate.respond_to?(m)
