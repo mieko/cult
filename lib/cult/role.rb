@@ -168,5 +168,9 @@ module Cult
       ! tree[role].nil?
     end
 
+    def names_for_role(*a)
+      build_order.map(&:name)
+    end
+
   end
 end

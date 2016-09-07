@@ -125,5 +125,40 @@ module Cult
     def values
       self
     end
+
+    # Takes a predicate in the form of:
+    #   key: value
+    # And returns all items that both respond_to?(key), and
+    # predicate === the result of sending key.
+    #
+    # Instances can override what predicates mean by defining "names_for_*" to
+    # override what is tested.
+    #
+    # For example, if you have an Object that contains a list of "Foos", but
+    # you want to select them by name, you'd do something like:
+    #
+    # class Object
+    #   attr_reader :foos   # Instances of Foo class
+    #
+    #   def names_for_foos  # Now we can select by name
+    #     foos.map(&:name)
+    #   end
+    # end
+    #
+    def with(**kw)
+      fail ArgumentError, "with only accepts one predicate" if kw.size != 1
+
+      method, predicate = kw.first
+      select do |candidate|
+        method = ["names_for_#{method}", method].find do |m|
+          candidate.respond_to?(m)
+        end
+
+        if method
+          result = Array(candidate.send(method))
+          result.any? {|r| predicate === r }
+        end
+      end
+    end
   end
 end
