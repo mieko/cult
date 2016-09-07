@@ -68,39 +68,53 @@ module Cult
       end
 
 
-      def destroy!(id:)
+      def destroy!(id:, ssh_key_ids: [])
         client.droplets.delete(id: id)
+        ssh_key_ids.each do |ssh_key_id|
+          destroy_ssh_key!(id: ssh_key_id)
+        end
       end
 
+      def destroy_ssh_key!(id:)
+        client.ssh_keys.delete(id: id)
+      end
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:)
-        ssh_key_ids = Array(ssh_key_files).map do |file|
-          upload_ssh_key(file: file).id
-        end
+        transaction do |xac|
+          ssh_key_ids = Array(ssh_key_files).map do |file|
+            upload_ssh_key(file: file).id.tap do |id|
+              xac.rollback do
+                destroy_ssh_key!(id: id)
+              end
+            end
+          end
 
-        begin
-          params = {
-            name:     name,
-            size:     fetch_mapped(name: :size, from: sizes_map, key: size),
-            image:    fetch_mapped(name: :image, from: images_map, key: image),
-            region:   fetch_mapped(name: :zone, from: zones_map, key: zone),
-            ssh_keys: ssh_key_ids,
+          begin
+            params = {
+              name:     name,
+              size:     fetch_mapped(name: :size, from: sizes_map, key: size),
+              image:    fetch_mapped(name: :image, from: images_map, key: image),
+              region:   fetch_mapped(name: :zone, from: zones_map, key: zone),
+              ssh_keys: ssh_key_ids,
 
-            private_networking: true,
-            ipv6: true
-          }
-        rescue KeyError => e
-          fail ArgumentError, "Invalid argument: #{e.message}"
-        end
+              private_networking: true,
+              ipv6: true
+            }
+          rescue KeyError => e
+            fail ArgumentError, "Invalid argument: #{e.message}"
+          end
 
-        droplet = DropletKit::Droplet.new(params)
+          droplet = DropletKit::Droplet.new(params)
 
-        if droplet.nil?
-          fail "Droplet was nil: #{params.inspect}"
-        end
+          if droplet.nil?
+            fail "Droplet was nil: #{params.inspect}"
+          end
 
-        rollback_on_error(id: droplet.id) do
           droplet = client.droplets.create(droplet)
+          xac.rollback do
+            destroy!(id: droplet.id)
+          end
+
           droplet = await_creation(droplet)
 
           ipv4_public  = droplet.networks.v4.find {|n| n.type == 'public'  }

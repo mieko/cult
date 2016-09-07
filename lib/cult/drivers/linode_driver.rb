@@ -124,7 +124,7 @@ module Cult
       end
 
 
-      def destroy!(id:)
+      def destroy!(id:, ssh_key_ids: [])
         client.linode.delete(linodeid: id, skipchecks: true)
       end
 
@@ -135,10 +135,13 @@ module Cult
         zoneid  = fetch_mapped(name: :zone, from: zones_map, key: zone)
         disksize = disk_size_for_size(size)
 
-        linodeid = client.linode.create(datacenterid: zoneid,
-                                        planid: sizeid).linodeid
+        transaction do |xac|
+          linodeid = client.linode.create(datacenterid: zoneid,
+                                          planid: sizeid).linodeid
+          xac.rollback do
+            destroy!(id: linodeid)
+          end
 
-        rollback_on_error(id: linodeid) do
           # We give it a name early so we can find it in the Web UI if anything
           # goes wrong.
           client.linode.update(linodeid: linodeid, label: name)
@@ -172,8 +175,8 @@ module Cult
           diskid = client.linode.disk.createfromdistribution(params).diskid
 
 
-          # We don't have to reference the config specifically: It'll be the only
-          # configuration that exists, so it'll be used.
+          # We don't have to reference the config specifically: It'll be the
+          # only configuration that exists, so it'll be used.
           client.linode.config.create(linodeid: linodeid,
                                       kernelid: latest_kernel_id,
                                       disklist: "#{diskid},#{swapid}",
@@ -211,6 +214,7 @@ module Cult
               meta:         {}
           }
         end
+
       end
 
 

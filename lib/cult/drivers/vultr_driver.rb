@@ -94,7 +94,7 @@ module Cult
       def upload_ssh_key(file:)
         key = ssh_key_info(file: file)
         Vultr::SSHKey.create(name: "Cult: #{key[:name]}",
-                             ssh_key: key[:data])[:result]
+                             ssh_key: key[:data])[:result]["SSHKEYID"]
       end
       with_api_key :upload_ssh_key
 
@@ -106,34 +106,48 @@ module Cult
       end
 
 
-      def destroy!(id:)
+      def destroy!(id:, ssh_key_ids: [])
         Vultr::Server.destroy(SUBID: id)
+        ssh_key_ids.each do |ssh_key_id|
+          destroy_ssh_key!(id: ssh_key_id)
+        end
       end
       with_api_key :destroy!
 
+      def destroy_ssh_key!(id:)
+        Vultr::SSHKey.destroy(SSHKEYID: id)
+      end
+      with_api_key :destroy_ssh_key!
+
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:)
-        ssh_keys = Array(ssh_key_files).map do |filename|
-          upload_ssh_key(file: filename)
-        end
+        transaction do |xac|
+          ssh_key_ids = Array(ssh_key_files).map do |filename|
+            upload_ssh_key(file: filename).tap do |ssh_key_id|
+              xac.rollback do
+                destroy_ssh_key!(id: ssh_key_id)
+              end
+            end
+          end
 
-        sizeid  = fetch_mapped(name: :size, from: sizes_map, key: size)
-        imageid = fetch_mapped(name: :image, from: images_map, key: image)
-        zoneid  = fetch_mapped(name: :zone, from: zones_map, key: zone)
+          sizeid  = fetch_mapped(name: :size, from: sizes_map, key: size)
+          imageid = fetch_mapped(name: :image, from: images_map, key: image)
+          zoneid  = fetch_mapped(name: :zone, from: zones_map, key: zone)
 
-        r = Vultr::Server.create(DCID: zoneid,
-                                 OSID: imageid,
-                                 VPSPLANID: sizeid,
-                                 enable_ipv6: 'yes',
-                                 enable_private_network: 'yes',
-                                 label: name,
-                                 hostname: name,
-                                 SSHKEYID: ssh_keys.map{|v| v["SSHKEYID"] }
-                                                   .join(','))
+          r = Vultr::Server.create(DCID: zoneid,
+                                   OSID: imageid,
+                                   VPSPLANID: sizeid,
+                                   enable_ipv6: 'yes',
+                                   enable_private_network: 'yes',
+                                   label: name,
+                                   hostname: name,
+                                   SSHKEYID: ssh_key_ids.map(&:to_s).join(','))
 
-        subid = r[:result]["SUBID"]
+          subid = r[:result]["SUBID"]
+          xac.rollback do
+            destroy!(id: subid)
+          end
 
-        rollback_on_error(id: subid) do
           # Wait until it's active, it won't have an IP until then
           backoff_loop do
             r = Vultr::Server.list(SUBID: subid)[:result]
@@ -152,7 +166,7 @@ module Cult
               zone:          zone,
               image:         image,
 
-              ssh_key_ids:   keys.map {|v| v["SSHKEYID"]},
+              ssh_key_ids:   ssh_key_ids,
 
               id:           subid,
               created_at:   Time.now.iso8601,

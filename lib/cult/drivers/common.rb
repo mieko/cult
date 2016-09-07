@@ -1,10 +1,11 @@
 require 'socket'
 require 'net/ssh'
+require 'cult/transaction'
 
 module Cult
   module Drivers
-
     module Common
+
       module ClassMethods
         # Lets us write a method "something_map" that returns {'ident' => ...},
         # and also get a function "something" that returns the keys.
@@ -34,11 +35,6 @@ module Cult
             remove_instance_variable(var_name)
           end
         end
-      end
-
-
-      def self.included(cls)
-        cls.extend(ClassMethods)
       end
 
 
@@ -78,21 +74,6 @@ module Cult
           data:        data,
           file:        file
         }
-      end
-
-
-      # Enter this block once a node has been created.  It makes sure it's
-      # destroyed if there's an error later in the procedure.
-      def rollback_on_error(id:, &block)
-        begin
-          yield
-        rescue Exception => e
-          begin
-            destroy!(id: id)
-          ensure
-            raise e
-          end
-        end
       end
 
 
@@ -185,6 +166,11 @@ module Cult
             end
           end
         end
+      end
+
+      def self.included(cls)
+        cls.extend(ClassMethods)
+        cls.include(::Cult::Transaction)
       end
 
     end

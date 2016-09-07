@@ -93,7 +93,6 @@ module Cult
         fail "Couldn't generate SSH key, command: #{cmd}"
       end
     end
-    private :generate_ssh_keys!
 
   end
 end
