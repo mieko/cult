@@ -106,28 +106,23 @@ module Cult
       end
 
 
-      def destroy!(id:, ssh_key_ids: [])
+      def destroy!(id:, ssh_key_id: nil)
         Vultr::Server.destroy(SUBID: id)
-        ssh_key_ids.each do |ssh_key_id|
-          destroy_ssh_key!(id: ssh_key_id)
-        end
+        destroy_ssh_key!(id: ssh_key_id) if ssh_key_id
       end
       with_api_key :destroy!
 
-      def destroy_ssh_key!(id:)
-        Vultr::SSHKey.destroy(SSHKEYID: id)
+      def destroy_ssh_key!(ssh_key_id:)
+        Vultr::SSHKey.destroy(SSHKEYID: ssh_key_id)
       end
       with_api_key :destroy_ssh_key!
 
 
-      def provision!(name:, size:, zone:, image:, ssh_key_files:)
+      def provision!(name:, size:, zone:, image:, ssh_public_key:)
         transaction do |xac|
-          ssh_key_ids = Array(ssh_key_files).map do |filename|
-            upload_ssh_key(file: filename).tap do |ssh_key_id|
-              xac.rollback do
-                destroy_ssh_key!(id: ssh_key_id)
-              end
-            end
+          ssh_key_id = upload_ssh_key(file: ssh_public_key)
+          xac.rollback do
+            destroy_ssh_key!(ssh_key_id: ssh_key_id)
           end
 
           sizeid  = fetch_mapped(name: :size, from: sizes_map, key: size)
@@ -141,7 +136,7 @@ module Cult
                                    enable_private_network: 'yes',
                                    label: name,
                                    hostname: name,
-                                   SSHKEYID: ssh_key_ids.map(&:to_s).join(','))
+                                   SSHKEYID: ssh_key_id)
 
           subid = r[:result]["SUBID"]
           xac.rollback do
@@ -166,7 +161,7 @@ module Cult
               zone:          zone,
               image:         image,
 
-              ssh_key_ids:   ssh_key_ids,
+              ssh_key_id:    ssh_key_id,
 
               id:           subid,
               created_at:   Time.now.iso8601,

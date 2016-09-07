@@ -156,7 +156,7 @@ module Cult
                                                 image: node_spec[:image],
                                                 size: node_spec[:size],
                                                 zone: node_spec[:zone],
-                                                ssh_key_files: node.ssh_public_key_file)
+                                                ssh_public_key: node.ssh_public_key_file)
                 prov_data['provider'] = provider.name
                 File.write(Cult.project.dump_name(node.state_path),
                            Cult.project.dump_object(prov_data))
@@ -195,7 +195,7 @@ module Cult
           end
 
           nodes.each do |node|
-            puts "Node: #{node.inspect}"
+            puts "#{node.name}\t#{node.provider&.name}\t#{node.roles.map(&:name)}"
           end
         end
       end

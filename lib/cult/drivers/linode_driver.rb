@@ -124,12 +124,12 @@ module Cult
       end
 
 
-      def destroy!(id:, ssh_key_ids: [])
+      def destroy!(id:, ssh_key_id: [])
         client.linode.delete(linodeid: id, skipchecks: true)
       end
 
 
-      def provision!(name:, size:, zone:, image:, ssh_key_files:)
+      def provision!(name:, size:, zone:, image:, ssh_public_key:)
         sizeid  = fetch_mapped(name: :size, from: sizes_map, key: size)
         imageid = fetch_mapped(name: :image, from: images_map, key: image)
         zoneid  = fetch_mapped(name: :zone, from: zones_map, key: zone)
@@ -146,10 +146,6 @@ module Cult
           # goes wrong.
           client.linode.update(linodeid: linodeid, label: name)
           client.linode.ip.addprivate(linodeid: linodeid)
-
-          ssh_keys = Array(ssh_key_files).map do |file|
-            ssh_key_info(file: file)
-          end
 
           # You shouldn't run meaningful swap, but this makes the Web UI not
           # scare you, and apparently Linux runs better with ANY swap,
@@ -168,7 +164,7 @@ module Cult
             # Linode's max length is 128, generates longer than that to
             # no get the fixed == and truncates.
             rootpass: SecureRandom.base64(100)[0...128],
-            rootsshkey: ssh_keys.map {|k| k[:data] }.join("\n"),
+            rootsshkey: ssh_key_info(file: ssh_public_key)[:data],
             size: disksize - SWAP_SIZE
           }
 

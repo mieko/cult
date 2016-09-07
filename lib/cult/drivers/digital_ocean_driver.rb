@@ -52,9 +52,9 @@ module Cult
       def upload_ssh_key(file:)
         key = ssh_key_info(file: file)
         # If we already have one with this fingerprint, use it.
-        client.ssh_keys.create \
-          DropletKit::SSHKey.new(public_key: key[:data],
-                                 name: "Cult: #{key[:name]}")
+        dk_key = DropletKit::SSHKey.new(public_key: key[:data],
+                                        name: "Cult: #{key[:name]}")
+        client.ssh_keys.create(dk_key).id
       end
 
 
@@ -68,25 +68,20 @@ module Cult
       end
 
 
-      def destroy!(id:, ssh_key_ids: [])
+      def destroy!(id:, ssh_key_id: nil)
         client.droplets.delete(id: id)
-        ssh_key_ids.each do |ssh_key_id|
-          destroy_ssh_key!(id: ssh_key_id)
-        end
+        destroy_ssh_key!(id: ssh_key_id) if ssh_key_id
       end
 
-      def destroy_ssh_key!(id:)
-        client.ssh_keys.delete(id: id)
+      def destroy_ssh_key!(ssh_key_id:)
+        client.ssh_keys.delete(id: ssh_key_id)
       end
 
-      def provision!(name:, size:, zone:, image:, ssh_key_files:)
+      def provision!(name:, size:, zone:, image:, ssh_public_key:)
         transaction do |xac|
-          ssh_key_ids = Array(ssh_key_files).map do |file|
-            upload_ssh_key(file: file).id.tap do |id|
-              xac.rollback do
-                destroy_ssh_key!(id: id)
-              end
-            end
+          ssh_key_id = upload_ssh_key(file: ssh_public_key)
+          xac.rollback do
+            destroy_ssh_key!(id: ssh_key_id)
           end
 
           begin
@@ -95,7 +90,7 @@ module Cult
               size:     fetch_mapped(name: :size, from: sizes_map, key: size),
               image:    fetch_mapped(name: :image, from: images_map, key: image),
               region:   fetch_mapped(name: :zone, from: zones_map, key: zone),
-              ssh_keys: ssh_key_ids,
+              ssh_keys: [ssh_key_id],
 
               private_networking: true,
               ipv6: true
@@ -129,7 +124,7 @@ module Cult
               zone:          zone,
               image:         image,
 
-              ssh_key_ids:   ssh_key_ids,
+              ssh_key_id:    ssh_key_id,
 
               id:            droplet.id,
               created_at:    droplet.created_at,
