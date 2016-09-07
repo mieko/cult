@@ -32,7 +32,8 @@ module Cult
 
         run(arguments: 1) do |opts, args, cmd|
           node = CLI.fetch_item(args[0], from: Node)
-          exec "ssh", "#{node.user}@#{node.host}"
+          exec "ssh", '-i', node.ssh_private_key_file,
+               "#{node.user}@#{node.host}"
         end
       end
       node.add_command(node_ssh)
@@ -155,7 +156,8 @@ module Cult
                                                 image: node_spec[:image],
                                                 size: node_spec[:size],
                                                 zone: node_spec[:zone],
-                                                ssh_key_files: '/Users/mike/.ssh/id_rsa.pub')
+                                                ssh_key_files: node.ssh_public_key_file)
+                prov_data['provider'] = provider.name
                 File.write(Cult.project.dump_name(node.state_path),
                            Cult.project.dump_object(prov_data))
 

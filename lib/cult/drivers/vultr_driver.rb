@@ -90,26 +90,11 @@ module Cult
       with_api_key    :sizes_map
 
 
-      def ssh_keys
-        Vultr::SSHKey.list[:result].values
-      end
-      memoize      :ssh_keys
-      with_api_key :ssh_keys
-
 
       def upload_ssh_key(file:)
         key = ssh_key_info(file: file)
-
-        vkey = if (exist = ssh_keys.find {|e| e["ssh_key"] == key[:data] })
-          exist
-        else
-          ssh_keys_dememo!
-          Vultr::SSHKey.create(name: "Cult: #{key[:name]}",
-                               ssh_key: key[:data])[:result]
-        end
-
-        vkey["fingerprint"] = key[:fingerprint]
-        vkey
+        Vultr::SSHKey.create(name: "Cult: #{key[:name]}",
+                             ssh_key: key[:data])[:result]
       end
       with_api_key :upload_ssh_key
 
@@ -128,7 +113,7 @@ module Cult
 
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:)
-        keys = Array(ssh_key_files).map do |filename|
+        ssh_keys = Array(ssh_key_files).map do |filename|
           upload_ssh_key(file: filename)
         end
 
@@ -143,8 +128,8 @@ module Cult
                                  enable_private_network: 'yes',
                                  label: name,
                                  hostname: name,
-                                 SSHKEYID: keys.map{|v| v["SSHKEYID"] }
-                                               .join(','))
+                                 SSHKEYID: ssh_keys.map{|v| v["SSHKEYID"] }
+                                                   .join(','))
 
         subid = r[:result]["SUBID"]
 
@@ -166,8 +151,8 @@ module Cult
               size:          size,
               zone:          zone,
               image:         image,
-              ssh_key_files: ssh_key_files,
-              ssh_keys:      keys.map{|v| v["fingerprint"]},
+
+              ssh_key_ids:   keys.map {|v| v["SSHKEYID"]},
 
               id:           subid,
               created_at:   Time.now.iso8601,

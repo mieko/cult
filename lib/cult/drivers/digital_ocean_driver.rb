@@ -1,6 +1,5 @@
 require 'cult/driver'
 require 'cult/drivers/common'
-require 'net/ssh'
 require 'json'
 
 module Cult
@@ -49,24 +48,13 @@ module Cult
       with_id_mapping :zones_map
 
 
-      def ssh_keys
-        client.ssh_keys.all.to_a.map(&:to_h)
-      end
-      memoize :ssh_keys
-
 
       def upload_ssh_key(file:)
         key = ssh_key_info(file: file)
         # If we already have one with this fingerprint, use it.
-        if (exist = ssh_keys.find {|dk| dk[:fingerprint] == key[:fingerprint]})
-          exist
-        else
-          ssh_keys_dememo!
-          client.ssh_keys.create \
-            DropletKit::SSHKey.new(fingerprint: key[:fingerprint],
-                                   public_key: key[:data],
-                                   name: key[:name])
-        end
+        client.ssh_keys.create \
+          DropletKit::SSHKey.new(public_key: key[:data],
+                                 name: "Cult: #{key[:name]}")
       end
 
 
@@ -86,8 +74,8 @@ module Cult
 
 
       def provision!(name:, size:, zone:, image:, ssh_key_files:)
-        fingerprints = Array(ssh_key_files).map do |file|
-          upload_ssh_key(file: file)[:fingerprint]
+        ssh_key_ids = Array(ssh_key_files).map do |file|
+          upload_ssh_key(file: file).id
         end
 
         begin
@@ -96,7 +84,7 @@ module Cult
             size:     fetch_mapped(name: :size, from: sizes_map, key: size),
             image:    fetch_mapped(name: :image, from: images_map, key: image),
             region:   fetch_mapped(name: :zone, from: zones_map, key: zone),
-            ssh_keys: fingerprints,
+            ssh_keys: ssh_key_ids,
 
             private_networking: true,
             ipv6: true
@@ -126,8 +114,8 @@ module Cult
               size:          size,
               zone:          zone,
               image:         image,
-              ssh_key_files: ssh_key_files,
-              ssh_keys:      fingerprints,
+
+              ssh_key_ids:   ssh_key_ids,
 
               id:            droplet.id,
               created_at:    droplet.created_at,

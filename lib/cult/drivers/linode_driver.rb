@@ -200,8 +200,6 @@ module Cult
               size:          size,
               zone:          zone,
               image:         image,
-              ssh_key_files: ssh_keys.map{|k| k[:file]},
-              ssh_keys:      ssh_keys.map{|k| k[:fingerprint]},
 
               id:           linodeid,
               created_at:   Time.now.iso8601,

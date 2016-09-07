@@ -93,8 +93,11 @@ module Cult
     end
 
     def connect(user:, &block)
-      puts "Connecting with user=#{user}"
-      Net::SSH.start(node.host, user) do |ssh|
+      puts "Connecting with user=#{user}, key=#{node.ssh_private_key_file}"
+      Net::SSH.start(node.host,
+                     user,
+                     keys_only: true,
+                     keys: [node.ssh_private_key_file]) do |ssh|
         yield ssh
       end
     end

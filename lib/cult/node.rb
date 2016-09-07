@@ -1,5 +1,6 @@
 require 'cult/role'
 require 'fileutils'
+require 'shellwords'
 
 module Cult
   class Node < Role
@@ -10,6 +11,9 @@ module Cult
       FileUtils.mkdir_p(node.path)
       File.write(project.dump_name(node.node_path),
                  project.dump_object(data))
+
+      node.generate_ssh_keys!
+
       return by_name(project, data[:name])
     end
 
@@ -58,5 +62,31 @@ module Cult
 
 
     alias_method :roles, :parent_roles
+
+
+    def ssh_public_key_file
+      File.join(path, 'ssh.pub')
+    end
+
+    def ssh_private_key_file
+      File.join(path, 'ssh.key')
+    end
+
+    def generate_ssh_keys!
+      esc = ->(s) { Shellwords.escape(s) }
+      tmp_public = ssh_private_key_file + '.pub'
+
+      # Wanted to use -o and -t ecdsa, but Net::SSH still has some
+      # issues with ECDSA, and only 4.0 beta supports -o style new keys
+      cmd = "ssh-keygen -N '' -t rsa -b 4096 -C #{esc.(name)} " +
+            "-f #{esc.(ssh_private_key_file)} && " +
+            "mv #{esc.(tmp_public)} #{esc.(ssh_public_key_file)}"
+      %x(#{cmd})
+      unless $?.success?
+        fail "Couldn't generate SSH key, command: #{cmd}"
+      end
+    end
+    private :generate_ssh_keys!
+
   end
 end
