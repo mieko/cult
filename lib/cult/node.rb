@@ -60,6 +60,13 @@ module Cult
       definition.direct('roles') || super
     end
 
+    def provider
+      project.providers[definition['provider']]
+    end
+
+    def names_for_provider
+      [ provider&.name ]
+    end
 
     alias_method :roles, :parent_roles
 
