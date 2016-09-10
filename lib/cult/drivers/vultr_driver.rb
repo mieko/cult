@@ -6,8 +6,6 @@ module Cult
     class VultrDriver < ::Cult::Driver
       self.required_gems = 'vultr'
 
-      include Common
-
       attr_reader :api_key
 
       def initialize(api_key:)

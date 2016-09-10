@@ -2,6 +2,7 @@ require 'cult/drivers/common'
 
 module Cult
   class Driver
+    include ::Cult::Drivers::Common
 
     # This is raised when a Driver is instantiated,  but the required
     # gems are not installed.

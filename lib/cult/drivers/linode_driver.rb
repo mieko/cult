@@ -45,8 +45,6 @@ module Cult
     class LinodeDriver < ::Cult::Driver
       self.required_gems = 'linode'
 
-      include Common
-
       SWAP_SIZE = 256
 
       attr_reader :client

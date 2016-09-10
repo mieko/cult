@@ -6,8 +6,6 @@ module Cult
     class DigitalOceanDriver < ::Cult::Driver
       self.required_gems = 'droplet_kit'
 
-      include Common
-
       attr_reader :client
 
       def initialize(api_key:)
