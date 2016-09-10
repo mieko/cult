@@ -1,5 +1,4 @@
 require 'fileutils'
-require 'cult/template'
 
 module Cult
   class Skel

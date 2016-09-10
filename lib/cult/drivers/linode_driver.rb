@@ -1,6 +1,3 @@
-require 'cult/driver'
-require 'cult/cli/common'
-
 require 'securerandom'
 require 'time'
 

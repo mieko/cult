@@ -1,6 +1,3 @@
-require 'cult/skel'
-require 'cult/commander'
-
 require 'SecureRandom'
 
 module Cult

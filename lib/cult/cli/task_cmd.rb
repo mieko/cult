@@ -1,6 +1,3 @@
-require 'cult/task'
-require 'cult/role'
-
 module Cult
   module CLI
     module_function

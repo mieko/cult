@@ -3,8 +3,6 @@ require 'shellwords'
 require 'json'
 require 'yaml'
 
-require 'cult/role'
-require 'cult/provider'
 
 module Cult
   class Project

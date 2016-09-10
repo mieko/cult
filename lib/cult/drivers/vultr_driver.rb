@@ -1,6 +1,3 @@
-require 'cult/driver'
-require 'cult/drivers/common'
-
 require 'net/ssh'
 require 'time'
 

@@ -1,6 +1,7 @@
-require 'cult/role'
 require 'fileutils'
 require 'shellwords'
+
+require 'cult/role'
 
 module Cult
   class Node < Role

@@ -1,5 +1,3 @@
-require 'cult/skel'
-require 'cult/project'
 require 'cult/drivers/load'
 
 module Cult

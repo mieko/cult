@@ -1,6 +1,3 @@
-require 'cult/driver'
-require 'cult/named_array'
-
 module Cult
   module Drivers
 

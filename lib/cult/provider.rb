@@ -1,6 +1,3 @@
-require 'cult/named_array'
-require 'cult/definition'
-
 require 'forwardable'
 
 module Cult

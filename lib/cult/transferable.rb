@@ -1,8 +1,5 @@
-require 'cult/template'
-
 module Cult
   module Transferable
-
     module ClassMethods
       def collection_name
         name.split('::')[-1].downcase + 's'

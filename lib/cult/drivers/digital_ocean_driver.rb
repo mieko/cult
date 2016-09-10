@@ -1,5 +1,3 @@
-require 'cult/driver'
-require 'cult/drivers/common'
 require 'json'
 
 module Cult

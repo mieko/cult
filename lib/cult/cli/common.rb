@@ -1,6 +1,8 @@
 require 'io/console'
 require 'shellwords'
 
+require 'cult/cli/cri_extensions'
+
 module Cult
   module CLI
 

@@ -1,5 +1,6 @@
 require 'socket'
 require 'net/ssh'
+
 require 'cult/transaction'
 
 module Cult

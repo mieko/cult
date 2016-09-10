@@ -1,11 +1,5 @@
 require 'tsort'
 
-require 'cult/task'
-require 'cult/artifact'
-require 'cult/definition'
-require 'cult/named_array'
-require 'cult/singleton_instances'
-
 module Cult
   class Role
     include SingletonInstances

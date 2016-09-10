@@ -1,5 +1,4 @@
 require 'cult/transferable'
-require 'cult/named_array'
 require 'cult/singleton_instances'
 
 module Cult

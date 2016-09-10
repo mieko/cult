@@ -1,4 +1,3 @@
-require 'cult/definition'
 require 'cult/drivers/common'
 
 module Cult
