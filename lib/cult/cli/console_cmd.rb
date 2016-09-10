@@ -1,20 +1,28 @@
 require 'delegate'
 require 'rainbow'
 
+require 'cult/user_refinements'
+
 module Cult
   module CLI
 
-    class ConsoleContext < SimpleDelegator
+    class ConsoleContext < ProjectContext
+      using ::Cult::UserRefinements
+
       attr_accessor :original_argv
 
-
+      attr_reader :project
       def initialize(project, argv)
-        super(project)
+        @project = project
+        # super(project)
 
         @original_argv = [$0, *argv]
         ENV['CULT_PROJECT'] = self.path
       end
 
+      def path
+        project.path
+      end
 
       def load_rc
         consolerc = project.location_of(".cultconsolerc")
@@ -29,17 +37,9 @@ module Cult
         super
       end
 
-
-      # Gives us an escape hatch to get the real, non-decorated object
-      def project
-        __getobj__
-      end
-
-
       def cult(*argv)
         system $0, *argv
       end
-
 
       def binding
         super

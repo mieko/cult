@@ -1,91 +1,39 @@
 require 'erb'
 require 'json'
+require 'cult/user_refinements'
 
 module Cult
   class Template
+    class Context < ProjectContext
+      using ::Cult::UserRefinements
 
-    # Alright!  We found a use for refinements!
-    module Refinements
-      module Util
-        module_function
-        def squote(s)
-          "'" + s.gsub("'", "\\\\\'") + "'"
-        end
-
-
-        def quote(s)
-          s.to_json
-        end
-
-
-        def slash(s)
-          Shellwords.escape(s)
-        end
-      end
-
-      refine String do
-        def quote
-          Util.quote(self)
-        end
-        alias_method :q, :quote
-
-
-        def squote
-          Util.squote(self)
-        end
-        alias_method :sq, :squote
-
-
-        def slash
-          Util.slash(self)
-        end
-      end
-
-      refine Array do
-        def quote(sep = ' ')
-          map {|v| Util.quote(v) }.join(sep)
-        end
-        alias_method :q, :quote
-
-
-        def squote(sep = ' ')
-          map {|v| Util.squote(v) }.join(sep)
-        end
-        alias_method :sq, :squote
-
-
-        def slash
-          map {|v| Util.slash(v) }.join(' ')
-        end
-      end
-    end
-
-    class Context
-      using Refinements
-
-      def initialize(pwd: nil, **kw)
+      def initialize(project, pwd: nil, **kw)
         @pwd = pwd
-        kw.each do |k,v|
-          define_singleton_method(k) { v }
-        end
+        super(project, **kw)
       end
 
-
-      def _process(template)
+      def _process(template, filename: nil)
         Dir.chdir(@pwd || Dir.pwd) do
-          ::ERB.new(template).result(binding)
+          erb = ::ERB.new(template)
+          erb.filename = filename
+          erb.result(binding)
         end
+      end
+
+      def binding
+        super
       end
     end
 
+    attr_reader :context
 
-    def initialize(pwd: nil, **kw)
-      @context = Context.new(pwd: pwd, **kw)
+    def initialize(project:, pwd: nil, **kw)
+      @context = Context.new(project, pwd: pwd, **kw)
     end
 
 
-    def process(text)
-      @context._process(text)
+    def process(text, filename: nil)
+      context._process(text, filename: filename)
     end
 
   end

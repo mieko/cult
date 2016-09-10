@@ -2,22 +2,19 @@ require 'yaml'
 require 'json'
 require 'forwardable'
 
-require 'cult/template'
-
 module Cult
   class Definition
     attr_reader :object
     attr_reader :bag
 
     extend Forwardable
-    def_delegators :object, :definition_parameters, :definition_path,
+    def_delegators :object, :definition_parameters,
+                            :definition_path,
                             :definition_parents
-
 
     def initialize(object)
       @object = object
     end
-
 
     def inspect
       "\#<#{self.class.name} " +
@@ -63,8 +60,8 @@ module Cult
       @bag ||= begin
         result = {}
         filenames.each do |filename|
-          erb = Template.new(definition_parameters)
-          contents = erb.process(File.read(filename))
+          erb = ::Cult::Template.new(project: nil, **definition_parameters)
+          contents = erb.process(File.read(filename), filename: filename)
           result.merge! decoder_for(filename).call(contents)
         end
         result

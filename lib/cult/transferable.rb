@@ -36,8 +36,8 @@ module Cult
       if binary?
         File.read(path)
       else
-        erb = Template.new(pwd: pwd, project: project, role: role, node: node)
-        erb.process File.read(path)
+        erb = Template.new(project: project, pwd: pwd, role: role, node: node)
+        erb.process(File.read(path), filename: path)
       end
     end
 

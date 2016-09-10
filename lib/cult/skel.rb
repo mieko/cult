@@ -50,7 +50,8 @@ module Cult
 
       dst, data = case src
         when /\.erb\z/
-          [ dst.sub(/\.erb\z/, ''), template.process(File.read(src))]
+          [ dst.sub(/\.erb\z/, ''),
+            template.process(File.read(src), filename: src)]
         else
           [ dst, File.read(src) ]
         end
