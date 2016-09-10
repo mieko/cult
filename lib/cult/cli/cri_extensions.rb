@@ -4,8 +4,7 @@ module Cult
   module CLI
     class ::String
       def format_description
-        self.gsub(/(\S)\n(\S)/m, '\1 \2')
-            .gsub(/\.[ ]{2}(\S)/m, '. \1')
+        self
       end
     end
 
