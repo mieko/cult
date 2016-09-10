@@ -2,6 +2,7 @@ module Cult
   module SingletonInstances
 
     module ClassMethods
+
       private
       def singletons
         @singletons ||= {}

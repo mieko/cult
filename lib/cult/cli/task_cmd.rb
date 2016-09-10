@@ -12,21 +12,40 @@ module Cult
         summary     'Task Manipulation'
         usage       'task [command]'
         description <<~EOD.format_description
+          Tasks are basically shell scripts.  Or anything with a \#! line, or
+          that can be executed by name.
 
+          Each task belongs to a Role, and the collection of Tasks in a Role,
+          when ran in sequence, define what the Role does.
+
+          For example, you could have a 'database-sever' Role, which would
+          include tasks with filenames like:
+
+            00000-add-postgres-apt-repo
+            00001-install-postgres
+            00002-create-roles
+            00003-update-hba
+            00004-install-tls-cert
+            00005-start-postgres
+
+          All of these Tasks would be run in sequence to define what you
+          consider a `database-server` should look like.  Note that a task's
+          sequence is defined by a leading number, and `task resequence` will
+          neatly line these up for you.
         EOD
 
         run(arguments: 0) do |opts, args, cmd|
           puts cmd.help
-          exit
         end
       end
 
 
-      task_reserial = Cri::Command.define do
+      task_resequence = Cri::Command.define do
         name        'resequence'
+        aliases     'reserial'
         summary     'Resequences task serial numbers'
 
-        flag     :A,  :all,             'Reserial all roles'
+        flag     :A,  :all,             'Re-sequence all roles'
         flag     :G,  :'git-add',       '`git add` each change'
         required :r,  :role,            'Roles to resequence (multiple)',
                       multiple: true
@@ -98,7 +117,7 @@ module Cult
           end
         end
       end
-      task.add_command(task_reserial)
+      task.add_command(task_resequence)
 
 
       task_sanity = Cri::Command.define do
