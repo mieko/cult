@@ -103,7 +103,7 @@ module Cult
 
       def destroy!(id:, ssh_key_id: nil)
         Vultr::Server.destroy(SUBID: id)
-        destroy_ssh_key!(id: ssh_key_id) if ssh_key_id
+        destroy_ssh_key!(ssh_key_id: ssh_key_id) if ssh_key_id
       end
       with_api_key :destroy!
 

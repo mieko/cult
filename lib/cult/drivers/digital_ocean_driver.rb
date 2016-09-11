@@ -66,7 +66,7 @@ module Cult
 
       def destroy!(id:, ssh_key_id: nil)
         client.droplets.delete(id: id)
-        destroy_ssh_key!(id: ssh_key_id) if ssh_key_id
+        destroy_ssh_key!(ssh_key_id: ssh_key_id) if ssh_key_id
       end
 
       def destroy_ssh_key!(ssh_key_id:)

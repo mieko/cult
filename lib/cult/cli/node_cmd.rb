@@ -1,4 +1,5 @@
 require 'SecureRandom'
+require 'fileutils'
 
 module Cult
   module CLI
@@ -168,6 +169,42 @@ module Cult
         end
       end
       node.add_command node_create
+
+      node_destroy = Cri::Command.define do
+        name        'destroy'
+        aliases     'rm'
+        usage       'destroy NODE'
+        summary     'Destroy nodes'
+        description <<~EOD.format_description
+          Destroys all nodes named NODE, or match the pattern described by
+          NODE.
+
+          First, the remote node is destroyed, then the local definition.
+
+          This command respects the global --yes option, otherwise, you will
+          be prompted before each destroy.
+        EOD
+
+        run(arguments: 1..-1) do |opts, args, cmd|
+          nodes = CLI.fetch_items(args, from: Node)
+          nodes.each do |node|
+            if CLI.yes_no?("Destroy node `#{node}`?")
+              puts "destroying #{node}"
+              begin
+                node.provider.destroy!(id: node.definition['id'],
+                                       ssh_key_id: node.definition['ssh_key_id'])
+              rescue Exception => e
+                puts "Exception while remote-destroying node: #{e.to_s}\n" +
+                     "#{e.backtrace}"
+                puts "Continuing, though."
+              end
+              fail unless node.path.match(/#{Regexp.escape(node.name)}/)
+              FileUtils.rm_rf(node.path)
+            end
+          end
+        end
+      end
+      node.add_command(node_destroy)
 
       node_list = Cri::Command.define do
         name        'list'

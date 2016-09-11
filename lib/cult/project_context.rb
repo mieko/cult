@@ -1,8 +1,10 @@
-require 'cult/project'
 require 'forwardable'
 
 module Cult
   class ProjectContext
+    extend Forwardable
+    def_delegators :project, :methods, :respond_to?, :to_s, :inspect
+
     attr_reader :project
 
     def initialize(project, **extra)
@@ -14,17 +16,8 @@ module Cult
     end
 
     def method_missing(*args)
-      puts args.inspect
       project.send(*args)
     end
 
-    def methods
-      project.methods
-    end
-
-    def respond_to?(*args)
-      project.send(__method__, *args)
-    end
   end
-
 end
