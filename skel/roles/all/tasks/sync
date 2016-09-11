@@ -14,8 +14,8 @@ set -e
 # 192.168.1.1 node-name # all role1 role2 role3
 #
 
-CULTMAP=~/cult/hosts
-
+CULTMAP="$HOME/cult/hosts"
+mkdir -p $(basename "$CULTMAP")
 sudo rm -f "$CULTMAP"
 
 <% nodes.each do |n| %>
