@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+
+# This file generates a map of all hosts on each node, in an /etc/hosts like
+# format.  Because it's included in all, it'll be executed before your custom
+# roles' sync task.  That means you can parse the cultmap instead of using
+# custom Ruby templating, if that's not your thing.
+#
+# Keep in mind that this file is evaluated on the local machine, and its result
+# is sent to the remote host.
+#
+# The output format is:
+#
+# 192.168.1.1 node-name # all role1 role2 role3
+#
+
+CULTMAP=~/cult/hosts
+
+sudo rm -f "$CULTMAP"
+
+<% nodes.each do |n| %>
+  <% roles = n.build_order.map(&:name).join " " %>
+  echo "<%= n.ipv4_private %> <%= n.name %> # <%= roles %>" | sudo tee -a "$CULTMAP"
+<% end %>
