@@ -42,8 +42,8 @@ module Cult
         usage       'create [options] NAME...'
         summary     'Create a new node'
         description <<~EOD.format_description
-          This command creates a new node specification.  With --bootstrap,
-          it'll also provision it, so it'll actually exist out there.
+          This command creates a new node specification and then creates it with
+          your provider.
 
           The newly created node will have all the roles listed in --role.  If
           none are specified, it'll have the role "all".  If no name is
@@ -73,8 +73,6 @@ module Cult
         required :Z, :zone,      'Provider zone'
         required :I, :image,     'Provider image'
         required :S, :size,      'Provider instance size'
-
-        flag     :b, :bootstrap, 'Bring up node'
 
         run(arguments: 0..-1) do |opts, args, cmd|
           random_suffix = ->(basename) do
@@ -149,20 +147,18 @@ module Cult
             }
 
             Node.from_data!(Cult.project, data).tap do |node|
-              if opts[:bootstrap]
-                prov_data = provider.provision!(name: node.name,
-                                                image: node_spec[:image],
-                                                size: node_spec[:size],
-                                                zone: node_spec[:zone],
-                                                ssh_public_key: node.ssh_public_key_file)
-                prov_data['provider'] = provider.name
-                File.write(Cult.project.dump_name(node.state_path),
-                           Cult.project.dump_object(prov_data))
+              prov_data = provider.provision!(name: node.name,
+                                              image: node_spec[:image],
+                                              size: node_spec[:size],
+                                              zone: node_spec[:zone],
+                                              ssh_public_key: node.ssh_public_key_file)
+              prov_data['provider'] = provider.name
+              File.write(Cult.project.dump_name(node.state_path),
+                         Cult.project.dump_object(prov_data))
 
-                c = Commander.new(project: Cult.project, node: node)
-                c.bootstrap!
-                c.install!(node)
-              end
+              c = Commander.new(project: Cult.project, node: node)
+              c.bootstrap!
+              c.install!(node)
             end
           end
 
