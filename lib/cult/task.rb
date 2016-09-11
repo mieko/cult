@@ -8,7 +8,7 @@ module Cult
     attr_reader :serial
     attr_reader :name
 
-    LEADING_ZEROS = 5
+    LEADING_ZEROS = 3
     BASENAME_RE = /\A(\d{#{LEADING_ZEROS},})-([\w-]+)(\..+)?\z/i
 
 

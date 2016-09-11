@@ -18,12 +18,12 @@ module Cult
           For example, you could have a 'database-sever' Role, which would
           include tasks with filenames like:
 
-            00000-add-postgres-apt-repo
-            00001-install-postgres
-            00002-create-roles
-            00003-update-hba
-            00004-install-tls-cert
-            00005-start-postgres
+            000-add-postgres-apt-repo
+            001-install-postgres
+            002-create-roles
+            003-update-hba
+            004-install-tls-cert
+            005-start-postgres
 
           All of these Tasks would be run in sequence to define what you
           consider a `database-server` should look like.  Note that a task's
