@@ -1,6 +1,7 @@
 ![Cult][logo]
 # Cult
 
+
 ## Introduction
 
 Cult is a tool to manage fleets of servers. It tries to work in an obvious
@@ -10,16 +11,17 @@ and terminology.
 Cult may be what you're looking for if:
 
   * You like the transparency of shell-script setup but have outgrown it, and
-    it's turning into a tangled mess
+    it's turning into a tangled mess.  You can create a more structured tangled
+    mess with Cult.
   * "Configuration Management Systems" and "Known Configuration State" stuff
-    rubs you the wrong way
+    rubs you the wrong way.
   * You're not worried about abstracting away Unix, as if you'll be deploying
-    on a herd of Amigas next year
+    on a herd of Amigas next year.
   * You're not looking to find a cloud-hosted meta-script to effectively
-    `apt-get -y install nginx`
+    `apt-get -y install nginx`.
   * You have no ceremony around spinning up and killing servers. Cult can
     manage real metal, but its default mindset is: if you fuck up too bad, you
-    can spin up a fresh instance
+    can spin up a fresh instance.
   * When you think of a forward migration, the first thing that comes to mind
     is `#!...`
   * You don't get why you need more than a working SSH to configure a server,
@@ -33,13 +35,13 @@ Cult's probably not your bourbon and ginger if:
 
   * You see value in "converging toward a configuration", as if you're guiding
     your precious children through the path of life, and helping them evolve
-    into better people.
+    into better servers.
   * You have one big-ass old server that's gets conservatively upgraded via
     efforts big enough to have a project name. Cult can help you *out* of
-    that, though.
+    that, though.  Maybe.
   * You're sold on image-in-a-container-in-a-KVM deployment. That's totally
     reasonable, but Cult doesn't really do anything particularly special
-    to help you if you're happy with the process you have building containers.
+    to help you if you're happy with the process you have building images.
   * You expect to have the same configuration abstractly work on a totally
     diverse set of platforms (e.g., one "formula" that works on Ubuntu,
     FreeBSD, and SCO OpenServer 5). Cult can manage these absolutely fine, but
@@ -49,7 +51,8 @@ Cult's probably not your bourbon and ginger if:
     worth of highly-tuned inputs into a Configuration Management System. Cult
     itself does less for you, but requires a lot less of you.
 
-But, what you gain via Cult is transparency, repeatability, and obviousness.
+But, what you gain via Cult is transparency, repeatability, and obviousness.  
+Hopefully.
 
 
 ## Installation
@@ -69,9 +72,9 @@ use the driver.
 Cult requires nothing to be installed on each node, other than an operating SSH
 server and Bourne Shell. If you know you've got Bash on the other end, feel
 free to write your tasks in Bash. If you want to write tasks in Ruby, Python,
-Node or Perl, etc, one of your firsts Tasks in the `all` role should be to
-`apt-get -y install {ruby,python,node}`. All subsequent tasks will have that
-interpreter available.
+Node or Perl, etc, one of your firsts Tasks in the `all` or `bootstrap` role
+should be to `apt-get -y install {ruby,python,node}`. All subsequent tasks will
+have that interpreter available.
 
 
 ## General Theory
@@ -114,6 +117,7 @@ you can connect to it. The `bootstrap` role can then kick in. Your `boostrap`
 role will typically create the `cult` user, disable the root account, etc (the
 default bootstrap role indeed does exactly this.)
 
+
 ### Nodes
 
 A node is a physical instance running somewhere. A node has a name, like
@@ -125,18 +129,23 @@ A node named `web1` is an idea, but hasn't spawned. A node named with its full
 description should represent a real server somewhere, that is (hopefully)
 running.
 
+
 ### Roles
 A role is a collection of files (usually configuration files), Tasks (usually
 shell scripts), and a configuration (`role.json`). A role can include other
-roles via `includes:`. A role can state it conflicts with another role via
-`conflicts:`.
+roles via `includes:`.
 
-A Role's tasks are named like `00000-a-descriptive-name`, because the only
-ordering Cult does is asciibetical.
+A Role's tasks are named like `000-a-descriptive-name`, because the only
+ordering Cult does is asciibetical.  Tasks named numerically are considered
+build tasks.  A Task named "sync" is built, shipped, and executed during
+`cult fleet sync`.  Other files are ignored, so you can symlink or whatever
+between them (if you want some sort of meta-role or something.)
 
 Every task, file, and even `role.json` is pre-processed with ERB before it gets
 processed by Cult or shipped to a node. This lets you customize behavior based
-on the node, the role, the provider, the project, or anything else you'd like.
+on the node, the role, the provider, the project, /dev/urandom, or anything
+else you'd like.
+
 
 #### Special Roles
 There are two Roles generated by default that you should think of as
@@ -155,12 +164,6 @@ special-ish:
      know Cult was enabled on the server, has a demo script that sets the
      hostname.
 
-## UI
-
-Even though you aren't required to use it, Cult includes the terminal-mode GUI
-packages (`$ cult ui`). Because it's 2016, and we're not worried about a few
-MB of extra packages hanging around anymore. We're steadily trying to improve
-this cool-ass tmux-based UI, but it's still new right now.
 
 ## Usage
 
@@ -168,7 +171,8 @@ We're going to put together a complete usage guide, tutorial, and example repo
 once Cult has settled down a bit. It's still pre-1.0 software, and we still
 like breaking things to make it work better for us.
 
-### 👻 Spooky Secrets
+
+### Spooky Secrets
 
   * `cult console` is built to be really nice to use. If you're not afraid of
     Ruby, the method names are chosen to read almost like pseudo-code. It
@@ -179,6 +183,8 @@ like breaking things to make it work better for us.
     first driver with `drivers[0]`, find it by name with `drivers['linode']`,
     or (*get ready for fancy stuff:*) look it up by a Regexp with
     `drivers[/ocean/i]`.
+  * Check this out on the console:
+    `nodes[/^dev/].with(role: /httpd/).with(something: /else/)`
   * The NamedArray stuff even works on the command-line with String arguments,
     and will convert strings that start with '/' to Regexps to search by name.
   * Although Cult will only *generate* JSON, not having comments and other
@@ -206,7 +212,8 @@ particular:
   1. Exercising the server bring-up process from bottom-up as the normal mode
      of operation. This is why Cult makes you bring up a node from provision/
      bootstrap each time, instead of using snapshots, a feature virtually every
-     VPS provider supports.
+     VPS provider supports.  (The snapshot thing is looking pretty tempting,
+     though.)
   2. Making it less reasonable to have nodes hanging around that have ended up
      in their current state via baby-step migrations for too long. Cult does
      this fine, but makes it easier to just test a new node with a clean build.
@@ -214,8 +221,16 @@ particular:
      conditional logic. If a node is not where you want, bring up another that
      is, and kill the old one.
 
-We can be convinced otherwise, but these are sort of core tenets of what Cult
-is about.
+We can be convinced otherwise, but these sort of feel like the core tenets of
+what Cult is about.
+
+Cult began and reached a useful state in a burst of exploratory hacking.  It
+accidentally turned out really useful for us.  It wasn't written with tests in
+lockstep. We'd love to have tests, but with our devel-branch style division, it
+hasn't been a priority yet (with other fires to put out.)  There wasn't, and
+probably won't be perfectly bisect-able single-feature commits.  This may make
+you feel a bit antsy.  Think of it more as jazz improv than an orchestra.
+
 
 ### Contributing
 
@@ -230,10 +245,12 @@ have to be taken seriously*, note:
      can be unpaid software contractors working on the demands of strangers on
      the internet.
   *  If your contribution consists of instructing the team how to run the
-     project: Thanks, but we've got that handled.
+     project or interface with the community: Thanks, but we've got that
+     handled.
 
 If you're contributing code, asking a question, or reporting a bug, don't let
 the above items you away.
+
 
 ## License
 
