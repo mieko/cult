@@ -18,13 +18,11 @@ module Cult
       return by_name(project, data[:name])
     end
 
-    # These are convenience methods for templates, etc.
-    # delegate them to the definition.
-    %i(user host ipv4_public ipv4_private ipv6_public ipv6_private).each do |m|
-      define_method(m) do
-        definition[m.to_s]
-      end
-    end
+    delegate_to_definition :host
+    delegate_to_definition :ipv4_public
+    delegate_to_definition :ipv4_private
+    delegate_to_definition :ipv6_public
+    delegate_to_definition :ipv6_private
 
 
     def self.path(project)

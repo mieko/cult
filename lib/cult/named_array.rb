@@ -82,8 +82,8 @@ module Cult
           predicate[0] == '/' ? build_regexp_from_string(predicate) : predicate
         when Regexp, Proc, Range
           predicate
-        when Symbol
-          predicate.to_s
+        when Symbol, Integer
+          ->(v) { predicate.to_s == v.to_s }
         when NilClass
           nil
         else
@@ -171,5 +171,7 @@ module Cult
         end
       end
     end
+
+    alias_method :where, :with
   end
 end

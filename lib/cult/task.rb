@@ -7,9 +7,11 @@ module Cult
     attr_reader :role
     attr_reader :serial
     attr_reader :name
+    attr_reader :type
 
     LEADING_ZEROS = 3
     BASENAME_RE = /\A(\d{#{LEADING_ZEROS},})-([\w-]+)(\..+)?\z/i
+    EVENTS = [:sync]
 
 
     def initialize(role, path)
@@ -17,11 +19,20 @@ module Cult
       @path = path
       @basename = File.basename(path)
 
+      unless self.class.valid_task_name?(@basename)
+        fail ArgumentError, "invalid task name: #{path}"
+      end
+
       if (m = @basename.match(BASENAME_RE))
+        @type = :build
         @serial = m[1].to_i
         @name = m[2]
+      elsif EVENTS.map(&:to_s).include?(@basename)
+        @type = :event
+        @serial = nil
+        @name = @basename
       else
-        fail ArgumentError, "invalid task name: #{path}"
+        fail "WTF"
       end
     end
 
@@ -37,8 +48,18 @@ module Cult
     end
 
 
+    def build_task?
+      type == :build
+    end
+
+
+    def event_task?
+      type != :build
+    end
+
+
     def inspect
-      "\#<#{self.class.name} role:#{role&.name.inspect} " +
+      "\#<#{self.class.name} type: #{type} role:#{role&.name.inspect} " +
           "serial:#{serial} name:#{name.inspect}>"
     end
     alias_method :to_s, :inspect
@@ -48,15 +69,18 @@ module Cult
       super | 0100
     end
 
+    def self.valid_task_name?(basename)
+      EVENTS.map(&:to_s).include?(basename) || basename.match(BASENAME_RE)
+    end
+
 
     def self.all_for_role(project, role)
       Dir.glob(File.join(role.path, "tasks", "*")).map do |filename|
-        next unless File.basename(filename).match(BASENAME_RE)
+        next unless valid_task_name?(File.basename(filename))
         new(role, filename).tap do |new_task|
           yield new_task if block_given?
         end
       end.compact.to_named_array
     end
-
   end
 end

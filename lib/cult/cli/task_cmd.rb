@@ -80,7 +80,7 @@ module Cult
 
           roles.each do |role|
             puts "Resequencing role: `#{role.name}'"
-            tasks = role.tasks.sort_by do |task|
+            tasks = role.build_tasks.sort_by do |task|
               # This makes sure we don't change order for duplicate serials
               [task.serial, task.name]
             end

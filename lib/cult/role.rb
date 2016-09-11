@@ -4,6 +4,15 @@ module Cult
   class Role
     include SingletonInstances
 
+    def self.delegate_to_definition(method_name, definition_key = nil)
+      definition_key ||= method_name
+      define_method(method_name) do
+        definition[definition_key.to_s]
+      end
+    end
+
+    delegate_to_definition :user
+
     attr_accessor :project
     attr_accessor :path
 
@@ -59,6 +68,16 @@ module Cult
 
     def tasks
       Task.all_for_role(project, self)
+    end
+
+
+    def build_tasks
+      tasks.select(&:build_task?)
+    end
+
+
+    def event_tasks
+      tasks.select(&:event_task?)
     end
 
 
@@ -164,6 +183,10 @@ module Cult
 
     def names_for_role(*a)
       build_order.map(&:name)
+    end
+
+    def names_for_task
+      tasks.map(&:name)
     end
 
   end
