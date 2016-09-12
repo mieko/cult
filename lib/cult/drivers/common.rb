@@ -90,7 +90,8 @@ module Cult
 
         # We don't particularly need the debian codename
         s = s.gsub(/(\d)[\s-]+(\S+)/, '\1') if s.match(/^debian/i)
-        s
+        s = s.gsub(/[\s.]+/, '-')
+        s.downcase
       end
 
 
@@ -100,14 +101,12 @@ module Cult
         times = 0
         total_wait = 0.0
 
-        catch :done do
-          loop do
-            yield times, total_wait
-            sleep wait
-            times += 1
-            total_wait += wait
-            wait *= scale
-          end
+        loop do
+          yield times, total_wait
+          sleep wait
+          times += 1
+          total_wait += wait
+          wait *= scale
         end
       end
 
@@ -115,11 +114,14 @@ module Cult
       # Waits until SSH is available at host.  "available" jsut means
       # "listening"/acceping connections.
       def await_ssh(host)
+        puts "Awaiting sshd on #{host}"
         backoff_loop do
           begin
             sock = connect_timeout(host, 22, 1)
-            throw :done
-          rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED
+            puts "GOT IT, BREAKING!"
+            break
+          rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED, Errno::EHOSTUNREACH,
+                 Errno::EHOSTDOWN
             # Nothing, these are expected
           ensure
             sock.close if sock

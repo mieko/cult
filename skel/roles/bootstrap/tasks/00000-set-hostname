@@ -13,7 +13,7 @@ HOSTS=$(cat /etc/hosts | sed -e 's/#.*//g' | sed -e 's/\t/ /g' | tr -s ' ' | \
         grep -v '^\s*$' | cut -d' ' -f2-)
 
 # See if we're in hosts
-if ! echo "$HOSTS" | grep -q "$NODE_NAME" ; then
+if ! echo "$HOSTS" | grep -E -q "\b$NODE_NAME\b" ; then
   echo "127.0.1.1 $NODE_NAME" >> /etc/hosts
   echo "::1 $NODE_NAME" >> /etc/hosts
 fi

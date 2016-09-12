@@ -231,6 +231,28 @@ module Cult
       end
       node.add_command node_list
 
+
+      node_sync = Cri::Command.define do
+        name    'sync'
+        summary 'Synchronize host information across fleet'
+        description <<~EOD.format_description
+          Processes generates and executes tasks/sync on every node with a
+          current network setup.
+        EOD
+
+        run(arguments: 0..-1) do |opts, args, cmd|
+          nodes = args.empty? ? Cult.project.nodes
+                              : CLI.fetch_items(args, from: Node)
+          nodes.each do |node|
+            c = Commander.new(project: Cult.project, node: node)
+            c.sync!
+            puts "SYNCING #{node}"
+          end
+        end
+      end
+      node.add_command(node_sync)
+
+
       return node
     end
   end

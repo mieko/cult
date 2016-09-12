@@ -18,6 +18,7 @@ module Cult
       Shellwords.escape(s)
     end
 
+
     def send_tar(io, ssh)
       filename = SecureRandom.hex + ".tar"
       puts "Uploading bundle: #{filename}"
@@ -25,6 +26,7 @@ module Cult
       scp.upload!(io, filename)
       ssh.exec! "tar -xf #{esc(filename)} && rm #{esc(filename)}"
     end
+
 
     def create_build_tar(role)
       io = StringIO.new
@@ -40,6 +42,7 @@ module Cult
       io.rewind
       io
     end
+
 
     def exec_remote!(ssh:, role:, task:)
       token = SecureRandom.hex
@@ -63,6 +66,7 @@ module Cult
       end
     end
 
+
     def install!(role)
       connect(user: role.user) do |ssh|
         io = create_build_tar(role)
@@ -77,6 +81,7 @@ module Cult
       end
     end
 
+
     def find_sync_tasks
       r = []
       node.build_order.each do |role|
@@ -86,6 +91,7 @@ module Cult
       end
       r
     end
+
 
     def create_sync_tar
       io = StringIO.new
@@ -99,6 +105,7 @@ module Cult
       io
     end
 
+
     def sync!
       connect do |ssh|
         io = create_sync_tar
@@ -109,19 +116,29 @@ module Cult
       end
     end
 
+
     def bootstrap!
       bootstrap_role = CLI.fetch_item('bootstrap', from: Role)
       install!(bootstrap_role)
     end
 
+
     def connect(user: nil, &block)
-      user ||= node.user
-      puts "Connecting with user=#{user}, key=#{node.ssh_private_key_file}"
-      Net::SSH.start(node.host,
-                     user,
-                     keys_only: true,
-                     keys: [node.ssh_private_key_file]) do |ssh|
-        yield ssh
+      5.times do |attempt|
+        begin
+          user ||= node.user
+          puts "Connecting with user=#{user}, key=#{node.ssh_private_key_file}"
+          Net::SSH.start(node.host,
+                         user,
+                         keys_only: true,
+                         keys: [node.ssh_private_key_file]) do |ssh|
+            yield ssh
+            return
+          end
+        rescue Errno::ECONNREFUSED
+          puts "Connection refused.  Retrying"
+          sleep attempt * 3
+        end
       end
     end
   end

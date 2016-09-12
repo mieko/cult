@@ -80,7 +80,7 @@ module Cult
     end
 
 
-    def self.new(api_key:)
+    def self.new(*args)
       try_requires!
       super
     end

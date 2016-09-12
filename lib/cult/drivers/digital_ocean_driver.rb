@@ -58,7 +58,7 @@ module Cult
         d = nil
         backoff_loop do
           d = client.droplets.find(id: droplet.id)
-          throw :done if d.status == 'active'
+          break if d.status == 'active'
         end
         return d
       end
@@ -77,7 +77,7 @@ module Cult
         transaction do |xac|
           ssh_key_id = upload_ssh_key(file: ssh_public_key)
           xac.rollback do
-            destroy_ssh_key!(id: ssh_key_id)
+            destroy_ssh_key!(ssh_key_id: ssh_key_id)
           end
 
           begin

@@ -141,7 +141,7 @@ module Cult
           # Wait until it's active, it won't have an IP until then
           backoff_loop do
             r = Vultr::Server.list(SUBID: subid)[:result]
-            throw :done if r['status'] == 'active'
+            break if r['status'] == 'active'
           end
 
           iplist4 = Vultr::Server.list_ipv4(SUBID: subid)[:result].values[0]

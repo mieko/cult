@@ -111,6 +111,8 @@ module Cult
           driver = CLI.fetch_item(opts[:driver] || name, from: Driver)
           name = CLI.fetch_item(name, from: Provider, exist: false)
 
+          puts JSON.pretty_generate(driver.setup!)
+          fail "FIXME"
           puts [driver, name].inspect
         end
       end
