@@ -102,9 +102,10 @@ hatches like ERB templating on shell scripts and JSON files to do weird stuff.
 ### Drivers
 
 Cult provides a handful of Drivers which can talk to common VPS providers,
-initially DigitalOcean, Linode, and Vultr. A driver is typically 200-300 lines
-of Ruby code, and is pretty well isolated from the rest of Cult, so feel free
-to open a PR to add your provider of choice. You can get a current list with:
+initially DigitalOcean, Linode, and Vultr, and a VirtualBox driver for local
+development. A driver is typically 200-300 lines of Ruby code, and is pretty
+well isolated from the rest of Cult, so feel free to open a PR to add your
+provider of choice. You can get a current list with:
 
     $ cult provider drivers
 
@@ -171,6 +172,17 @@ We're going to put together a complete usage guide, tutorial, and example repo
 once Cult has settled down a bit. It's still pre-1.0 software, and we still
 like breaking things to make it work better for us.
 
+### Local VirtualBox-driver Development
+
+The 'virtual-box' driver sees your VMs as images, and clones one to start from.
+The guest must have the VirtualBox Guest Extensions installed and the first
+network adapter set up to "Bridged", so it acts like an actual machine.
+
+Cult expects to be able to login as "root" with the password "password", and
+immediately locks the root account after provisioning.  On ubuntu, you'll have
+to re-enabled the account with `sudo passwd root` and/or `sudo passwd -u root`.
+
+Note that VirtualBox is a little weird, and intended for development only.
 
 ### Spooky Secrets
 
