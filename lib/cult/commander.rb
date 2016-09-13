@@ -137,6 +137,8 @@ module Cult
           puts "Connecting with user=#{user}, key=#{node.ssh_private_key_file}"
           Net::SSH.start(node.host,
                          user,
+                         port: node.ssh_port,
+                         user_known_hosts_file: node.ssh_known_hosts_file,
                          timeout: 5,
                          keys_only: true,
                          keys: [node.ssh_private_key_file]) do |ssh|

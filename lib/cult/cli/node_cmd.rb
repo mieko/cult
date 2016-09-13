@@ -28,9 +28,13 @@ module Cult
         description <<~EOD.format_description
         EOD
 
+        esc = ->(s) { Shellwords.escape(s) }
+
         run(arguments: 1) do |opts, args, cmd|
           node = CLI.fetch_item(args[0], from: Node)
           exec "ssh", '-i', node.ssh_private_key_file,
+               '-p', node.ssh_port.to_s,
+               '-o', "UserKnownHostsFile=#{esc.(node.ssh_known_hosts_file)}",
                "#{node.user}@#{node.host}"
         end
       end
