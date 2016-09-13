@@ -1,5 +1,4 @@
-require 'erb'
-require 'json'
+require 'erubis'
 require 'cult/user_refinements'
 
 module Cult
@@ -12,9 +11,9 @@ module Cult
         super(project, **kw)
       end
 
-      def _process(template, filename: nil)
+      def _process(input, filename: nil)
         Dir.chdir(@pwd || Dir.pwd) do
-          erb = ::ERB.new(template)
+          erb = Erubis::Eruby.new(input)
           erb.filename = filename
           erb.result(binding)
         end
