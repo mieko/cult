@@ -233,8 +233,8 @@ module Cult
 
 
       node_sync = Cri::Command.define do
-        name    'sync'
-        summary 'Synchronize host information across fleet'
+        name        'sync'
+        summary     'Synchronize host information across fleet'
         description <<~EOD.format_description
           Processes generates and executes tasks/sync on every node with a
           current network setup.
@@ -251,6 +251,34 @@ module Cult
         end
       end
       node.add_command(node_sync)
+
+      node_ping = Cri::Command.define do
+        name        'ping'
+        summary     'Check the responsiveness of each node'
+        usage       'ping NODES'
+
+        flag :d, :destroy, 'Destroy nodes that are not responding.'
+
+        description <<~EOD.format_description
+          Connects to each node and reports health information.
+        EOD
+
+        run(arguments: 0..-1) do |opts, args, cmd|
+          nodes = args.empty? ? Cult.project.nodes
+                              : CLI.fetch_items(args, from: Node)
+          unresponsive = nodes.map do |node|
+            c = Commander.new(project: Cult.project, node: node)
+            if (r = c.ping)
+              puts Rainbow(node.name).green + ": #{r}"
+              nil
+            else
+              puts Rainbow(node.name).red + ": Unreachable"
+              node
+            end
+          end
+        end
+      end
+      node.add_command(node_ping)
 
 
       return node

@@ -118,7 +118,6 @@ module Cult
         backoff_loop do
           begin
             sock = connect_timeout(host, 22, 1)
-            puts "GOT IT, BREAKING!"
             break
           rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED, Errno::EHOSTUNREACH,
                  Errno::EHOSTDOWN

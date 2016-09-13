@@ -122,6 +122,13 @@ module Cult
       install!(bootstrap_role)
     end
 
+    def ping
+      connect do |ssh|
+        ssh.exec! "uptime"
+      end
+    rescue
+      nil
+    end
 
     def connect(user: nil, &block)
       5.times do |attempt|
@@ -130,10 +137,10 @@ module Cult
           puts "Connecting with user=#{user}, key=#{node.ssh_private_key_file}"
           Net::SSH.start(node.host,
                          user,
+                         timeout: 5,
                          keys_only: true,
                          keys: [node.ssh_private_key_file]) do |ssh|
-            yield ssh
-            return
+            return (yield ssh)
           end
         rescue Errno::ECONNREFUSED
           puts "Connection refused.  Retrying"
