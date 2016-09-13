@@ -87,7 +87,7 @@ module Cult
         when NilClass
           nil
         else
-          fail KeyError, "Invalid predicate: #{predicate.inspect}"
+          ->(v) { predicate == v }
       end
     end
     private :expand_predicate
@@ -157,17 +157,16 @@ module Cult
     def with(**kw)
       fail ArgumentError, "with requires exactly one predicate" if kw.size != 1
 
-      method, predicate = kw.first
+      key, predicate = kw.first
       predicate = expand_predicate(predicate)
 
       select do |candidate|
-        method = ["names_for_#{method}", method].find do |m|
+        methods = [key, "names_for_#{key}"].select do |m|
           candidate.respond_to?(m)
         end
 
-        if method
-          result = Array(candidate.send(method))
-          result.any? {|r| predicate === r }
+        methods.any? do |method|
+          Array(candidate.send(method)).any? { |r| predicate === r }
         end
       end
     end
