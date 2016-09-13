@@ -10,8 +10,10 @@ module Cult
 
     attr_reader :path
     attr_accessor :cult_version
+    attr_accessor :default_ip_protocol
 
     def initialize(path)
+      @default_ip_protocol = :ipv4
       @path = path
     end
 

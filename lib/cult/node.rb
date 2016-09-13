@@ -19,6 +19,7 @@ module Cult
     end
 
     delegate_to_definition :host
+    delegate_to_definition :zone
     delegate_to_definition :ipv4_public
     delegate_to_definition :ipv4_private
     delegate_to_definition :ipv6_public
@@ -59,9 +60,11 @@ module Cult
       definition.direct('roles') || super
     end
 
+
     def provider
       project.providers[definition['provider']]
     end
+
 
     def names_for_provider
       [ provider&.name ]
@@ -74,9 +77,49 @@ module Cult
       File.join(path, 'ssh.pub')
     end
 
+
     def ssh_private_key_file
       File.join(path, 'ssh.key')
     end
+
+    def ssh_known_hosts_file
+      File.join(path, 'ssh.known-host')
+    end
+
+    def ssh_port
+      # Moving SSH ports for security is lame.
+      definition['ssh_port'] || 22
+    end
+
+
+    def addr(access, protocol = project.default_ip_protocol)
+      fail ArgumentError unless [:public, :private].include?(access)
+      fail ArgumentError unless [:ipv4, :ipv6].include?(protocol)
+      send("#{protocol}_#{access}")
+    end
+
+
+    def same_network?(other)
+      [provider, zone] == [other.provider, other.zone]
+    end
+
+
+    def addr_from(other, protocol = project.default_ip_protocol)
+      same_network?(other) ? addr(:private, protocol) : addr(:public, protocol)
+    end
+
+
+    def provider_peers
+      project.nodes.with(provider: provider).reject do |n|
+        n == self
+      end
+    end
+
+
+    def zone_peers
+      provider_peers.with(zone: zone)
+    end
+
 
     def generate_ssh_keys!
       esc = ->(s) { Shellwords.escape(s) }
