@@ -90,9 +90,9 @@ module Cult
           end
 
           generate_sequenced_names = ->(name, n) do
-            result = []
-            result.push(random_suffix.(name)) until result.size == n
-            result
+            (0...n).map do
+              random_suffix.(name)
+            end
           end
 
           unless opts[:count].nil? || opts[:count].match(/^\d+$/)
@@ -218,9 +218,9 @@ module Cult
         required :r, :role, 'List only nodes which include <value>',
                      multiple: true
 
-        run(arguments: 0..1) do |opts, args, cmd|
+        run(arguments: 0..-1) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
-                              : CLI.fetch_items(*args, from: Node)
+                              : CLI.fetch_items(args, from: Node)
 
           if opts[:role]
             roles = CLI.fetch_items(opts[:role], from: Role)

@@ -85,9 +85,7 @@ module Cult
     def find_sync_tasks
       r = []
       node.build_order.each do |role|
-        role.event_tasks.each do |task|
-          r << task if task.name == 'sync'
-        end
+        r += role.event_tasks.select { |t| t.event == :sync }
       end
       r
     end
