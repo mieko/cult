@@ -3,43 +3,19 @@ module Cult
     include Transferable
     include SingletonInstances
 
-    attr_reader :path
     attr_reader :role
-    attr_reader :serial
+    attr_reader :path
     attr_reader :name
-    attr_reader :type
-
-    LEADING_ZEROS = 3
-    BASENAME_RE = /\A(\d{#{LEADING_ZEROS},})-([\w-]+)(\..+)?\z/i
-    EVENTS = [:sync]
-
 
     def initialize(role, path)
       @role = role
       @path = path
-      @basename = File.basename(path)
-
-      unless self.class.valid_task_name?(@basename)
-        fail ArgumentError, "invalid task name: #{path}"
-      end
-
-      if (m = @basename.match(BASENAME_RE))
-        @type = :build
-        @serial = m[1].to_i
-        @name = m[2]
-      elsif EVENTS.map(&:to_s).include?(@basename)
-        @type = :event
-        @serial = nil
-        @name = @basename
-      else
-        fail "WTF"
-      end
+      @name = File.basename(path)
     end
 
 
-    def self.from_serial_and_name(role, serial:, name:)
-      basename = sprintf("%0#{LEADING_ZEROS}d-%s", serial, name)
-      new(role, File.join(role.path, collection_name, basename))
+    def self.collection_name
+      "tasks"
     end
 
 
@@ -48,39 +24,83 @@ module Cult
     end
 
 
-    def build_task?
-      type == :build
-    end
-
-
-    def event_task?
-      type != :build
-    end
-
-
-    def inspect
-      "\#<#{self.class.name} type: #{type} role:#{role&.name.inspect} " +
-          "serial:#{serial} name:#{name.inspect}>"
-    end
-    alias_method :to_s, :inspect
-
-
     def file_mode
       super | 0100
     end
 
-    def self.valid_task_name?(basename)
-      EVENTS.map(&:to_s).include?(basename) || basename.match(BASENAME_RE)
+
+    def self.spawn(role, path)
+      [BuildTask, EventTask].each do |task_cls|
+        if task_cls.valid_name?(File.basename(path))
+          return task_cls.new(role, path)
+        end
+      end
+      nil
     end
 
 
     def self.all_for_role(project, role)
-      Dir.glob(File.join(role.path, "tasks", "*")).map do |filename|
-        next unless valid_task_name?(File.basename(filename))
-        new(role, filename).tap do |new_task|
-          yield new_task if block_given?
-        end
+      fail ArgumentError if block_given?
+
+      Dir.glob(File.join(role.path, "tasks", "*")).sort.map do |path|
+        spawn(role, path)
       end.compact.to_named_array
     end
+  end
+
+
+  class BuildTask < Task
+    LEADING_ZEROS = 3
+    BASENAME_RE = /\A(\d{#{LEADING_ZEROS},})-([\w-]+)(\..+)?\z/i
+
+
+    def self.valid_name?(basename)
+      !! basename.match(BASENAME_RE)
+    end
+
+
+    attr_reader :serial
+
+    def initialize(role, path)
+      super
+
+      if (m = BASENAME_RE.match(name))
+        @serial = m[1].to_i
+        @name = m[2]
+      else
+        fail ArgumentError
+      end
+    end
+
+
+    def self.from_serial_and_name(role, serial:, name:)
+      basename = sprintf("%0#{LEADING_ZEROS}d-%s", serial, name)
+      new(role, File.join(role.path, collection_name, basename))
+    end
+  end
+
+
+  class EventTask < Task
+    EVENT_TYPES = [:sync]
+    EVENT_RE = /^(#{EVENT_TYPES.join('|')})\-?/
+
+    attr_reader :event
+
+
+    def self.valid_name?(basename)
+      !! basename.match(EVENT_RE)
+    end
+
+
+    def initialize(role, path)
+      super
+      @event = event_name(name)
+    end
+
+
+    def event_name(basename)
+      basename.match(EVENT_RE)[1].to_sym
+    end
+
   end
 end

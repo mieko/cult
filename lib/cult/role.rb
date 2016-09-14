@@ -72,12 +72,12 @@ module Cult
 
 
     def build_tasks
-      tasks.select(&:build_task?)
+      tasks.select { |t| t.is_a?(Cult::BuildTask) }
     end
 
 
     def event_tasks
-      tasks.select(&:event_task?)
+      tasks.select { |t| t.is_a?(Cult::EventTask) }
     end
 
 
