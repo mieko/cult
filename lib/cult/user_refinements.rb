@@ -27,7 +27,7 @@ module Cult
 
     refine String do
       def dquote
-        Util.squote(self)
+        Util.dquote(self)
       end
       alias_method :dq, :dquote
       alias_method :q, :dquote
