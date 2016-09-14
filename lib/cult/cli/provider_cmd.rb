@@ -32,6 +32,7 @@ module Cult
 
         run(arguments: 0) do |opts, args, cmd|
           puts cmd.help
+          exit
         end
       end
 

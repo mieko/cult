@@ -37,6 +37,7 @@ cult = Cri::Command.define do
 
   flag :h, :help, 'Show this help' do |value, cmd|
     puts cmd.help
+    exit
   end
 
   flag :y, :yes, 'Answer "yes" to any questions' do
@@ -54,6 +55,7 @@ cult = Cri::Command.define do
 
   run(arguments: 0) do |opts, args, cmd|
     puts cmd.help
+    exit
   end
 end
 
