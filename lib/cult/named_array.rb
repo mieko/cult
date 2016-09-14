@@ -92,6 +92,15 @@ module Cult
     end
     private :expand_predicate
 
+    def extract_index(key)
+      re = /\[([+-]?\d+)\]$/
+      if key.is_a?(String) && (m = key.match(re))
+        subs, index = m[0], m[1]
+        [ key[0... key.size - subs.size], index.to_i ]
+      else
+        [ key, nil ]
+      end
+    end
 
     # Returns all keys that match if method == :select, the first if
     # method == :find
@@ -99,10 +108,24 @@ module Cult
       return super if key.is_a?(Integer)
       return nil if key.nil?
 
+      key, index = extract_index(key)
       predicate = expand_predicate(key)
 
-      send(method) do |v|
+      effective_method = index.nil? ? method : :select
+
+      result = send(effective_method) do |v|
         predicate === v.named_array_identifier
+      end
+
+      case method
+        when :select
+          if index
+            result = result[index]
+            result = result.nil? ? [] : [result]
+          end
+          return result
+        when :find
+          return index ? result[index] : result
       end
     end
 
