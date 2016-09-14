@@ -31,7 +31,7 @@ module Cult
 
 
       def zones_map
-        Vultr::Region.list[:result].map do |k, v|
+        Vultr::Regions.list[:result].map do |k, v|
           [slugify(v["regioncode"]), v["DCID"]]
         end.to_h
       end
@@ -57,7 +57,7 @@ module Cult
 
 
       def sizes_map
-        Vultr::Plan.list[:result].values.select do |v|
+        Vultr::Plans.list[:result].values.select do |v|
           v["plan_type"] == 'SSD'
         end.map do |v|
           if (m = v["name"].match(/^(\d+) ([MGTP]B) RAM/i))
