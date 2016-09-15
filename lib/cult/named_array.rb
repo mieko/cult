@@ -87,7 +87,7 @@ module Cult
         when NilClass
           nil
         else
-          ->(v) { predicate == v }
+          predicate
       end
     end
     private :expand_predicate
@@ -131,9 +131,16 @@ module Cult
 
 
     # first matching item
-    def [](key)
-      return super if key.is_a?(Integer)
-      all(key, :find)
+    def [](key, index = nil)
+      if key.is_a?(Integer)
+        unless index.nil?
+          fail ArgumentError, "cant specify index with an... index?"
+        end
+
+        return super(key)
+      end
+
+      index.nil? ? all(key, :find) : all(key, :select)[index]
     end
 
 
@@ -184,7 +191,7 @@ module Cult
       predicate = expand_predicate(predicate)
 
       select do |candidate|
-        methods = [key, "names_for_#{key}"].select do |m|
+        methods = [key, "query_for_#{key}", "names_for_#{key}"].select do |m|
           candidate.respond_to?(m)
         end
 
