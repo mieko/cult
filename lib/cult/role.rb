@@ -185,6 +185,10 @@ module Cult
       build_order.map(&:name)
     end
 
+    def query_for_role
+      build_order
+    end
+
     def names_for_task
       tasks.map(&:name)
     end

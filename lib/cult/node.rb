@@ -24,6 +24,7 @@ module Cult
     delegate_to_definition :ipv4_private
     delegate_to_definition :ipv6_public
     delegate_to_definition :ipv6_private
+    delegate_to_definition :created_at
 
 
     def self.path(project)
@@ -115,6 +116,24 @@ module Cult
       end
     end
 
+    def provider_leader(role, zone: nil)
+      candidates = project.nodes.with(provider: provider).with(role: role)
+      candidates = candidates.with(zone: zone) if zone
+
+      candidates.sort_by(&:created_at).first
+    end
+
+    def provider_leader?(role)
+      provider_leader(role) == self
+    end
+
+    def zone_leader(role)
+      provider_leader(role, zone: self.zone)
+    end
+
+    def zone_leader?(role)
+      zone_leader(role) == self
+    end
 
     def zone_peers
       provider_peers.with(zone: zone)
