@@ -132,7 +132,8 @@ module Cult
       5.times do |attempt|
         begin
           user ||= node.user
-          puts "Connecting with user=#{user}, key=#{node.ssh_private_key_file}"
+          puts "Connecting with user=#{user}, host=#{node.host}, " +
+               "key=#{node.ssh_private_key_file}"
           Net::SSH.start(node.host,
                          user,
                          port: node.ssh_port,
