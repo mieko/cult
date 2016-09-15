@@ -247,14 +247,16 @@ module Cult
           current network setup.
         EOD
 
+        required :p, :pass, "Only execute pass PASS.  Can be specified " +
+                            "more than once.",
+                            multiple: true
+
         run(arguments: 0..-1) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
                               : CLI.fetch_items(args, from: Node)
-          nodes.each do |node|
-            c = Commander.new(project: Cult.project, node: node)
-            c.sync!
-            puts "SYNCING #{node}"
-          end
+          c = CommanderSync.new(project: Cult.project, nodes: nodes)
+          passes = opts[:pass] ? opts[:pass].map(&:to_i) : nil
+          c.sync!(passes: passes)
         end
       end
       node.add_command(node_sync)

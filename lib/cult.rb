@@ -1,6 +1,7 @@
 require 'cult/artifact'
 require 'cult/bundle'
 require 'cult/commander'
+require 'cult/commander_sync'
 require 'cult/definition'
 require 'cult/driver'
 require 'cult/named_array'

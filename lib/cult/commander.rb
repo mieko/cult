@@ -82,19 +82,21 @@ module Cult
     end
 
 
-    def find_sync_tasks
+    def find_sync_tasks(pass:)
       r = []
       node.build_order.each do |role|
-        r += role.event_tasks.select { |t| t.event == :sync }
+        r += role.event_tasks.select do |t|
+          t.event == :sync && t.pass == pass
+        end
       end
       r
     end
 
 
-    def create_sync_tar
+    def create_sync_tar(pass:)
       io = StringIO.new
       Bundle.new(io) do |bundle|
-        find_sync_tasks.each do |task|
+        find_sync_tasks(pass: pass).each do |task|
           bundle.add_file(project, task.role, node, task)
         end
       end
@@ -104,11 +106,13 @@ module Cult
     end
 
 
-    def sync!
+    def sync!(pass:)
+      io = create_sync_tar(pass: pass)
+      return if io.eof?
+
       connect do |ssh|
-        io = create_sync_tar
         send_tar(io, ssh)
-        find_sync_tasks.each do |task|
+        find_sync_tasks(pass: pass).each do |task|
           exec_remote!(ssh: ssh, role: task.role, task: task)
         end
       end

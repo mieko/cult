@@ -39,7 +39,7 @@ module Cult
     # and wrap the result with a NamedArray.  This is why NamedArray.select
     # results in a NamedArray instead of an Array
     PROXY_METHODS = %i(& * + - << | collect compact flatten reject reverse
-                       rotate select shuffle slice sort uniq)
+                       rotate select shuffle slice sort uniq sort_by)
     PROXY_METHODS.each do |method_name|
       define_method(method_name) do |*args, &b|
         r = super(*args, &b)

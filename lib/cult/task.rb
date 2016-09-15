@@ -82,10 +82,10 @@ module Cult
 
   class EventTask < Task
     EVENT_TYPES = [:sync]
-    EVENT_RE = /^(#{EVENT_TYPES.join('|')})\-?/
+    EVENT_RE = /^(#{EVENT_TYPES.join('|')})(?:\-P(\d+))?\-?/
 
     attr_reader :event
-
+    attr_reader :pass
 
     def self.valid_name?(basename)
       !! basename.match(EVENT_RE)
@@ -95,11 +95,17 @@ module Cult
     def initialize(role, path)
       super
       @event = event_name(name)
+      @pass = pass_name(name)
     end
 
 
+    private
     def event_name(basename)
       basename.match(EVENT_RE)[1].to_sym
+    end
+
+    def pass_name(basename)
+      basename.match(EVENT_RE)[2].to_i
     end
 
   end
