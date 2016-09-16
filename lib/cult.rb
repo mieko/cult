@@ -28,6 +28,7 @@ module Cult
       defined?(@singletons) ? @singletons : env_flag('CULT_SINGLETONS', true)
     end
 
+
     def concurrency=(v)
       unless v.is_a?(Integer) && v > 0
         fail CLI::CLIError, "concurrency must be a positive integer"
@@ -35,25 +36,9 @@ module Cult
       @concurrency = v
     end
 
+
     def concurrency
-      if defined?(@concurrency)
-        @concurrency
-      else
-        if (v = ENV['CULT_CONCURRENT'])
-          @concurrency = case v
-            when /^1|0|no|n$/i
-              1
-            when /^(\d+)$/
-              $1.to_i
-            when nil, /^y|yes$/
-              :max
-            else
-              fail CLI::CLIError, "Invalid concurrency value: #{v}"
-          end
-        else
-          :max
-        end
-      end
+      defined?(@concurrency) ? @concurrency : :max
     end
 
 
