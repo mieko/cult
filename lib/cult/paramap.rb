@@ -1,5 +1,3 @@
-require 'thread'
-
 module Cult
   class Paramap
     attr_reader :enum
