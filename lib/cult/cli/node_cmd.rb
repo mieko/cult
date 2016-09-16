@@ -145,7 +145,7 @@ module Cult
             [m, value]
           end.to_h
 
-          nodes = names.map do |name|
+          Cult.paramap(names) do |name|
             data = {
               name: name,
               roles: roles.map(&:name)
@@ -275,7 +275,7 @@ module Cult
         run(arguments: 0..-1) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
                               : CLI.fetch_items(args, from: Node)
-          unresponsive = nodes.map do |node|
+          Cult.paramap(nodes) do |node|
             c = Commander.new(project: Cult.project, node: node)
             if (r = c.ping)
               puts Rainbow(node.name).green + ": #{r}"

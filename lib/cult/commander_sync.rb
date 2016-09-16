@@ -13,7 +13,7 @@ module Cult
 
       passes.each do |pass|
         puts Rainbow("Executing pass #{pass}").yellow
-        nodes.each do |node|
+        Cult.paramap(nodes) do |node|
           c = Commander.new(project: project, node: node)
           c.sync!(pass: pass)
         end

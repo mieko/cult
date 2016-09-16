@@ -53,6 +53,11 @@ cult = Cri::Command.define do
     puts 'Copyright (C) 2016 Mike A. Owens, meter.md, and Contributors'
   end
 
+  required :j, :jobs, 'Number of concurrent jobs.  Defaults to max' do |value|
+    fail Cult::CLI::CLIError, "--jobs must be a number" unless value.match(/^\d+$/)
+    Cult.concurrency = value.to_i
+  end
+
   run(arguments: 0) do |opts, args, cmd|
     puts cmd.help
     exit
