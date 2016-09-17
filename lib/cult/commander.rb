@@ -143,11 +143,12 @@ module Cult
                          port: node.ssh_port,
                          user_known_hosts_file: node.ssh_known_hosts_file,
                          timeout: 5,
+                         auth_methods: ['publickey'],
                          keys_only: true,
                          keys: [node.ssh_private_key_file]) do |ssh|
             return (yield ssh)
           end
-        rescue Errno::ECONNREFUSED
+        rescue Errno::ECONNREFUSED, Net::SSH::ConnectionTimeout
           puts "Connection refused.  Retrying"
           sleep attempt * 3
         end
