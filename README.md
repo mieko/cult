@@ -3,7 +3,6 @@
 
 
 ## Introduction
-
 Cult is a tool to manage fleets of servers. It tries to work in an obvious
 way, and doesn't intend on you learning a bunch of new metaphors, languages,
 and terminology.
@@ -56,7 +55,6 @@ Hopefully.
 
 
 ## Installation
-
 Cult is written in Ruby and available as a gem, but it is an application, not a
 library. It's not written in, and has no relation to Rails. It depends on
 Ruby 2.3 or greater. If you've got Ruby installed, via any means, the following
@@ -78,7 +76,6 @@ have that interpreter available.
 
 
 ## General Theory
-
 I think a reasonable level of abstraction for cloud deployments is such:
 
   1. *Nodes*: Actual machines, virtual or otherwise, running somewhere.
@@ -87,11 +84,11 @@ I think a reasonable level of abstraction for cloud deployments is such:
   3. *Tasks*: Roles are made of tasks, which are basically scripts, called
      things like `install-postgres` or `configure-nginx`. They're written in
      your language of choice. When you being up a Node with a Role, all of the
-     Role's tasks are executed to get it up and running.
+     Role's tasks are executed to get it up and running, and later to update
+     configuration.
   4. *Providers*: Your VPS provider, e.g., Linode, DigitalOcean, etc. These
      allow you to spawn and destroy nodes, and typically charge you a few cents
-     per node per hour. I guess there's also *Drivers*, but a Provider is
-     really just an instance of a *Driver* with an API key configured.
+     per node per hour.
 
 We hate adding anything on top of this because it increases complexity.
 
@@ -100,7 +97,6 @@ hatches like ERB templating on shell scripts and JSON files to do weird stuff.
 
 
 ### Drivers
-
 Cult provides a handful of Drivers which can talk to common VPS providers,
 initially DigitalOcean, Linode, and Vultr, and a VirtualBox driver for local
 development. A driver is typically 200-300 lines of Ruby code, and is pretty
@@ -120,32 +116,20 @@ default bootstrap role indeed does exactly this.)
 
 
 ### Nodes
-
 A node is a physical instance running somewhere. A node has a name, like
-'web1', but also has a full description, that looks something like:
-
-  web1@ubuntu-16-01.2gb:digitalocean.nyc1
-
-A node named `web1` is an idea, but hasn't spawned. A node named with its full
-description should represent a real server somewhere, that is (hopefully)
-running.
+'web1-hr7sjdh8'.  You create a node with `cult node new -r some-role`.  
+Multiple roles may be specified.  You can check on all nodes with
+`cult node ping`.
 
 
 ### Roles
 A role is a collection of files (usually configuration files), Tasks (usually
-shell scripts), and a configuration (`role.json`). A role can include other
-roles via `includes:`.
+shell scripts), and a generated configuration (`role.json`). A role can include
+other roles via `includes:`.
 
-A Role's tasks are named like `000-a-descriptive-name`, because the only
-ordering Cult does is asciibetical.  Tasks named numerically are considered
-build tasks.  A Task named "sync" is built, shipped, and executed during
-`cult fleet sync`.  Other files are ignored, so you can symlink or whatever
-between them (if you want some sort of meta-role or something.)
-
-Every task, file, and even `role.json` is pre-processed with ERB before it gets
-processed by Cult or shipped to a node. This lets you customize behavior based
-on the node, the role, the provider, the project, /dev/urandom, or anything
-else you'd like.
+Tasks and Files, and role.json  are processed with ERB when used to create a
+node.  This lets you customize behavior based on the node, the role, the
+provider, the project, /dev/urandom, or anything else you'd like.
 
 
 #### Special Roles
@@ -165,15 +149,35 @@ special-ish:
      know Cult was enabled on the server, has a demo script that sets the
      hostname.
 
+### Tasks
+Tasks are simple, but because they've been utilized in building real systems,
+there's quite a few special ways to use them.  A Role's tasks live in
+`roles/name/tasks`, and its type is inferred by its filename.
+
+#### Build Tasks
+A Role's build tasks are named like `000-a-descriptive-name`, because the only
+ordering Cult does is asciibetical. Build tasks are executed in order to build
+a node out of a role.
+
+
+#### Sync Tasks
+Sync tasks are meant to inform existing nodes of their state.  They are
+executed via `cult node sync`.  They are named `sync-description`.  By default,
+sync tasks are in "pass 0", which work a lot like build tasks.  If you have
+the need to place a sync task into a separate, later pass, you can specify it
+by naming the file something like `sync-P1-something`.  Note that
+`sync-something` and `sync-P0-something` mean the same thing.  All sync tasks
+of the same pass are executed in parallel.  To guarantee an order, place a sync
+task that must execute after another in a later pass.
+
 
 ## Usage
-
 We're going to put together a complete usage guide, tutorial, and example repo
 once Cult has settled down a bit. It's still pre-1.0 software, and we still
 like breaking things to make it work better for us.
 
-### Local VirtualBox-driver Development
 
+### Local VirtualBox-driver Development
 The 'virtual-box' driver sees your VMs as images, and clones one to start from.
 The guest must have the VirtualBox Guest Extensions installed and the first
 network adapter set up to "Bridged", so it acts like an actual machine.
@@ -185,7 +189,6 @@ to re-enabled the account with `sudo passwd root` and/or `sudo passwd -u root`.
 Note that VirtualBox is a little weird, and intended for development only.
 
 ### Spooky Secrets
-
   * `cult console` is built to be really nice to use. If you're not afraid of
     Ruby, the method names are chosen to read almost like pseudo-code. It
     supports IRB, Pry, and Ripl with command-line flags.
@@ -210,7 +213,6 @@ Note that VirtualBox is a little weird, and intended for development only.
 ## Development
 
 ### History
-
 Cult was developed to basically avoid Puppet, Chef, and Ansible. I know there
 are some really large, successful deployments of all of these. I just think
 they just do too much for me to feel safe with when shit goes crazy.
@@ -245,7 +247,6 @@ you feel a bit antsy.  Think of it more as jazz improv than an orchestra.
 
 
 ### Contributing
-
 We greatly appreciate bug reports, pull-requests, questions, and general
 commentary in the GitHub Issues. These are all *contributions*. However,
 before opening an issue demanding us to work on your feature that Cult *has to
@@ -265,7 +266,6 @@ the above items you away.
 
 
 ## License
-
 Cult is available as open source software under the terms of the
 [MIT License](http://opensource.org/licenses/MIT).
 
