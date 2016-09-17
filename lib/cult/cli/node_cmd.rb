@@ -51,7 +51,7 @@ module Cult
           your provider.
 
           The newly created node will have all the roles listed in --role.  If
-          none are specified, it'll have the role "all".  If no name is
+          none are specified, it'll have the role "base".  If no name is
           provided, it will be named for its role(s).
 
           If multiple names are provided, a new node is created for each name
@@ -104,7 +104,7 @@ module Cult
           roles = opts[:role] ? CLI.fetch_items(opts[:role], from: Role) : []
 
           if roles.empty?
-            roles = CLI.fetch_items('all', from: Role)
+            roles = CLI.fetch_items('base', from: Role)
             if names.empty?
               begin
                 names.push CLI.fetch_item('node', from: Node, exist: false)

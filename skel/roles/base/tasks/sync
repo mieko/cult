@@ -2,16 +2,16 @@
 set -e
 
 # This file generates a map of all hosts on each node, in an /etc/hosts like
-# format.  Because it's included in all, it'll be executed before your custom
-# roles' sync task.  That means you can parse the cultmap instead of using
-# custom Ruby templating, if that's not your thing.
+# format.  Because it's included in `base`, it'll be executed before your
+# custom roles' sync task.  That means you can parse the cultmap instead of
+# using custom Ruby templating, if that's not your thing.
 #
 # Keep in mind that this file is evaluated on the local machine, and its result
 # is sent to the remote host.
 #
 # The output format is:
 #
-# 192.168.1.1 node-name # all role1 role2 role3
+# 192.168.1.1 node-name # base role1 role2 role3
 #
 
 CULTMAP="$HOME/cult/hosts"

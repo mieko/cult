@@ -108,7 +108,7 @@ module Cult
 
 
     def includes
-      definition.direct('includes') || ['all']
+      definition.direct('includes') || ['base']
     end
 
 

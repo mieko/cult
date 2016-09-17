@@ -36,17 +36,17 @@ module Cult
           `rat-site` and `tempo-site` roles and be happily serving both sites.
 
           By default, `cult init` generates two root roles that don't depend on
-          anything else: `all` and `bootstrap`.  The `bootstrap` role exists
+          anything else: `base` and `bootstrap`.  The `bootstrap` role exists
           to get a node from a clean OS install to a configuration to be
-          managed by the settings in `all'.  Theoretically, if you're happy
+          managed by the settings in `base'.  Theoretically, if you're happy
           doing all deploys as the root user, you don't need a `bootstrap` role
-          at all: Delete it and set the `user` key in `all/role.json` to
+          at all: Delete it and set the `user` key in `base/role.json` to
           "root".
 
-          The tasks in the `all` role are considered shared amongst all roles.
-          However, the only thing special about the `all` role is that Cult
+          The tasks in the `base` role are considered shared amongst all roles.
+          However, the only thing special about the `base` role is that Cult
           assumes roles and nodes without an explicit `includes` setting belong
-          to all.
+          to `base`.
         EOD
 
         run(arguments: 0) do |opts, args, cmd|

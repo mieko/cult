@@ -145,7 +145,7 @@ module Cult
 
         run do |opts, args, cmd|
           english = args.join " "
-          opts[:roles] ||= 'all'
+          opts[:roles] ||= 'base'
           puts [english, opts[:roles], opts[:edit]].inspect
         end
       end

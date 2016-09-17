@@ -37,7 +37,7 @@ module Cult
           be accomplished by hand, so if you want to change anything later, it's
           not a big deal.
 
-          The project generated sets up a pretty common configuration: an 'all'
+          The project generated sets up a pretty common configuration: a `base`
           role, a 'bootstrap' role, and a demo task that puts a colorful banner
           in each node's MOTD.
         EOD
