@@ -9,11 +9,17 @@ module Cult
 
       def unwind
         begin
-          while (step = steps.pop)
+          # We stop rolling back when we read entries created in our parent
+          # process
+          while !steps.empty?
+            pid, step = steps.last
+            break if pid != Process.pid
+            steps.pop
             step.call
           end
         rescue Exception => e
-          puts "Error raised while rolling back: #{e.inspect}\n#{e.backtrace}"
+          $stderr.puts "Execption raised while rolling back: #{e.inspect}\n" +
+                       e.backtrace
           retry
         end
       end
@@ -29,7 +35,7 @@ module Cult
       end
 
       def rollback(&block)
-        steps.push(block)
+        steps.push([Process.pid, block])
       end
     end
 
