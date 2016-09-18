@@ -31,7 +31,7 @@ module Cult
           neatly line these up for you.
         EOD
 
-        run(arguments: 0) do |opts, args, cmd|
+        run(arguments: none) do |opts, args, cmd|
           puts cmd.help
           exit
         end
@@ -43,10 +43,10 @@ module Cult
         aliases     'reserial'
         summary     'Resequences task serial numbers'
 
-        flag     :A,  :all,             'Re-sequence all roles'
-        flag     :G,  :'git-add',       '`git add` each change'
-        required :r,  :role,            'Roles to resequence (multiple)',
-                      multiple: true
+        flag     :A,  :all,       'Re-sequence all roles'
+        flag     :G,  :'git-add', '`git add` each change'
+        required :r,  :role,      'Roles to resequence (multiple)',
+                                  multiple: true
 
         description <<~EOD.format_description
           Resequences the serial numbers in each task provided with --roles,
@@ -66,7 +66,7 @@ module Cult
         EOD
 
 
-        run(arguments: 0) do |opts, args, cmd|
+        run(arguments: none) do |opts, args, cmd|
           if opts[:all] && Array(opts[:role]).size != 0
             fail CLIError, "can't supply -A and also a list of roles"
           end

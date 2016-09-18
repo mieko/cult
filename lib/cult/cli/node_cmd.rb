@@ -16,7 +16,7 @@ module Cult
           conceptually description of a server.
         EOD
 
-        run(arguments: 0) do |opts, args, cmd|
+        run(arguments: none) do |opts, args, cmd|
           puts cmd.help
           exit
         end
@@ -25,20 +25,24 @@ module Cult
       node_ssh = Cri::Command.define do
         name        'ssh'
         usage       'ssh NODE'
-        summary     'Starts an interactive SSH shell to NODE'
+        summary     'Starts an SSH shell to NODE'
         description <<~EOD.format_description
+          With no additional arguments, initiates an interactive SSH connection
+          to a node, authenticated with the node's public key.
+
+          Additional arguments are passed to the 'ssh' command to allow for
+          scripting or running one-off commands on the node..
         EOD
 
         esc = ->(s) { Shellwords.escape(s) }
 
         run(arguments: 1 .. unlimited) do |opts, args, cmd|
-          puts "arguments: #{args.inspect}"
           node = CLI.fetch_item(args[0], from: Node)
-          ssh_args = "ssh", '-i', node.ssh_private_key_file,
-                     '-p', node.ssh_port.to_s,
+          ssh_args = "ssh", '-i', esc.(node.ssh_private_key_file),
+                     '-p', esc.(node.ssh_port.to_s),
                      '-o', "UserKnownHostsFile=#{esc.(node.ssh_known_hosts_file)}",
-                     "#{node.user}@#{node.host}"
-          ssh_args += args[1..-1]
+                     esc.("#{node.user}@#{node.host}")
+          ssh_args += args[1 .. -1]
           exec(*ssh_args)
         end
       end
@@ -54,22 +58,19 @@ module Cult
 
           The newly created node will have all the roles listed in --role.  If
           none are specified, it'll have the role "base".  If no name is
-          provided, it will be named for its role(s).
+          provided, it will be named after its role(s).
 
           If multiple names are provided, a new node is created for each name
-          given.
+          given.  The --count option is incompatible with multiple names given
+          on the command line.
 
           The --count option lets you create an arbitrary amount of new nodes.
-          The nodes will be identical, except they'll be named with increasing
-          sequential numbers, like:
+          The nodes will be identical, except they'll be named with arbitrary
+          random suffixes, like:
 
-          > web-01, web-02
+          > web-fjfowhs7, web-48pqee6v
 
-          And so forth.  The --count option is incompatible with multiple names
-          given on the command line.  If --count is specified with one name, the
-          name will become the prefix for all nodes created.  If --count is
-          specified with no names, the prefix will be generated from the role
-          names used, as discussed above.
+          And so forth.
         EOD
 
         required :r, :role,      'Specify possibly multiple roles',

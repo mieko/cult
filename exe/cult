@@ -58,7 +58,7 @@ cult = Cri::Command.define do
     Cult.concurrency = value.to_i
   end
 
-  run(arguments: 0) do |opts, args, cmd|
+  run(arguments: none) do |opts, args, cmd|
     puts cmd.help
     exit
   end
