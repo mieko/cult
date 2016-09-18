@@ -56,9 +56,8 @@ module Cult
       end
 
 
-      role_create = Cri::Command.define do
-        name        'create'
-        aliases     'new'
+      role_new = Cri::Command.define do
+        name        'new'
         summary     'creates a new role'
         usage       'create [options] NAME'
         description <<~EOD.format_description
@@ -90,19 +89,18 @@ module Cult
           File.write(File.join(role.path, "tasks", ".keep"), '')
         end
       end
-      role.add_command role_create
+      role.add_command(role_new)
 
 
-      role_destroy = Cri::Command.define do
-        name        'destroy'
-        aliases     'delete', 'rm'
-        usage       'destroy ROLES...'
+      role_rm = Cri::Command.define do
+        name        'rm'
+        usage       'rm ROLES...'
         summary     'Destroy role ROLE'
         description <<~EOD.format_description
           Destroys all roles specified.
         EOD
 
-        run(arguments: 1..-1) do |opts, args, cmd|
+        run(arguments: 1 .. unlimited) do |opts, args, cmd|
           roles = args.map do |role_name|
             CLI.fetch_items(role_name, from: Role)
           end.flatten
@@ -115,20 +113,19 @@ module Cult
           end
         end
       end
-      role.add_command(role_destroy)
+      role.add_command(role_rm)
 
 
-      role_list = Cri::Command.define do
-        name        'list'
-        aliases     'ls'
-        usage       'list [ROLES...]'
+      role_ls = Cri::Command.define do
+        name        'ls'
+        usage       'ls [ROLES...]'
         summary     'List existing roles'
         description <<~EOD.format_description
           Lists roles in this project.  By default, lists all roles.  If one or
           more ROLES are specified, only lists those
         EOD
 
-        run(arguments: 0..-1) do |opts, args, cmd|
+        run(arguments: unlimited) do |opts, args, cmd|
           roles = Cult.project.roles
           unless args.empty?
             roles = CLI.fetch_items(*args, from: Role)
@@ -141,7 +138,7 @@ module Cult
 
         end
       end
-      role.add_command(role_list)
+      role.add_command(role_ls)
 
 
       role

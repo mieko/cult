@@ -37,9 +37,8 @@ module Cult
       end
 
 
-      provider_list = Cri::Command.define do
-        name        'list'
-        aliases     'ls'
+      provider_ls = Cri::Command.define do
+        name        'ls'
         summary     'List Providers'
         description <<~EOD.format_description
           Lists Providers for this project.  If --driver is specified, it only
@@ -66,7 +65,7 @@ module Cult
 
         end
       end
-      provider.add_command(provider_list)
+      provider.add_command(provider_ls)
 
 
       provider_avail = Cri::Command.define do
@@ -87,10 +86,9 @@ module Cult
       provider.add_command(provider_avail)
 
 
-      provider_create = Cri::Command.define do
-        name        'create'
-        aliases     'new'
-        usage       'create NAME'
+      provider_new = Cri::Command.define do
+        name        'new'
+        usage       'new NAME'
         summary     'creates a new provider for your project'
         required    :d, :driver, 'Specify driver, if different than NAME'
         description <<~EOD.format_description
@@ -117,7 +115,7 @@ module Cult
           puts [driver, name].inspect
         end
       end
-      provider.add_command(provider_create)
+      provider.add_command(provider_new)
 
 
       provider

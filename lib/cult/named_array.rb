@@ -196,7 +196,15 @@ module Cult
         end
 
         methods.any? do |method|
-          Array(candidate.send(method)).any? { |r| predicate === r }
+          Array(candidate.send(method)).any? do |r|
+            begin
+              predicate === r
+            rescue
+              # We're going to assume this is a result of a string
+              # comparison to a custom #==
+              false
+            end
+          end
         end
       end
     end

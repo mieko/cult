@@ -7,7 +7,18 @@ module Cult
       @enum, @block = enum, block
     end
 
-    def run_parallel(njobs)
+
+    def parallel_max
+      case (r = Cult.concurrency)
+        when :max
+          enum.respond_to?(:size) ? enum.size : 200
+        else
+          r
+      end
+    end
+
+
+    def run(njobs = parallel_max)
       iter = enum.to_enum
       active = []
       finished = false
@@ -33,19 +44,6 @@ module Cult
           active.delete(Process.waitpid)
         end
       end
-    end
-
-    def parallel_max
-      case (r = Cult.concurrency)
-        when :max
-          enum.respond_to?(:size) ? enum.size : 200
-        else
-          r
-      end
-    end
-
-    def run
-      run_parallel(parallel_max)
     end
   end
 

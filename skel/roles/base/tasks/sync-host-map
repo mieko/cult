@@ -20,5 +20,5 @@ sudo rm -f "$CULTMAP"
 
 <% nodes.each do |n| %>
   <% roles = n.build_order.map(&:name).join " " %>
-  echo "<%= n.ipv4_private %> <%= n.name %> # <%= roles %>" | sudo tee -a "$CULTMAP"
+  echo "<%= n.addr_from(node) %> <%= n.name %> # <%= roles %>" | sudo tee -a "$CULTMAP"
 <% end %>

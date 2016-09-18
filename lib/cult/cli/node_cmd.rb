@@ -31,20 +31,22 @@ module Cult
 
         esc = ->(s) { Shellwords.escape(s) }
 
-        run(arguments: 1) do |opts, args, cmd|
+        run(arguments: 1 .. unlimited) do |opts, args, cmd|
+          puts "arguments: #{args.inspect}"
           node = CLI.fetch_item(args[0], from: Node)
-          exec "ssh", '-i', node.ssh_private_key_file,
-               '-p', node.ssh_port.to_s,
-               '-o', "UserKnownHostsFile=#{esc.(node.ssh_known_hosts_file)}",
-               "#{node.user}@#{node.host}"
+          ssh_args = "ssh", '-i', node.ssh_private_key_file,
+                     '-p', node.ssh_port.to_s,
+                     '-o', "UserKnownHostsFile=#{esc.(node.ssh_known_hosts_file)}",
+                     "#{node.user}@#{node.host}"
+          ssh_args += args[1..-1]
+          exec(*ssh_args)
         end
       end
       node.add_command(node_ssh)
 
-      node_create = Cri::Command.define do
-        name        'create'
-        aliases     'new'
-        usage       'create [options] NAME...'
+      node_new = Cri::Command.define do
+        name        'new'
+        usage       'new [options] NAME...'
         summary     'Create a new node'
         description <<~EOD.format_description
           This command creates a new node specification and then creates it with
@@ -79,7 +81,7 @@ module Cult
         required :I, :image,     'Provider image'
         required :S, :size,      'Provider instance size'
 
-        run(arguments: 0..-1) do |opts, args, cmd|
+        run(arguments: unlimited) do |opts, args, cmd|
           random_suffix = ->(basename) do
             begin
               suffix = CLI.unique_id
@@ -95,36 +97,26 @@ module Cult
             end
           end
 
-          unless opts[:count].nil? || opts[:count].match(/^\d+$/)
-            fail CLIError, "--count must be an integer"
-          end
-
           names = args.dup
 
-          roles = opts[:role] ? CLI.fetch_items(opts[:role], from: Role) : []
-
-          if roles.empty?
-            roles = CLI.fetch_items('base', from: Role)
-            if names.empty?
-              begin
-                names.push CLI.fetch_item('node', from: Node, exist: false)
-              rescue
-                names.push random_suffix.('node')
-              end
-            end
+          unless opts[:count].nil? || opts[:count].match(/^\d+$/)
+            fail CLIError, "--count must be an integer"
           end
 
           if names.size > 1 && opts[:count]
             fail CLIError, "cannot specify both --count and more than one name"
           end
 
-          if names.empty? && !roles.empty?
-            names.push roles.map(&:name).sort.join('-')
+          roles = CLI.fetch_items(opts[:role] || 'base', from: Role)
+
+          if names.empty?
+            names.push roles.map(&:name).join("-")
+            opts[:count] ||= 1
           end
 
-          if opts[:count]
-            names = generate_sequenced_names.(names[0], opts[:count].to_i)
-          end
+          names = opts[:count] ? generate_sequenced_names.(names[0],
+                                                           opts[:count].to_i)
+                               : names
 
           # Makes sure they're all new.
           names = names.map do |name|
@@ -169,12 +161,11 @@ module Cult
 
         end
       end
-      node.add_command node_create
+      node.add_command(node_new)
 
-      node_destroy = Cri::Command.define do
-        name        'destroy'
-        aliases     'rm'
-        usage       'destroy NODE'
+      node_rm = Cri::Command.define do
+        name        'rm'
+        usage       'rm NODE'
         summary     'Destroy nodes'
         description <<~EOD.format_description
           Destroys all nodes named NODE, or match the pattern described by
@@ -186,7 +177,7 @@ module Cult
           be prompted before each destroy.
         EOD
 
-        run(arguments: 1..-1) do |opts, args, cmd|
+        run(arguments: 1 .. unlimited) do |opts, args, cmd|
           nodes = CLI.fetch_items(args, from: Node)
           nodes.each do |node|
             if CLI.yes_no?("Destroy node `#{node}`?")
@@ -205,10 +196,9 @@ module Cult
           end
         end
       end
-      node.add_command(node_destroy)
+      node.add_command(node_rm)
 
-      node_list = Cri::Command.define do
-        name        'list'
+      node_ls = Cri::Command.define do
         aliases     'ls'
         summary     'List nodes'
         description <<~EOD.format_description
@@ -218,7 +208,7 @@ module Cult
         required :r, :role, 'List only nodes which include <value>',
                      multiple: true
 
-        run(arguments: 0..-1) do |opts, args, cmd|
+        run(arguments: unlimited) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
                               : CLI.fetch_items(args, from: Node)
 
@@ -236,7 +226,7 @@ module Cult
           end
         end
       end
-      node.add_command node_list
+      node.add_command(node_ls)
 
 
       node_sync = Cri::Command.define do
@@ -251,7 +241,7 @@ module Cult
                             "more than once.",
                             multiple: true
 
-        run(arguments: 0..-1) do |opts, args, cmd|
+        run(arguments: unlimited) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
                               : CLI.fetch_items(args, from: Node)
           c = CommanderSync.new(project: Cult.project, nodes: nodes)
@@ -272,7 +262,7 @@ module Cult
           Connects to each node and reports health information.
         EOD
 
-        run(arguments: 0..-1) do |opts, args, cmd|
+        run(arguments: unlimited) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
                               : CLI.fetch_items(args, from: Node)
           Cult.paramap(nodes) do |node|
@@ -288,6 +278,37 @@ module Cult
         end
       end
       node.add_command(node_ping)
+
+      node_addr = Cri::Command.define do
+        name        'addr'
+        aliases     'ip'
+        summary     'print IP address of node'
+        usage       'addr NODE'
+        flag        :p, :private, 'Print private address'
+        flag        :'6', :ipv6, 'Print ipv6 address'
+        flag        :'4', :ipv4, 'Print ipv4 address'
+        description <<~EOD.format_description
+        EOD
+
+        run(arguments: unlimited) do |opts, args, cmd|
+          prot = Cult.project.default_ip_protocol
+          if opts[:ipv4] && opts[:ipv6]
+            fail CLIError, "can't specify --ipv4 and --ipv6"
+          end
+
+          prot = :ipv6 if opts[:ipv6]
+          prot = :ipv4 if opts[:ipv4]
+
+          priv = opts[:private] ? :private: :public
+
+          nodes = args.empty? ? Cult.project.nodes
+                              : CLI.fetch_items(args, from: Node)
+          nodes.each do |node|
+            puts node.addr(priv, prot)
+          end
+        end
+      end
+      node.add_command(node_addr)
 
 
       return node

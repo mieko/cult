@@ -20,6 +20,9 @@ module Cult
 
     delegate_to_definition :host
     delegate_to_definition :zone
+    delegate_to_definition :size
+    delegate_to_definition :image
+    delegate_to_definition :provider_name, :provider
     delegate_to_definition :ipv4_public
     delegate_to_definition :ipv4_private
     delegate_to_definition :ipv6_public
@@ -63,12 +66,7 @@ module Cult
 
 
     def provider
-      project.providers[definition['provider']]
-    end
-
-
-    def names_for_provider
-      [ provider&.name ]
+      project.providers[provider_name]
     end
 
     alias_method :roles, :parent_roles
@@ -110,35 +108,72 @@ module Cult
     end
 
 
-    def provider_peers
-      project.nodes.with(provider: provider).reject do |n|
-        n == self
+    def cluster(*preds)
+      unless (preds - [:provider, :zone]).empty?
+        fail ArgumentError, "invalid predicate: #{preds.inspect}"
       end
+
+      preds.push(:provider) if preds.include?(:zone)
+
+      col = project.nodes
+      preds.each do |pred|
+        col = col.select do |v|
+          v.send(pred) == send(pred)
+        end
+      end
+      col
     end
 
-    def provider_leader(role, zone: nil)
-      candidates = project.nodes.with(provider: provider).with(role: role)
-      candidates = candidates.with(zone: zone) if zone
 
-      candidates.sort_by(&:created_at).first
+    def peers(*preds)
+      cluster(*preds).reject{|v| v == self}
     end
 
-    def provider_leader?(role)
+
+    def provider_peers
+      peers(:provider)
+    end
+
+
+    def leader(role, *preds)
+      c = cluster(*preds)
+      c = c.with(role: role) if role
+      c = c.sort_by(&:created_at)
+      c.first
+    end
+
+
+    def provider_leader(role = nil)
+      leader(role, :provider)
+    end
+
+
+    def provider_leader?(role = nil)
       provider_leader(role) == self
     end
 
-    def zone_leader(role)
-      provider_leader(role, zone: self.zone)
+
+    def zone_leader(role = nil)
+      leader(role, :zone)
     end
 
-    def zone_leader?(role)
+
+    def zone_leader?(role = nil)
       zone_leader(role) == self
     end
 
+
     def zone_peers
-      provider_peers.with(zone: zone)
+      peers(:zone)
     end
 
+    def names_for_provider
+      [ provider_name ]
+    end
+
+    def names_for_zone
+      [zone]
+    end
 
     def generate_ssh_keys!
       esc = ->(s) { Shellwords.escape(s) }

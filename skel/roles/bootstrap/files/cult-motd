@@ -2,8 +2,16 @@
 set -e
 
 NODE=<%= node.name.sq %>
-ROLES=<%= node.roles.map(&:name).sq %>
-SPAWN=<%= Time.now.to_s.sq %>
+PROVIDER=<%= node.provider.name.sq %>
+ZONE=<%= node.zone.sq %>
+ROLES=<%= node.build_order.map(&:name).join(' ').sq %>
+CREATED_AT=<%= Time.now.to_s.sq %>
+SIZE=<%= node.size.sq %>
+IMAGE=<%= node.image.sq %>
+IPV4_PUBLIC=<%= node.ipv4_public.sq %>
+IPV4_PRIVATE=<%= node.ipv4_private.sq %>
+
+LEADER_FILE=~cult/cult/leader-of
 
 colorize() {
   i=124
@@ -38,8 +46,12 @@ cat <<EOD | colorize
                      ::: :::  ::::: ::   :: ::::     ::
                      :: :: :   : :  :   : :: : :     :
 
+
 EOD
 
-inf "node: $NODE, since $SPAWN"
+inf "node: $NODE@$PROVIDER/$ZONE:$SIZE/$IMAGE"
+inf "addr: $IPV4_PUBLIC, $IPV4_PRIVATE"
+inf "created: $CREATED_AT"
 inf "roles: $ROLES"
+[ -f "$LEADER_FILE" ] && inf "leader: $(cat "$LEADER_FILE")"
 echo

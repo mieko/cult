@@ -64,8 +64,8 @@ cult = Cri::Command.define do
   end
 end
 
-Cult::CLI.commands.each do |m|
-  cult.add_command(m)
+Cult::CLI.commands.each do |root_command|
+  cult.add_command(root_command)
 end
 
 if (env = ENV['CULT_PROJECT'])

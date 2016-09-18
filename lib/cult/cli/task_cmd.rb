@@ -132,9 +132,8 @@ module Cult
       task.add_command task_sanity
 
 
-      task_create = Cri::Command.define do
-        name        'create'
-        aliases     'new'
+      task_new = Cri::Command.define do
+        name        'new'
         usage       'create [options] DESCRIPTION'
         summary     'create a new task for ROLE with a proper serial'
         description <<~EOD.format_description
@@ -149,7 +148,7 @@ module Cult
           puts [english, opts[:roles], opts[:edit]].inspect
         end
       end
-      task.add_command task_create
+      task.add_command(task_new)
 
       task
     end
