@@ -1,10 +1,79 @@
 module Cult
   class Paramap
+    class MultipleExceptions < RuntimeError
+      attr_reader :exceptions
+
+      def initialize(*exceptions)
+        @exceptions = exceptions
+        super("mutiple exceptions raised")
+      end
+    end
+
+    class Sub
+      attr_reader :pid
+      attr_reader :ident
+
+      def initialize(ident, value, block)
+        @ident = ident
+        @pipe = IO.pipe
+        @pid = fork do
+          @pipe[0].close
+          begin
+            write_result!(:result, block.call(value))
+          rescue Exception => e
+            write_result!(:exception, e)
+          end
+        end
+        @pipe[1].close
+      end
+
+      def read_result!
+        if ! defined?(@finalized)
+          @finalized = true
+          obj = Marshal.load(@pipe[0].read)
+          case obj[0]
+            when :result
+              @result = obj[1]
+            when :exception
+              @exception = obj[1]
+          end
+          @pipe.each(&:close)
+        end
+      end
+
+      def result
+        read_result!
+        @result
+      end
+
+      def exception
+        read_result!
+        @exception
+      end
+
+      def write_result!(status, obj)
+        @pipe[1].write(Marshal.dump([status, obj]))
+        @pipe[1].flush
+        @pipe[1].close
+      end
+
+      def success?
+        @exception.nil?
+      end
+    end
+
+
+
     attr_reader :enum
     attr_reader :block
+    attr_reader :exception_strategy
+    attr_reader :exceptions
+    attr_reader :results
 
-    def initialize(enum, &block)
-      @enum, @block = enum, block
+    def initialize(enum, exception_strategy:, &block)
+      @enum, @exception_strategy, @block = enum, exception_strategy, block
+      @results = []
+      @exceptions = []
     end
 
 
@@ -17,38 +86,77 @@ module Cult
       end
     end
 
+    def run_sequential
+      enum.map do |next_value|
+        block.call(next_value)
+      end
+    end
 
-    def run(njobs = parallel_max)
+    def handle_exception(sub)
+      case exception_strategy
+        when :raise
+          raise sub.exception
+        when :collect
+          exceptions.push(sub.exception)
+        when :ignore
+          nil
+        when Proc
+          exception_strategy.call(sub.exception)
+      end
+    end
+
+    def handle_result(sub)
+      results[sub.ident] = sub.result
+    end
+
+    def handle_response(sub)
+      sub.success? ? handle_result(sub) : handle_exception(sub)
+    end
+
+    def run_parallel(njobs)
       iter = enum.to_enum
       active = []
       finished = false
+      i = 0
 
       loop do
-        while active.size != njobs
+        while !finished && active.size != njobs
           begin
             next_value = iter.next
           rescue StopIteration
             finished = true
             break
           end
-
-          pid = fork do
-            block.call(next_value)
-          end
-          active.push(pid)
+          active.push(Sub.new(i, next_value, block))
+          i += 1
         end
 
         if active.empty?
           break if finished
         else
-          active.delete(Process.waitpid)
+          pid = Process.waitpid
+          if (sub = active.find {|sub| sub.pid == pid})
+            active.delete(sub)
+            handle_response(sub)
+          end
         end
       end
+
+
+      unless self.exceptions.empty?
+        raise MultipleExceptions.new(*self.exceptions)
+      end
+
+      self.results
+    end
+
+    def run(njobs = parallel_max)
+      njobs <= 1 ? run_sequential : run_parallel(njobs)
     end
   end
 
   module_function
-  def paramap(enum, &block)
-    ::Cult::Paramap.new(enum, &block).run
+  def paramap(enum, exception: :raise, &block)
+    ::Cult::Paramap.new(enum, exception_strategy: exception, &block).run
   end
 end
