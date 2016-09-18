@@ -52,7 +52,15 @@ module Cult
       end
 
       def write_result!(status, obj)
-        @pipe[1].write(Marshal.dump([status, obj]))
+        begin
+          @pipe[1].write(Marshal.dump([status, obj]))
+        rescue TypeError => e
+          if e.message.match(/_dump_data/)
+            @pipe[1].write(Marshal.dump([status, nil]))
+          else
+            raise
+          end
+        end
         @pipe[1].flush
         @pipe[1].close
       end
@@ -80,18 +88,12 @@ module Cult
     end
 
 
-    def parallel_max
+    def max_parallel
       case (r = Cult.concurrency)
         when :max
           enum.respond_to?(:size) ? enum.size : 200
         else
           r
-      end
-    end
-
-    def run_sequential
-      enum.map do |next_value|
-        block.call(next_value)
       end
     end
 
@@ -119,7 +121,7 @@ module Cult
       sub.success? ? handle_result(sub) : handle_exception(sub)
     end
 
-    def run_parallel(njobs)
+    def run(njobs = max_parallel)
       iter = enum.to_enum
       active = []
       finished = false
@@ -159,10 +161,6 @@ module Cult
         e
       end
       self.results
-    end
-
-    def run(njobs = parallel_max)
-      njobs <= 1 ? run_sequential : run_parallel(njobs)
     end
   end
 
