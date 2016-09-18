@@ -81,9 +81,9 @@ module Cult
             when range.size == 1 && range.begin == 0
               "accepts no arguments"
             when range.size == 1 && range.begin == 1
-              "accepts one argument"
+              "requires exactly one argument"
             when range.begin == range.end
-              "accepts exactly #{range.begin} arguments"
+              "requires exactly #{range.begin} arguments"
             else
               if range.end == Float::INFINITY
                 "requires #{range.begin}+ arguments"
