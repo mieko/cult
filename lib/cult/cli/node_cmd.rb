@@ -220,7 +220,7 @@ module Cult
             end
           end
 
-          nodes.each do |node|
+          Cult.paramap(nodes) do |node|
             puts "#{node.name}\t#{node.provider&.name}\t" +
                 "#{node.zone}\t#{node.addr(:public)}\t#{node.addr(:private)}\t" +
                 "#{node.roles.map(&:name)}"

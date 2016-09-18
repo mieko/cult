@@ -58,10 +58,10 @@ module Cult
       end
 
       def success?
+        read_result!
         @exception.nil?
       end
     end
-
 
 
     attr_reader :enum
@@ -70,10 +70,13 @@ module Cult
     attr_reader :exceptions
     attr_reader :results
 
-    def initialize(enum, exception_strategy:, &block)
-      @enum, @exception_strategy, @block = enum, exception_strategy, block
-      @results = []
+
+    def initialize(enum, exception:, &block)
+      @enum = enum
+      @exception_strategy = exception
+      @block = block
       @exceptions = []
+      @results = []
     end
 
 
@@ -96,6 +99,9 @@ module Cult
       case exception_strategy
         when :raise
           raise sub.exception
+        when :tag
+          results[sub.ident] = nil
+          exceptions[sub.ident] = sub.exception
         when :collect
           exceptions.push(sub.exception)
         when :ignore
@@ -142,11 +148,16 @@ module Cult
         end
       end
 
-
-      unless self.exceptions.empty?
-        raise MultipleExceptions.new(*self.exceptions)
+      if [:raise, :collect].include?(exception_strategy)
+        unless self.exceptions.empty?
+          raise MultipleExceptions.new(*self.exceptions)
+        end
       end
 
+      e = self.exceptions
+      self.results.define_singleton_method(:exceptions) do
+        e
+      end
       self.results
     end
 
@@ -157,6 +168,6 @@ module Cult
 
   module_function
   def paramap(enum, exception: :raise, &block)
-    ::Cult::Paramap.new(enum, exception_strategy: exception, &block).run
+    ::Cult::Paramap.new(enum, exception: exception, &block).run
   end
 end
