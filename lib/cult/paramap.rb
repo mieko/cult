@@ -39,7 +39,7 @@ module Cult
 
       def prepare_forked_environment!
         # Stub out things that have caused a problem in the past.
-        Kernel.define_method(:exec) do |*a|
+        Kernel.send(:define_method, :exec) do |*a|
           fail "don't use Kernel\#exec inside of a paramap job"
         end
       end
