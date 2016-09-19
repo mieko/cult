@@ -30,9 +30,10 @@ module Cult
 
 
     def concurrency=(v)
-      unless v.is_a?(Integer) && v > 0
-        fail CLI::CLIError, "concurrency must be a positive integer"
+      unless v == :max || (v.is_a?(Integer) && v >= 0)
+        fail CLI::CLIError, "concurrency must be a positive integer or :max"
       end
+      v = 1 if v == 0
       @concurrency = v
     end
 

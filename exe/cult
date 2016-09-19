@@ -54,8 +54,14 @@ cult = Cri::Command.define do
   end
 
   required :j, :jobs, 'Number of concurrent jobs.  Defaults to max' do |value|
-    fail Cult::CLI::CLIError, "--jobs must be a number" unless value.match(/^\d+$/)
-    Cult.concurrency = value.to_i
+    Cult.concurrency = case value
+      when /^(\d+)$/
+         $1.to_i
+      when 'max'
+        :max
+      else
+        fail Cult::CLI::CLIError, "--jobs must be a number or 'max'"
+    end
   end
 
   run(arguments: none) do |opts, args, cmd|
