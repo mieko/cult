@@ -26,24 +26,55 @@ module Cult
         name        'ssh'
         usage       'ssh NODE'
         summary     'Starts an SSH shell to NODE'
+
+        flag :i, :interactive,       "Force interactive mode"
+        flag :I, :'non-interactive', "Force non-interactive mode"
+
         description <<~EOD.format_description
           With no additional arguments, initiates an interactive SSH connection
           to a node, authenticated with the node's public key.
 
           Additional arguments are passed to the 'ssh' command to allow for
-          scripting or running one-off commands on the node..
+          scripting or running one-off commands on the node.
+
+          By default, cult assumes an interactive SSH session when no extra
+          SSH arguments are passed, and a non-interactive session otherwise.
+          You can force this behavior one way or the other with --interactive
+          or --non-interactive.
+
+          Cult will run SSH commands over all matching nodes in parallel if it
+          considers your command non-interactive.
         EOD
 
         esc = ->(s) { Shellwords.escape(s) }
 
         run(arguments: 1 .. unlimited) do |opts, args, cmd|
-          node = CLI.fetch_item(args[0], from: Node)
-          ssh_args = "ssh", '-i', esc.(node.ssh_private_key_file),
-                     '-p', esc.(node.ssh_port.to_s),
-                     '-o', "UserKnownHostsFile=#{esc.(node.ssh_known_hosts_file)}",
-                     esc.("#{node.user}@#{node.host}")
-          ssh_args += args[1 .. -1]
-          exec(*ssh_args)
+          if opts[:interactive] && opts[:'non-interactive']
+            fail CLIError, "can't specify --interactive and --non-interactive"
+          end
+
+          interactive = opts[:interactive] ||
+                        (opts[:'non-interactive'] && false)
+
+          nodes = CLI.fetch_items(args[0], from: Node)
+
+          # With args, we'll assume it's a non-interactive session and run them
+          # in parallel, otherwise, we'll assume it's interactive and force
+          # them to run one at a time.
+          ssh_extra = args[1 .. -1]
+          interactive ||= ssh_extra.empty?
+          concurrent = interactive || nodes.size == 1 ? 1 : nil
+
+          Cult.paramap(nodes, concurrent: concurrent) do |node|
+            ssh_args = 'ssh', '-i', esc.(node.ssh_private_key_file),
+                       '-p', esc.(node.ssh_port.to_s),
+                       '-o', "UserKnownHostsFile=#{esc.(node.ssh_known_hosts_file)}",
+                       esc.("#{node.user}@#{node.host}")
+            ssh_args += ssh_extra
+            # We used to use exec here, but with paramap, the forked process
+            # has to live to long enough to report it's return value.
+            system(*ssh_args)
+          end
         end
       end
       node.add_command(node_ssh)
