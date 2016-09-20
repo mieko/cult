@@ -29,9 +29,9 @@ module Cult
           @pipe[0].close
           prepare_forked_environment!
           begin
-            write_response!(:result, block.call(value))
+            write_response!('=', block.call(value))
           rescue Exception => e
-            write_response!(:exception, e)
+            write_response!('!', e)
           end
         end
         @pipe[1].close
@@ -44,13 +44,14 @@ module Cult
         end
       end
 
-      def write_response!(status, obj)
+      def write_response!(scode, obj)
+        fail unless ['!', '='].include?(scode)
         begin
-          pipe[1].write(Marshal.dump([status, obj]))
+          pipe[1].write(scode + Marshal.dump(obj))
         rescue TypeError => e
           # Unmarshallable
           raise unless e.message.match(/_dump_data/)
-          pipe[1].write(Marshal.dump([status, nil]))
+          pipe[1].write(scode + Marshal.dump(nil))
         end
         pipe[1].flush
         pipe[1].close
@@ -59,8 +60,18 @@ module Cult
       def fetch_response!
         unless pipe[0].closed?
           data = @pipe[0].read
-          obj = Marshal.load(data)
-          instance_variable_set("@#{obj[0]}", obj[1])
+
+          scode = data[0]
+          fail unless ['!', '='].include?(scode)
+
+          data = data[1..-1]
+          ivar = (scode == '!') ? :exception : :result
+          begin
+            obj = Marshal.load(data)
+          rescue
+            obj = nil
+          end
+          instance_variable_set("@#{ivar}", obj)
           pipe[0].close
         end
       end
