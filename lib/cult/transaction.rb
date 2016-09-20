@@ -27,8 +27,8 @@ module Cult
       def protect(&block)
         begin
           yield
-        rescue Exception
-          $stderr.puts "Rolling back actions"
+        rescue Exception => e
+          $stderr.puts "Rolling back actions due to: #{e.inspect}"
           unwind
           raise
         end
