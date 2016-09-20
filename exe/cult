@@ -65,8 +65,10 @@ cult = Cri::Command.define do
   end
 
   run(arguments: none) do |opts, args, cmd|
-    puts cmd.help
-    exit
+    if opts.empty? && args.empty?
+      puts cmd.help
+      exit
+    end
   end
 end
 

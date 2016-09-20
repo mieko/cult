@@ -75,6 +75,7 @@ module Cult
             # We used to use exec here, but with paramap, the forked process
             # has to live to long enough to report it's return value.
             system(*ssh_args)
+            exit if interactive
           end
         end
       end
@@ -217,7 +218,8 @@ module Cult
 
         run(arguments: 1 .. unlimited) do |opts, args, cmd|
           nodes = CLI.fetch_items(args, from: Node)
-          nodes.each do |node|
+          concurrent = CLI.yes? ? :max : 1
+          Cult.paramap(nodes, concurrent: concurrent) do |node|
             if CLI.yes_no?("Destroy node `#{node}`?")
               puts "destroying #{node}"
               begin
@@ -231,6 +233,7 @@ module Cult
               fail unless node.path.match(/#{Regexp.escape(node.name)}/)
               FileUtils.rm_rf(node.path)
             end
+            nil
           end
         end
       end

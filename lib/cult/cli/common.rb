@@ -193,8 +193,7 @@ module Cult
 
 
     # Takes a list of keys and returns an array of objects that correspond
-    # to any of them.  If required is true, each key must correspond to at
-    # least one object.
+    # to any of them.
     def fetch_items(*keys, **kw)
       keys.flatten.map do |key|
         fetch_item(key, method: :all, **kw)

@@ -24,9 +24,46 @@ module Cult
     # This maps #named_array_identifier to #name by default
     module ObjectExtensions
       def named_array_identifier
-        name
+        respond_to?(:name) ? name : nil
       end
       ::Object.include(self)
+    end
+
+    # Allows named_array.all[/something/]
+    class IndexWrapper
+      def initialize(ary, method_name)
+        @ary, @method_name = ary, method_name
+      end
+
+      def inspect
+        "\#<#{self.class.name}>"
+      end
+
+      def [](*args)
+        @ary.send(@method_name, *args)
+      end
+
+      def to_a
+        @ary
+      end
+      alias_method :to_ary, :to_a
+
+      def to_named_array
+        @ary.to_named_array
+      end
+    end
+    private_constant :IndexWrapper
+
+    def self.indexable_wrapper(method_name)
+      old_method_name = "#{method_name}_without_wrapper"
+      alias_method old_method_name, method_name
+      define_method(method_name) do |*a|
+        if a.empty?
+          return IndexWrapper.new(self, method_name)
+        else
+          return send(old_method_name, *a)
+        end
+      end
     end
 
 
@@ -93,65 +130,79 @@ module Cult
     private :expand_predicate
 
     def extract_index(key)
-      re = /\[([+-]?\d+)\]$/
+      re = /\[\s*([^\]]*)\s*\]$/
       if key.is_a?(String) && (m = key.match(re))
-        subs, index = m[0], m[1]
-        [ key[0... key.size - subs.size], index.to_i ]
+        subs, expr = m[0], m[1]
+        index = case expr
+          when /^(\-?\d+)$/; $1.to_i #.. $1.to_i
+          when /^(\-?\d+)\s*\.\.\s*(\-?\d+)$/; $1.to_i .. $2.to_i
+          when /^(\-?\d+)\s*\.\.\.\s*(\-?\d+)$/; $1.to_i ... $2.to_i
+          when /^((?:\-?\d+\s*,?\s*)+)$/; $1.split(',').map(&:to_i)
+        end
+        # We return [predicate string with index removed, expanded index]
+        [ key[0 ... key.size - subs.size], index ]
       else
         [ key, nil ]
       end
     end
 
+    def fetch_by_index(ary, index)
+      case index
+        when Array
+          ary.values_at(*index).compact
+        when Integer
+          v = ary.at(index)
+          v.nil? ? [] : [v]
+        when Range
+          ary[index]
+        else
+          fail ArgumentError, "weird index: #{index.inspect}"
+      end
+    end
+
+    def normal_key?(k)
+      [Integer, Range].any?{|cls| k.is_a?(cls) }
+    end
+
     # Returns all keys that match if method == :select, the first if
     # method == :find
     def all(key, method = :select)
-      return super if key.is_a?(Integer)
-      return nil if key.nil?
+      return [self[key]] if normal_key?(key)
+      return [] if key.nil?
 
       key, index = extract_index(key)
       predicate = expand_predicate(key)
-
       effective_method = index.nil? ? method : :select
 
       result = send(effective_method) do |v|
         predicate === v.named_array_identifier
       end
 
-      case method
-        when :select
-          if index
-            result = result[index]
-            result = result.nil? ? [] : [result]
-          end
-          return result
-        when :find
-          return index ? result[index] : result
-      end
+      result = fetch_by_index(result, index) if index
+      Array(result).to_named_array
     end
+    indexable_wrapper :all
 
 
     # first matching item
-    def [](key, index = nil)
-      if key.is_a?(Integer)
-        unless index.nil?
-          fail ArgumentError, "cant specify index with an... index?"
-        end
-
-        return super(key)
-      end
-
-      index.nil? ? all(key, :find) : all(key, :select)[index]
+    def [](key)
+      return super if normal_key?(key)
+      all(key).first
     end
 
+    def first(key = nil)
+      return super() if key.nil?
+      all(key, :find).first
+    end
 
     # first matching item, or raises KeyError
     def fetch(key)
-      all(key, :find) or raise KeyError
+      first(key) or raise KeyError
     end
 
 
     def key?(key)
-      !! all(key, :find)
+      !! first(key)
     end
     alias_method :exist?, :key?
 
