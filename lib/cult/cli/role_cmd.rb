@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'json'
 
 module Cult
   module CLI
@@ -79,8 +80,8 @@ module Cult
                                               from: Role).map(&:name)
           end
           FileUtils.mkdir_p(role.path)
-          File.write(Cult.project.dump_name(role.definition_file),
-                     Cult.project.dump_object(data))
+          File.write(role.definition_file,
+                     JSON.pretty_generate(data))
 
           FileUtils.mkdir_p(File.join(role.path, "files"))
           File.write(File.join(role.path, "files", ".keep"), '')

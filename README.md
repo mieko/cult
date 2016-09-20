@@ -202,12 +202,6 @@ Note that VirtualBox is a little weird, and intended for development only.
     `nodes[/^dev/].with(role: /httpd/).with(something: /else/)`
   * The NamedArray stuff even works on the command-line with String arguments,
     and will convert strings that start with '/' to Regexps to search by name.
-  * Although Cult will only *generate* JSON, not having comments and other
-    stuff is a pain. If you don't care about JSON-readability of your
-    `node.json`s or `role.json`s, you can just rename it to `node.yaml` or
-    `node.yml` and it'll get parsed with a YAML parser. Cult keeps transient
-    state in separate files for this reason: so it doesn't overwrite your
-    long-lived YAML replacements with JSON equivalents.
 
 
 ## Development

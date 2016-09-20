@@ -1,8 +1,6 @@
 require 'securerandom'
 require 'shellwords'
 require 'json'
-require 'yaml'
-
 
 module Cult
   class Project
@@ -126,21 +124,6 @@ module Cult
       if res && (m = res.match(/^\* (.*)/))
         return m[1].chomp
       end
-    end
-
-
-    def dump_yaml?
-      !! (ENV['CULT_DUMP'] || '').match(/^yaml$/i)
-    end
-
-
-    def dump_object(obj)
-      dump_yaml? ? YAML.dump(obj) : JSON.pretty_generate(obj)
-    end
-
-
-    def dump_name(basename)
-      basename + (dump_yaml? ? '.yml' : '.json')
     end
 
 

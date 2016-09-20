@@ -93,7 +93,8 @@ module Cult
 
 
     def definition_path
-      File.join(path, "role")
+      [ File.join(path, "extra.json"),
+        File.join(path, "role.json") ]
     end
 
 
@@ -154,11 +155,10 @@ module Cult
 
 
     def self.all(project)
+      fail if block_given?
       all_files(project).map do |filename|
-        new(project, filename).tap do |new_role|
-          yield new_role if block_given?
-        end
-      end.to_named_array
+        new(project, filename)
+      end.select(&:exist?).to_named_array
     end
 
 

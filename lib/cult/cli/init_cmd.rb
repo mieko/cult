@@ -1,4 +1,5 @@
 require 'cult/drivers/load'
+require 'json'
 
 module Cult
   module CLI
@@ -87,15 +88,13 @@ module Cult
             FileUtils.mkdir_p(provider_dir)
 
 
-            provider_file = File.join(provider_dir,
-                                      project.dump_name("provider"))
-            File.write(provider_file, project.dump_object(provider_conf))
+            provider_file = File.join(provider_dir, "provider.json")
+            File.write(provider_file, JSON.pretty_generate(provider_conf))
 
 
-            defaults_file = File.join(provider_dir,
-                                      project.dump_name("defaults"))
+            defaults_file = File.join(provider_dir, "defaults.json")
             defaults = Provider.generate_defaults(provider_conf)
-            File.write(defaults_file, project.dump_object(defaults))
+            File.write(defaults_file, JSON.pretty_generate(defaults))
           end
 
           if opts[:git]

@@ -43,7 +43,9 @@ module Cult
 
 
     def definition_path
-      [File.join(path, "provider"), File.join(path, "defaults")]
+      [ File.join(path, "extra.json"),
+        File.join(path, "defaults.json"),
+        File.join(path, "provider.json") ]
     end
 
 

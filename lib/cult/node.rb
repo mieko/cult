@@ -1,5 +1,6 @@
 require 'fileutils'
 require 'shellwords'
+require 'json'
 
 require 'cult/role'
 
@@ -10,8 +11,7 @@ module Cult
       raise Errno::EEXIST if node.exist?
 
       FileUtils.mkdir_p(node.path)
-      File.write(project.dump_name(node.node_path),
-                 project.dump_object(data))
+      File.write(node.node_path, JSON.pretty_generate(data))
 
       node.generate_ssh_keys!
 
@@ -36,17 +36,21 @@ module Cult
 
 
     def node_path
-      File.join(path, 'node')
+      File.join(path, 'node.json')
+    end
+
+    def exist?
+      File.exist?(state_path)
     end
 
 
     def state_path
-      File.join(path, 'state')
+      File.join(path, 'state.json')
     end
 
 
     def definition_path
-      [ node_path, state_path ]
+      [ extra_path, state_path, node_path ]
     end
 
 
@@ -55,8 +59,8 @@ module Cult
     end
 
 
-    def extra_file
-      File.join(path, 'extra')
+    def extra_path
+      File.join(path, 'extra.json')
     end
 
 

@@ -1,19 +1,24 @@
-require 'yaml'
 require 'json'
-require 'forwardable'
 
 module Cult
   class Definition
     attr_reader :object
     attr_reader :bag
 
-    extend Forwardable
-    def_delegators :object, :definition_parameters,
-                            :definition_path,
-                            :definition_parents
-
     def initialize(object)
       @object = object
+    end
+
+    def definition_parameters
+      object.definition_parameters
+    end
+
+    def definition_path
+      object.definition_path
+    end
+
+    def definition_parents
+      object.definition_parents
     end
 
     def inspect
@@ -21,63 +26,30 @@ module Cult
         "object: #{object.inspect}, " +
         "params: #{definition_parameters}, " +
         "parents: #{definition_parents}, " +
-        "direct_values: #{bag}>"
+        "bag: #{bag}>"
     end
     alias_method :to_s, :inspect
 
-
-    def filenames
-      Array(definition_path).map do |dp|
-        attempt = [ "#{dp}.yaml", "#{dp}.yml", "#{dp}.json" ]
-        existing = attempt.select do |filename|
-          File.exist?(filename)
-        end
-        if existing.size > 1
-          raise RuntimeError, "conflicting definition files: #{existing}"
-        end
-        existing[0]
-      end.compact
-    end
-
-
-    def decoder_for(filename)
-      @decoder_for ||= begin
-        case filename
-          when nil
-            nil
-          when /\.json\z/
-            JSON.method(:parse)
-          when /\.ya?ml\z/
-            YAML.method(:safe_load)
-          else
-            fail RuntimeError, "No decoder for file type: #{filename}"
-        end
-      end
-    end
-
-
     def bag
-      @bag ||= begin
-        result = {}
-        filenames.each do |filename|
-          erb = ::Cult::Template.new(project: nil, **definition_parameters)
-          contents = erb.process(File.read(filename), filename: filename)
-          result.merge! decoder_for(filename).call(contents)
-        end
-        result
+      @bag ||= Array(definition_path).select do |filename|
+        File.exist?(filename)
+      end.inject({}) do |acc, filename|
+        erb = ::Cult::Template.new(project: nil, **definition_parameters)
+        contents = erb.process(File.read(filename), filename: filename)
+        JSON.parse(contents).merge(acc)
       end
     end
     alias_method :to_h, :bag
 
 
     def direct(k)
-      fail "Use string keys" unless k.is_a?(String)
+      fail ArgumentError unless k.is_a?(String)
       bag[k]
     end
 
 
     def [](k)
-      fail "Use string keys" unless k.is_a?(String)
+      fail ArgumentError unless k.is_a?(String)
       if bag.key?(k)
         bag[k]
       else

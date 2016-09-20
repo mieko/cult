@@ -1,4 +1,5 @@
 require 'cult/drivers/load'
+require 'json'
 
 module Cult
   module CLI

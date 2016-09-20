@@ -1,5 +1,6 @@
-require 'SecureRandom'
+require 'securerandom'
 require 'fileutils'
+require 'json'
 
 module Cult
   module CLI
@@ -176,18 +177,23 @@ module Cult
             }
 
             Node.from_data!(Cult.project, data).tap do |node|
+              puts "Provisioning #{node.name}..."
               prov_data = provider.provision!(name: node.name,
                                               image: node_spec[:image],
                                               size: node_spec[:size],
                                               zone: node_spec[:zone],
                                               ssh_public_key: node.ssh_public_key_file)
               prov_data['provider'] = provider.name
-              File.write(Cult.project.dump_name(node.state_path),
-                         Cult.project.dump_object(prov_data))
+              File.write(node.state_path, JSON.pretty_generate(prov_data))
 
               c = Commander.new(project: Cult.project, node: node)
+              puts "Bootstrapping #{node.name}..."
               c.bootstrap!
+
+              puts "Installing roles for #{node.name}..."
               c.install!(node)
+
+              puts "Node installed: #{node.name}"
             end
           end
 
