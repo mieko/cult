@@ -6,6 +6,29 @@ require 'cult/role'
 
 module Cult
   class Node < Role
+    class << self
+      attr_accessor :marshal_exclude
+    end
+
+    self.marshal_exclude = [:@project]
+
+    def marshal_dump
+      instance_variables.reject do |key|
+        self.class.marshal_exclude.include?(key)
+      end.map do |key|
+        [key, instance_variable_get(key)]
+      end.to_h
+    end
+
+    def marshal_load(vars)
+      vars.each do |key, value|
+        unless self.class.marshal_exclude.include?(key)
+          instance_variable_set(key, value)
+        end
+      end
+      self.project = Cult.project
+    end
+
     def self.from_data!(project, data)
       node = by_name(project, data[:name])
       raise Errno::EEXIST if node.exist?
