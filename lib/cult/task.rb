@@ -24,8 +24,10 @@ module Cult
     end
 
 
+    # Task files are executable by anyone: this makes re-exec'ing
+    # tasks as another user trivial.
     def file_mode
-      super | 0100
+      super | 0111
     end
 
 
