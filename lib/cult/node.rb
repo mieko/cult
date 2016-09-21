@@ -118,6 +118,25 @@ module Cult
     end
 
 
+    def generate_ssh_keys!
+      esc = ->(s) { Shellwords.escape(s) }
+      tmp_public = ssh_private_key_file + '.pub'
+
+      # Wanted to use -o and -t ecdsa, but Net::SSH still has some
+      # issues with ECDSA, and only 4.0 beta supports -o style new keys
+      cmd = "ssh-keygen -N '' -t rsa -b 4096 -C #{esc.(name)} " +
+            "-f #{esc.(ssh_private_key_file)} && " +
+            "mv #{esc.(tmp_public)} #{esc.(ssh_public_key_file)}"
+      %x(#{cmd})
+
+      unless $?.success?
+        fail "Couldn't generate SSH key, command: #{cmd}"
+      end
+
+      File.chmod(0600, ssh_private_key_file)
+    end
+
+
     def addr(access, protocol = project.default_ip_protocol)
       fail ArgumentError unless [:public, :private].include?(access)
       fail ArgumentError unless [:ipv4, :ipv6].include?(protocol)
@@ -201,21 +220,5 @@ module Cult
     def names_for_zone
       [zone]
     end
-
-    def generate_ssh_keys!
-      esc = ->(s) { Shellwords.escape(s) }
-      tmp_public = ssh_private_key_file + '.pub'
-
-      # Wanted to use -o and -t ecdsa, but Net::SSH still has some
-      # issues with ECDSA, and only 4.0 beta supports -o style new keys
-      cmd = "ssh-keygen -N '' -t rsa -b 4096 -C #{esc.(name)} " +
-            "-f #{esc.(ssh_private_key_file)} && " +
-            "mv #{esc.(tmp_public)} #{esc.(ssh_public_key_file)}"
-      %x(#{cmd})
-      unless $?.success?
-        fail "Couldn't generate SSH key, command: #{cmd}"
-      end
-    end
-
   end
 end
