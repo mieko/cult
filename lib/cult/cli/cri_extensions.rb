@@ -63,16 +63,16 @@ module Cult
       def block
         lambda do |opts, args, cmd|
           if project_required? && Cult.project.nil?
-            fail CLIError, "command '#{name}' requires a Cult project"
+            fail CLIError, "command '#{cmd.name}' requires a Cult project"
           end
 
-          check_argument_spec!(args, argument_spec) if argument_spec
+          check_argument_spec!(args, argument_spec, cmd) if argument_spec
 
           super.call(opts, args, cmd)
         end
       end
 
-      def check_argument_spec!(args, range)
+      def check_argument_spec!(args, range, cmd)
         range = (0..range) if range == Float::INFINITY
         range = (range..range) if range.is_a?(Integer)
 
@@ -86,12 +86,17 @@ module Cult
               "requires exactly #{range.begin} arguments"
             else
               if range.end == Float::INFINITY
-                "requires #{range.begin}+ arguments"
+                words =%w(zero one two three)
+                if range.begin < words.size
+                  "requires #{words[range.begin]} or more arguments"
+                else
+                  "requires #{range.begin}+ arguments"
+                end
               else
                 "accepts #{range} arguments"
               end
           end
-          fail CLIError, "Command #{msg}"
+          fail CLIError, "command '#{cmd.name}' #{msg} (usage: #{cmd.usage})"
         end
       end
 

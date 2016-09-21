@@ -10,7 +10,7 @@ module Cult
         optional_project
         name        'provider'
         aliases     'providers'
-        summary     'Provider Commands'
+        summary     'Provider commands'
         description <<~EOD.format_description
           A provider is a VPS service.  Cult ships with drivers for quite a few
           services, (which can be listed with `cult provider drivers`).
@@ -40,6 +40,7 @@ module Cult
 
       provider_ls = Cri::Command.define do
         name        'ls'
+        usage       'ls [/PROVIDER+/ ...]'
         summary     'List Providers'
         description <<~EOD.format_description
           Lists Providers for this project.  If --driver is specified, it only

@@ -25,7 +25,7 @@ module Cult
 
       node_ssh = Cri::Command.define do
         name        'ssh'
-        usage       'ssh NODE'
+        usage       'ssh /NODE+/ [command...]'
         summary     'Starts an SSH shell to NODE'
 
         flag :i, :interactive,       "Force interactive mode"
@@ -83,7 +83,7 @@ module Cult
 
       node_new = Cri::Command.define do
         name        'new'
-        usage       'new [options] NAME...'
+        usage       'new -r /ROLE+/ [options] NAME0 NAME1 ...'
         summary     'Create a new node'
         description <<~EOD.format_description
           This command creates a new node specification and then creates it with
@@ -106,11 +106,11 @@ module Cult
           And so forth.
         EOD
 
-        required :r, :role,      'Specify possibly multiple roles',
+        required :r, :role,      'Specify possibly multiple /ROLE+/',
                                   multiple: true
         required :n, :count,     'Generates <value> number of nodes'
 
-        required :p, :provider,  'Provider'
+        required :p, :provider,  'Use /PROVIDER/ to create the node'
         required :Z, :zone,      'Provider zone'
         required :I, :image,     'Provider image'
         required :S, :size,      'Provider instance size'
@@ -204,7 +204,7 @@ module Cult
 
       node_rm = Cri::Command.define do
         name        'rm'
-        usage       'rm NODE'
+        usage       'rm /NODE+/ ...'
         summary     'Destroy nodes'
         description <<~EOD.format_description
           Destroys all nodes named NODE, or match the pattern described by
@@ -240,8 +240,9 @@ module Cult
       node.add_command(node_rm)
 
       node_ls = Cri::Command.define do
-        aliases     'ls'
+        name        'ls'
         summary     'List nodes'
+        usage       'ls /NODE+/ ...'
         description <<~EOD.format_description
           This command lists the nodes in the project.
         EOD
@@ -272,22 +273,58 @@ module Cult
 
       node_sync = Cri::Command.define do
         name        'sync'
+        usage       'sync /NODE+/ ...'
         summary     'Synchronize host information across fleet'
         description <<~EOD.format_description
-          Processes generates and executes tasks/sync on every node with a
-          current network setup.
+          Computes, pre-processes, and executes "sync" tasks on every NODE,
+          or all nodes if none are specified.
+
+          Sync tasks are tasks that begin with 'sync-'.  They are meant to
+          process dynamic information about the fleet well after a node has
+          been created.  Typically, you'll run `cult node sync` to let each
+          instance know about its new neighborhood after you add or remove
+          new nodes.
+
+          Sync tasks can optionally specify a "pass", with "sync-P0-..." or
+          "sync-P1-...".  When `cult node sync` executes, it ensures that:
+
+            1. On a given node, all tasks in the current pass are executed
+               sequentially, in role and asciibetical order.
+
+            2. Across the fleet, nodes which have tasks to run in a given pass
+               are run concurently with each other.
+
+            3. The entire fleet (or NODE selection) synchonizes between passes.
+               "Pass 0" has run on EVERY node (across any role boundaries)
+               before "Pass 1" is started on ANY node.
+
+          Sync tasks without a specified pass are implicitly in "Pass 0".
+
+          The sync can be restricted to a specified set of passes with the
+          --pass option.  Note that this skips dependent passes.
+
+          The sync can be restricted to a specified set of CONCRETE role tasks
+          with the --role option.  No dependencies are considered: Cult
+          calculates the tasks it would've ran, then removes all tasks not
+          belonging to a role given to --roles
         EOD
 
-        required :p, :pass, "Only execute pass PASS.  Can be specified " +
+        required :R, :role, "Skip sync tasks not in /ROLE/.  Can be specified " +
                             "more than once.",
+                            multiple: true
+
+        required :P, :pass, "Only execute PASS.  Can be specified more than " +
+                            "once.",
                             multiple: true
 
         run(arguments: unlimited) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
                               : CLI.fetch_items(args, from: Node)
+          roles = opts[:role].nil? ? Cult.project.roles
+                                   : CLI.fetch_items(opts[:role], from: Role)
           c = CommanderSync.new(project: Cult.project, nodes: nodes)
           passes = opts[:pass] ? opts[:pass].map(&:to_i) : nil
-          c.sync!(passes: passes)
+          c.sync!(roles: roles, passes: passes)
         end
       end
       node.add_command(node_sync)
@@ -295,7 +332,7 @@ module Cult
       node_ping = Cri::Command.define do
         name        'ping'
         summary     'Check the responsiveness of each node'
-        usage       'ping NODES'
+        usage       'ping /NODE+/'
 
         flag :d, :destroy, 'Destroy nodes that are not responding.'
 
@@ -324,7 +361,7 @@ module Cult
         name        'addr'
         aliases     'ip'
         summary     'print IP address of node'
-        usage       'addr NODE'
+        usage       'addr [/NODE+/ ...]'
         flag        :p, :private, 'Print private address'
         flag        :'6', :ipv6, 'Print ipv6 address'
         flag        :'4', :ipv4, 'Print ipv4 address'

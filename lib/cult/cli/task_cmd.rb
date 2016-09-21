@@ -6,7 +6,7 @@ module Cult
         optional_project
         name        'task'
         aliases     'tasks'
-        summary     'Task Manipulation'
+        summary     'Task manipulation'
         usage       'task [command]'
         description <<~EOD.format_description
           Tasks are basically shell scripts.  Or anything with a \#! line, or
@@ -45,7 +45,7 @@ module Cult
 
         flag     :A,  :all,       'Re-sequence all roles'
         flag     :G,  :'git-add', '`git add` each change'
-        required :r,  :role,      'Roles to resequence (multiple)',
+        required :r,  :role,      'Resequence only /NODE+/ (multiple)',
                                   multiple: true
 
         description <<~EOD.format_description
@@ -139,7 +139,7 @@ module Cult
         description <<~EOD.format_description
         EOD
 
-        required :r, :role, 'role for task.  defaults to "all"'
+        required :r, :role, '/ROLE/ for task.  defaults to "base"'
         flag :e, :edit, 'open generated task file in your $EDITOR'
 
         run do |opts, args, cmd|

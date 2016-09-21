@@ -48,7 +48,7 @@ module Cult
       token = SecureRandom.hex
       task_bin = role.relative_path(task.path)
 
-      puts "Executing: #{task.remote_path}"
+      puts "Executing: #{task.remote_path} on #{node.name}"
       res = ssh.exec! <<~BASH
         cd #{esc(role.remote_path)}; \
         ./#{esc(task_bin)} && \
@@ -82,9 +82,15 @@ module Cult
     end
 
 
-    def find_sync_tasks(pass:)
+    def find_sync_tasks(pass:, roles: nil)
+      selected_roles = node.build_order
+
+      if roles
+        selected_roles.select! { |r| roles.include?(r) }
+      end
+
       r = []
-      node.build_order.each do |role|
+      selected_roles.each do |role|
         r += role.event_tasks.select do |t|
           t.event == :sync && t.pass == pass
         end
@@ -93,10 +99,10 @@ module Cult
     end
 
 
-    def create_sync_tar(pass:)
+    def create_sync_tar(pass:, roles: nil)
       io = StringIO.new
       Bundle.new(io) do |bundle|
-        find_sync_tasks(pass: pass).each do |task|
+        find_sync_tasks(pass: pass, roles: roles).each do |task|
           bundle.add_file(project, task.role, node, task)
         end
       end
@@ -106,13 +112,13 @@ module Cult
     end
 
 
-    def sync!(pass:)
-      io = create_sync_tar(pass: pass)
+    def sync!(pass:, roles: nil)
+      io = create_sync_tar(pass: pass, roles: roles)
       return if io.eof?
 
       connect do |ssh|
         send_tar(io, ssh)
-        find_sync_tasks(pass: pass).each do |task|
+        find_sync_tasks(pass: pass, roles: roles).each do |task|
           exec_remote!(ssh: ssh, role: task.role, task: task)
         end
       end

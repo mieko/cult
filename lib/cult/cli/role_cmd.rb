@@ -66,7 +66,7 @@ module Cult
           $CULT_PROJECT/roles/$NAME
         EOD
 
-        required :r, :roles, 'this role depends on another role',
+        required :r, :roles, 'this role depends on another /ROLE+/ (multiple)',
                  multiple: true
 
         run(arguments: 1) do |opts, args, cmd|
@@ -95,7 +95,7 @@ module Cult
 
       role_rm = Cri::Command.define do
         name        'rm'
-        usage       'rm ROLES...'
+        usage       'rm /ROLE+/ ...'
         summary     'Destroy role ROLE'
         description <<~EOD.format_description
           Destroys all roles specified.
@@ -119,7 +119,7 @@ module Cult
 
       role_ls = Cri::Command.define do
         name        'ls'
-        usage       'ls [ROLES...]'
+        usage       'ls [/ROLE+/ ...]'
         summary     'List existing roles'
         description <<~EOD.format_description
           Lists roles in this project.  By default, lists all roles.  If one or
