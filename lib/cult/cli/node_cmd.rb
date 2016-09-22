@@ -262,9 +262,17 @@ module Cult
           end
 
           Cult.paramap(nodes) do |node|
+            role_string = node.build_order.map do |role|
+              if node.zone_leader?(role)
+                Rainbow('*' + role.name).cyan
+              else
+                '=' + role.name
+              end
+            end.join(', ')
+
             puts "#{node.name}\t#{node.provider&.name}\t" +
                 "#{node.zone}\t#{node.addr(:public)}\t#{node.addr(:private)}\t" +
-                "#{node.roles.map(&:name)}"
+                "#{role_string}"
           end
         end
       end
