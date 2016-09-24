@@ -83,9 +83,19 @@ module Cult
       end
     end
 
+    # We allow setting to a lookup value instead of an instance
     attr_writer :default_provider
     def default_provider
-      @default_provider ||= providers[0]
+      @default_provider_instance ||= begin
+        case @default_provider
+          when Cult::Provider
+            @default_provider
+          when nil;
+            providers.first
+          else
+            providers[@default_provider]
+        end
+      end
     end
 
 

@@ -197,7 +197,7 @@ module Cult
 
     # first matching item, or raises KeyError
     def fetch(key)
-      first(key) or raise KeyError
+      first(key) or raise KeyError, "Not found: #{key.inspect}"
     end
 
 
