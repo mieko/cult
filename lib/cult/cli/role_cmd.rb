@@ -80,8 +80,7 @@ module Cult
                                               from: Role).map(&:name)
           end
           FileUtils.mkdir_p(role.path)
-          File.write(role.definition_file,
-                     JSON.pretty_generate(data))
+          File.write(role.role_file, JSON.pretty_generate(data))
 
           FileUtils.mkdir_p(File.join(role.path, "files"))
           File.write(File.join(role.path, "files", ".keep"), '')

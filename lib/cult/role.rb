@@ -86,6 +86,9 @@ module Cult
     end
     alias_method :files, :artifacts
 
+    def role_file
+      File.join(path, "role.json")
+    end
 
     def definition
       @definition ||= Definition.new(self)
@@ -94,7 +97,7 @@ module Cult
 
     def definition_path
       [ File.join(path, "extra.json"),
-        File.join(path, "role.json") ]
+        role_file ]
     end
 
 

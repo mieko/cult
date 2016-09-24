@@ -67,6 +67,11 @@ module Cult
           concurrent = interactive || nodes.size == 1 ? 1 : nil
 
           Cult.paramap(nodes, concurrent: concurrent) do |node|
+            # Through source control, etc, these sometimes end up with improper
+            # permissions.  OpenSSH won't let us use it otherwise, and there's
+            # no option to disable the check.
+            File.chmod(0600, node.ssh_private_key_file)
+
             ssh_args = 'ssh', '-i', esc.(node.ssh_private_key_file),
                        '-p', esc.(node.ssh_port.to_s),
                        '-o', "UserKnownHostsFile=#{esc.(node.ssh_known_hosts_file)}",
