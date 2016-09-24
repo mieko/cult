@@ -9,8 +9,10 @@ module Cult
 
 
       def sizes_map
+        # Cores = GB Ram is a pretty good scaling factor, and
+        # closely maps what VPS providers are doing.
         [1, 2, 4, 6, 8, 10, 12, 16].map do |size|
-          ["#{size}gb", size * 1024 * 1024]
+          [ "#{size}gb", { ram: size * 1024, cores: size } ]
         end.to_h
       end
       with_id_mapping :sizes_map
@@ -83,6 +85,8 @@ module Cult
 
 
       def guest_copy(name, src, dst)
+        # NOTE: Bug in current (Sep 2016) VBox has a fucked copyto, where
+        # setting target-directory to the full path is a workaround
         cmd = "VBoxManage guestcontrol #{esc(name)} " +
               "--username root --password password " +
               "copyto #{esc(src)} --target-directory #{esc(dst)}"
@@ -101,38 +105,50 @@ module Cult
 
 
       def provision!(name:, size:, zone:, image:, ssh_public_key:)
-        system 'VBoxManage', 'clonevm',
-                fetch_mapped(name: :image, from: images_map, key: image),
-               '--name', name, '--register'
+        transaction do |xac|
+          # Todo: transaction
+          system 'VBoxManage', 'clonevm',
+                  fetch_mapped(name: :image, from: images_map, key: image),
+                 '--name', name, '--register'
 
-        system 'VBoxManage', 'modifyvm', name, '--groups', '/Cult'
-        system 'VBoxManage', 'startvm', name, '--type', 'headless'
+          xac.rollback do
+            destroy!(id: name, ssh_key_id: nil)
+          end
 
-        public_ip  = await_ip_address(name, 0, :ipv4)
-        private_ip = public_ip
+          system_spec = sizes_map[size]
+          system 'VBoxManage', 'modifyvm', name,
+                               '--groups', '/Cult',
+                               '--memory', system_spec[:ram].to_s,
+                               '--cpus', system_spec[:cores].to_s
 
-        await_ssh(public_ip)
+          system 'VBoxManage', 'startvm', name, '--type', 'headless'
 
-        guest_command(name, "mkdir -m 0600 /root/.ssh")
-        guest_copy(name, ssh_public_key, "/root/.ssh/authorized_keys")
-        guest_command(name, "chmod 0644 /root/.ssh/authorized_keys")
-        guest_command(name, "passwd -l root")
+          public_ip  = await_ip_address(name, 0, :ipv4)
+          private_ip = public_ip
 
-        return {
-            name:          name,
-            size:          size,
-            zone:          zone,
-            image:         image,
+          await_ssh(public_ip)
 
-            id:           name,
-            created_at:   Time.now.iso8601,
-            host:         public_ip,
-            ipv4_public:  public_ip,
-            ipv4_private: private_ip,
-            ipv6_public:  nil,
-            ipv6_private: nil,
-            meta:         {}
-        }
+          guest_command(name, "mkdir -m 0600 /root/.ssh")
+          guest_copy(name, ssh_public_key, "/root/.ssh/authorized_keys")
+          guest_command(name, "chmod 0644 /root/.ssh/authorized_keys")
+          guest_command(name, "passwd -l root")
+
+          return {
+              name:          name,
+              size:          size,
+              zone:          zone,
+              image:         image,
+
+              id:           name,
+              created_at:   Time.now.iso8601,
+              host:         public_ip,
+              ipv4_public:  public_ip,
+              ipv4_private: private_ip,
+              ipv6_public:  nil,
+              ipv6_private: nil,
+              meta:         {}
+          }
+        end
       end
 
       def self.setup!
