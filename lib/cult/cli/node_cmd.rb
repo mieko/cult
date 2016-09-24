@@ -271,9 +271,9 @@ module Cult
               if node.zone_leader?(role)
                 Rainbow('*' + role.name).cyan
               else
-                '=' + role.name
+                role.name
               end
-            end.join(', ')
+            end.join(' ')
 
             puts "#{node.name}\t#{node.provider&.name}\t" +
                 "#{node.zone}\t#{node.addr(:public)}\t#{node.addr(:private)}\t" +

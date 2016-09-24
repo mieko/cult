@@ -9,14 +9,24 @@ set -e
 
 # The ERB helper has quite a few methods for shell-escaping, for example:
 
-# The "q" method quotes a string with double-quotes.
+# "e" does shell slash-escaping, e.g., I\'m\ Awesome.  Importantly, it will
+# also escape $ with \$.  It is the most general-purpose for shell scripts,
+# and should be your go-to, even though its results are uglier.
+# AKA: slash
+echo <%= node.name.e %>
+
+# The "q" method quotes a string with double-quotes.  AKA "dq" and "dquote".
+# Quote characters are escaped with a slash, e.g., \"
+# AKA: dq, dquote
 echo <%= node.name.q %>
 
-# The "sq" method single-quotes the string.
+# The "sq" method single-quotes the string.  This usually never what you want
+# in shell-script context, but comes in handy with config files.  We just
+# happen to know it'll work here.  Single-quotes are escaped with a slash,
+# which shells don't like.
+# AKA: squote
 echo <%= node.name.sq %>
 
-# "slash" does shell slash-escaping, e.g., I\'m\ Awesome
-echo <%= node.name.slash %>
 
 # The same methods work on Array (over each item), and have an optional
 # separator argument, which defaults to ' '

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -e
+ZONE_LEADERS="$HOME/cult/zone-leaders"
+
+<%
+  leader_of = node.build_order.select do |role|
+    node.zone_leader?(role) && node != role
+  end.map(&:name)
+%>
+
+<% if leader_of.empty? %>
+  rm -f "$ZONE_LEADERS"
+<% else %>
+  echo <%= leader_of.join(" ").e %> | tee "$ZONE_LEADERS"
+<% end %>

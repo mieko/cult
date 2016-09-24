@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -e
+
+# This file generates a map of all hosts on each node, in /etc/hosts.  Because
+# it's included in `base`, it'll be executed before your custom roles' sync
+# tasks.  That means you can parse the map instead of using custom Ruby
+# templating, if that's not your thing.
+#
+# Keep in mind that this file is evaluated on the local machine, and its result
+# is sent to the remote host.
+#
+# The output format is:
+#
+# 192.168.1.1 node-name # base *role1 role2 role3
+#
+# Where the * signifies that the node is the zone leader of that role.
+#
+
+CULTMAP="$HOME/cult/hosts"
+mkdir -p $(basename "$CULTMAP")
+sudo rm -f "$CULTMAP"
+
+cat - <<HOSTS | tee "$CULTMAP"
+# cult: generated host map from <%= __FILE__ %>
+<% nodes.each do |n| %>
+<%
+  role_string = n.build_order.map do |r|
+    (n.zone_leader?(r) ? '*' : '') + r.name
+  end.join(' ')
+%>
+<%= n.addr_from(node) %> <%= n.name %> # cult: <%= role_string %>
+<% end %>
+HOSTS
+
+HOSTS=$(cat /etc/hosts | grep -v '# cult: '; cat "$CULTMAP")
+echo "$HOSTS" | sudo tee /etc/hosts

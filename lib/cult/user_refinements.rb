@@ -1,4 +1,3 @@
-require 'json'
 require 'shellwords'
 
 # These are refinements we enable in a user-facing context, e.g., the console
@@ -9,15 +8,14 @@ module Cult
     # Alright!  We found a use for refinements!
     module Util
       module_function
+
       def squote(s)
         "'" + s.gsub("'", "\\\\\'") + "'"
       end
 
-
       def dquote(s)
-        s.to_json
+        '"' + s.gsub('"', '\"') + '"'
       end
-
 
       def slash(s)
         Shellwords.escape(s)
@@ -40,6 +38,7 @@ module Cult
       def slash
         Util.slash(self)
       end
+      alias_method :e, :slash
     end
 
 
@@ -55,11 +54,10 @@ module Cult
       end
       alias_method :sq, :squote
 
-
-
       def slash(sep = ' ')
         map {|v| Util.slash(v) }.join(sep)
       end
+      alias_method :e, :slash
     end
   end
 end
