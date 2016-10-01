@@ -53,6 +53,10 @@ module Cult
     delegate_to_definition :created_at
 
 
+    def node?
+      true
+    end
+
     def self.path(project)
       File.join(project.path, 'nodes')
     end

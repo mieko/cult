@@ -247,7 +247,7 @@ module Cult
       node_ls = Cri::Command.define do
         name        'ls'
         summary     'List nodes'
-        usage       'ls /NODE+/ ...'
+        usage       'ls /NODE*/ ...'
         description <<~EOD.format_description
           This command lists the nodes in the project.
         EOD
@@ -267,7 +267,7 @@ module Cult
           end
 
           Cult.paramap(nodes) do |node|
-            role_string = node.build_order.map do |role|
+            role_string = node.build_order.reject(&:node?).map do |role|
               if node.zone_leader?(role)
                 Rainbow('*' + role.name).cyan
               else
@@ -286,7 +286,7 @@ module Cult
 
       node_sync = Cri::Command.define do
         name        'sync'
-        usage       'sync /NODE+/ ...'
+        usage       'sync /NODE*/ ...'
         summary     'Synchronize host information across fleet'
         description <<~EOD.format_description
           Computes, pre-processes, and executes "sync" tasks on every NODE,
@@ -345,7 +345,7 @@ module Cult
       node_ping = Cri::Command.define do
         name        'ping'
         summary     'Check the responsiveness of each node'
-        usage       'ping /NODE+/'
+        usage       'ping /NODE*/'
 
         flag :d, :destroy, 'Destroy nodes that are not responding.'
 

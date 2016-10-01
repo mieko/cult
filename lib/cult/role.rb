@@ -21,6 +21,9 @@ module Cult
       @path = path
     end
 
+    def node?
+      false
+    end
 
     def exist?
       Dir.exist?(path)
