@@ -1,6 +1,7 @@
 require 'securerandom'
 require 'fileutils'
 require 'json'
+require 'terminal-table'
 
 module Cult
   module CLI
@@ -266,7 +267,11 @@ module Cult
             end
           end
 
-          Cult.paramap(nodes) do |node|
+          table = Terminal::Table.new(headings:
+            ['Node', 'Provider', 'Zone', 'Public IPv4', 'Private IPv4', 'Roles']
+          )
+
+          table.rows = Cult.paramap(nodes) do |node|
             role_string = node.build_order.reject(&:node?).map do |role|
               if node.zone_leader?(role)
                 Rainbow('*' + role.name).cyan
@@ -275,10 +280,11 @@ module Cult
               end
             end.join(' ')
 
-            puts "#{node.name}\t#{node.provider&.name}\t" +
-                "#{node.zone}\t#{node.addr(:public)}\t#{node.addr(:private)}\t" +
-                "#{role_string}"
+            [ node.name, node.provider&.name, node.zone,
+              node.addr(:public), node.addr(:private), role_string]
           end
+
+          puts table
         end
       end
       node.add_command(node_ls)
@@ -356,16 +362,15 @@ module Cult
         run(arguments: unlimited) do |opts, args, cmd|
           nodes = args.empty? ? Cult.project.nodes
                               : CLI.fetch_items(args, from: Node)
-          Cult.paramap(nodes) do |node|
+
+          table = Terminal::Table.new(headings: ["Node", "Status"])
+          table.rows = Cult.paramap(nodes, quiet: true) do |node|
             c = Commander.new(project: Cult.project, node: node)
-            if (r = c.ping)
-              puts Rainbow(node.name).green + ": #{r}"
-              nil
-            else
-              puts Rainbow(node.name).red + ": Unreachable"
-              node
-            end
+            status = c.ping
+            [ node.name, status ? Rainbow(status).green
+                                : Rainbow("unreachable").red ]
           end
+          puts table
         end
       end
       node.add_command(node_ping)

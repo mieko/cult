@@ -132,7 +132,7 @@ module Cult
 
     def ping
       connect do |ssh|
-        ssh.exec! "uptime"
+        ssh.exec!("uptime").chomp
       end
     rescue
       nil

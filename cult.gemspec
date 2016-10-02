@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "net-scp", "~> 1.2"
   spec.add_dependency "rainbow", "~> 2.1"
   spec.add_dependency "erubis", "~> 2.7.0"
+  spec.add_dependency "terminal-table", "~> 1.7.2"
 
   spec.add_development_dependency "bundler", "~> 1.12"
   spec.add_development_dependency "rake", "~> 10.0"

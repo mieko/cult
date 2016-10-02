@@ -1,6 +1,6 @@
 require 'io/console'
 require 'shellwords'
-
+require 'cult/cli/table_extensions'
 require 'cult/cli/cri_extensions'
 
 module Cult
