@@ -3,6 +3,9 @@ require 'etc'
 require 'socket'
 
 module Cult
+  # Project Context is a binding useful for "cult console" and templates.  It
+  # makes it so "nodes" and "roles" return something useful.
+
   class ProjectContext
     extend Forwardable
     def_delegators :project, :methods, :respond_to?, :to_s, :inspect
@@ -11,9 +14,9 @@ module Cult
 
     def initialize(project, **extra)
       @project = project
-
       extra.each do |k, v|
-        define_singleton_method(k) { v }
+        v.respond_to?(:call) ? define_singleton_method(k, &v)
+                             : define_singleton_method(k) { v }
       end
     end
 
@@ -21,19 +24,6 @@ module Cult
       project.send(*args)
     end
 
-    def cultsrcid
-      loc = caller_locations(1, 1)[0]
-      path = loc.absolute_path
-      if path.start_with?(project.path)
-        path = project.name + "/" + path[project.path.size + 1 .. -1]
-      end
-
-      user, host = Etc.getlogin, Socket.gethostname
-      vcs = "#{git_branch}@#{git_commit_id(short: true)}"
-      timestamp = Time.now.iso8601
-
-      "@cultsrcid: #{path}:#{loc.lineno} #{vcs} #{timestamp} #{user}@#{host}"
-    end
-
+    public :binding
   end
 end

@@ -40,10 +40,6 @@ module Cult
       def cult(*argv)
         system $0, *argv
       end
-
-      def binding
-        super
-      end
     end
 
     module_function

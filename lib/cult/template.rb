@@ -11,16 +11,27 @@ module Cult
         super(project, **kw)
       end
 
+      def cultsrcid
+        loc = caller_locations(1, 1)[0]
+        path = loc.absolute_path
+        if path.start_with?(project.path)
+          path = project.name + "/" + path[project.path.size + 1 .. -1]
+        end
+
+        user, host = Etc.getlogin, Socket.gethostname
+        vcs = "#{git_branch}@#{git_commit_id(short: true)}"
+        timestamp = Time.now.iso8601
+
+        "@cultsrcid: #{path}:#{loc.lineno} #{vcs} #{timestamp} #{user}@#{host}"
+      end
+
+      private
       def _process(input, filename: nil)
         Dir.chdir(@pwd || Dir.pwd) do
           erb = Erubis::Eruby.new(input)
           erb.filename = filename
           erb.result(binding)
         end
-      end
-
-      def binding
-        super
       end
     end
 
@@ -32,7 +43,7 @@ module Cult
 
 
     def process(text, filename: nil)
-      context._process(text, filename: filename)
+      context.send(:_process, text, filename: filename)
     end
 
   end
