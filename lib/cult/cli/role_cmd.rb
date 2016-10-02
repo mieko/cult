@@ -131,10 +131,11 @@ module Cult
             roles = CLI.fetch_items(*args, from: Role)
           end
 
-          roles.each do |r|
-            fmt = "%-20s %s\n"
-            printf fmt, r.name, r.build_order.map(&:name).join(', ')
+          table = Terminal::Table.new(headings: ['Role', 'Build Order'])
+          table.rows = roles.map do |r|
+            [r.name, r.build_order.map(&:name).join(', ')]
           end
+          puts table
 
         end
       end
