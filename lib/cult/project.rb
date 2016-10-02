@@ -137,9 +137,10 @@ module Cult
     end
 
     def git_commit_id(short: false)
-      res = %x(git -C #{Shellwords.escape(path)} rev-parse --verify HEAD).chomp
-      res = res[0..7] if short
-      res
+      short = short ? "--short" : ''
+      cmd = "git -C #{Shellwords.escape(path)} rev-parse #{short} " +
+            "--verify HEAD"
+      %x(#{cmd}).chomp
     end
 
 
