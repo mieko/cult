@@ -192,6 +192,14 @@ module Cult
       c.first
     end
 
+    def role_leader(role)
+      leader(role)
+    end
+
+    def role_leader?(role)
+      role_leader(role) == self
+    end
+
 
     def provider_leader(role = nil)
       leader(role, :provider)
