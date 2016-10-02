@@ -18,11 +18,11 @@
 module Cult
   class Paramap
     class Job
-      attr_reader :ident, :value, :block
+      attr_reader :ident, :value, :rebind, :block
       attr_reader :pid, :pipe
 
-      def initialize(ident, value, block)
-        @ident, @value, @block = ident, value, block
+      def initialize(ident, value, rebind: {}, &block)
+        @ident, @value, @rebind, @block = ident, value, rebind, block
 
         @pipe = IO.pipe
         @pid = fork do
@@ -37,7 +37,22 @@ module Cult
         @pipe[1].close
       end
 
+      def rebind_streams!
+        names = {
+          stdout: STDOUT,
+          stdin: STDIN,
+          stderr: STDERR,
+          nil => '/dev/null'
+        }
+        rebind.each do |k, v|
+          src, dst = names[k], names[v]
+          dst = File.open(dst, 'w+') if dst.is_a?(String)
+          src.reopen(dst)
+        end
+      end
+
       def prepare_forked_environment!
+        rebind_streams!
         # Stub out things that have caused a problem in the past.
         Kernel.send(:define_method, :exec) do |*a|
           fail "don't use Kernel\#exec inside of a paramap job"
@@ -92,6 +107,7 @@ module Cult
     end
 
     attr_reader :enum, :iter
+    attr_reader :rebind
     attr_reader :block
     attr_reader :job_queue
     attr_reader :exception_strategy
@@ -99,14 +115,16 @@ module Cult
     attr_reader :results
     attr_reader :concurrent
 
-    def initialize(enum, concurrent: nil, exception_strategy:, &block)
+    def initialize(enum, rebind: {}, concurrent: nil, exception_strategy:, &block)
       @enum = enum
+      @rebind = rebind
       @iter = @enum.to_enum
       @concurrent = concurrent || max_concurrent
       @exception_strategy = exception_strategy
       @block = block
       @exceptions, @results = [], []
       @job_queue = []
+
     end
 
     def max_concurrent
@@ -144,7 +162,7 @@ module Cult
     end
 
     def add_job(value)
-      job_queue.push(Job.new(new_job_index, value, block))
+      job_queue.push(Job.new(new_job_index, value, rebind: rebind, &block))
     end
 
     def job_by_pid(pid)
@@ -202,8 +220,11 @@ module Cult
   private_constant :Paramap
 
   module_function
-  def paramap(enum, concurrent: nil, exception: :raise, &block)
-    Paramap.new(enum, concurrent: concurrent,
+  def paramap(enum, quiet: false, concurrent: nil, exception: :raise, &block)
+    rebind = quiet ? { stdout: nil, stderr: nil } : {}
+    Paramap.new(enum,
+                rebind: rebind,
+                concurrent: concurrent,
                 exception_strategy: exception, &block).run
   end
 end
