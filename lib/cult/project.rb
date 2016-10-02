@@ -136,6 +136,12 @@ module Cult
       end
     end
 
+    def git_commit_id(short: false)
+      res = %x(git -C #{Shellwords.escape(path)} rev-parse --verify HEAD).chomp
+      res = res[0..7] if short
+      res
+    end
+
 
     def env
       ENV['CULT_ENV'] || begin

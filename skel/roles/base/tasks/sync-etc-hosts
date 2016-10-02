@@ -21,7 +21,7 @@ mkdir -p $(basename "$CULTMAP")
 sudo rm -f "$CULTMAP"
 
 cat - <<HOSTS | tee "$CULTMAP"
-# cult: generated host map from <%= __FILE__ %>
+# <%= cultsrcid %>
 <% nodes.each do |n| %>
 <%
   role_string = n.build_order.map do |r|
