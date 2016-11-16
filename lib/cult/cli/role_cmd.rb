@@ -141,7 +141,6 @@ module Cult
       end
       role.add_command(role_ls)
 
-
       role
     end
   end
