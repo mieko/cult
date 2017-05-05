@@ -2,45 +2,6 @@ require 'securerandom'
 require 'time'
 
 module Cult
-  # This has been submitted as a PR.  It lets us set a label and custom
-  # expiration length for an API key.
-  #  See: https://github.com/rick/linode/pull/34
-  module LinodeMonkeyPatch
-    def fetch_api_key(options = {})
-      request = {
-        api_action: 'user.getapikey',
-        api_responseFormat: 'json',
-        username: username,
-        password: password
-      }
-
-      if options.key?(:label)
-        request[:label] = options[:label]
-      end
-
-      if options.key?(:expires)
-        expires = options[:expires]
-        request[:expires] = expires.nil? ? 0 : expires
-      end
-
-      response = post(request)
-      if error?(response)
-        fail "Errors completing request [user.getapikey] @ [#{api_url}] for " +
-             "username [#{username}]:\n" +
-             "#{error_message(response, 'user.getapikey')}"
-      end
-      reformat_response(response).api_key
-    end
-    public :fetch_api_key
-
-    module_function
-    def install!
-      ::Linode.prepend(self)
-    end
-  end
-end
-
-module Cult
   module Drivers
     class LinodeDriver < ::Cult::Driver
       self.required_gems = 'linode'
