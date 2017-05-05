@@ -11,7 +11,6 @@ module Cult
       attr_reader :client
 
       def initialize(api_key:)
-        LinodeMonkeyPatch.install!
         @client = Linode.new(api_key: api_key)
       end
 
