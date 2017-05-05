@@ -1,4 +1,4 @@
-require 'erubis'
+require 'erubi'
 require 'cult/user_refinements'
 
 module Cult
@@ -28,9 +28,8 @@ module Cult
       private
       def _process(input, filename: nil)
         Dir.chdir(@pwd || Dir.pwd) do
-          erb = Erubis::Eruby.new(input)
-          erb.filename = filename
-          erb.result(binding)
+          erb = Erubi::Engine.new(input, filename: filename)
+          binding.eval(erb.src)
         end
       end
     end
