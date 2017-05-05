@@ -80,23 +80,24 @@ module Cult
           end
 
           context.load_rc
+          context_binding = context.instance_eval { binding }
 
           if opts[:ripl]
             require 'ripl'
             ARGV.clear
             # Look, something reasonable:
-            Ripl.start(binding: context.binding)
+            Ripl.start(binding: context_binding)
 
           elsif opts[:pry]
             require 'pry'
-            context.binding.pry
+            context_binding.pry
           else
             # irb: This is ridiculous.
             require 'irb'
             ARGV.clear
             IRB.setup(nil)
 
-            irb = IRB::Irb.new(IRB::WorkSpace.new(context.binding))
+            irb = IRB::Irb.new(IRB::WorkSpace.new(context_binding))
             IRB.conf[:MAIN_CONTEXT] = irb.context
             IRB.conf[:IRB_RC].call(irb.context) if IRB.conf[:IRB_RC]
 
