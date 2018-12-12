@@ -28,8 +28,7 @@ module Cult
         begin
           yield
         rescue Exception => e
-          $stderr.puts "Rolling back actions due to: #{e.inspect}\n" +
-                       e.backtrace
+          $stderr.puts "Rolling back actions due to: #{e.inspect}\n#{e.backtrace}"
           unwind
           raise
         end

@@ -74,6 +74,9 @@ module Cult
       end
 
       def provision!(name:, size:, zone:, image:, ssh_public_key:)
+        zone = zone.downcase
+        image = image.downcase
+
         transaction do |xac|
           ssh_key_id = upload_ssh_key(file: ssh_public_key)
           xac.rollback do

@@ -19,7 +19,8 @@ We haven't checked compatibility or started using new features from some of our 
 
 Check on:
   * `net-ssh`.  We're on 4.2, 5.0.x is current.  We may just want to find or write a 'mini-ssh'
-                that drives the SSH client.
+                that drives the SSH client.  This will also avoid a new problem of a dependency
+                on libsodium that no gem actually builds.
   * `net-scp`.  Currently in maintenance mode, and most recent version depends on `net-ssh < 5.0`.
                 We need a solution for this.  The current version is now controlled by the
                 `net-ssh` team at `net-ssh/net-scp`.  May just need a gemspec update on their
