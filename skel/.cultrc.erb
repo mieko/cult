@@ -17,11 +17,6 @@ Cult.project.instance_eval do
   # the behavior of this version.
   self.cult_version = <%= Cult::VERSION.sq %>
 
-  # Git integration is great, it basically makes sure you stay in sync.  If
-  # this was enabled with the generator (it <%=project.git? ? 'was' : "wasn\'t" %>), you've already got a Git
-  # project and everything was committed.
-  self.git_integration = <%= !! project.git_integration %>
-
   # If you don't set this, the project's default_provider will be nil until one
   # is created, and otherwise, the first one.  This really only comes into play
   # when you're using multiple providers.

@@ -45,15 +45,12 @@ module Cult
 
         required :d, :driver,   'Driver with which to create your provider'
         required :p, :provider, 'Specify an explicit provider name'
-        flag     :g, :git,      'Enable Git integration'
 
         run(arguments: 1) do |opts, args, cmd|
           project = Project.new(args[0])
           if project.exist?
             fail CLIError, "a Cult project already exists in #{project.path}"
           end
-
-          project.git_integration = opts[:git]
 
           driver_cls = if !opts[:provider] && !opts[:driver]
             opts[:provider] ||= 'scripts'
@@ -97,12 +94,10 @@ module Cult
             File.write(defaults_file, JSON.pretty_generate(defaults))
           end
 
-          if opts[:git]
-            Dir.chdir(project.path) do
-              `git init .`
-              `git add -A`
-              `git commit -m "[Cult] Created new project"`
-            end
+          Dir.chdir(project.path) do
+            `git init .`
+            `git add -A`
+            `git commit -m "[Cult] Created new project"`
           end
 
         end

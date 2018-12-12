@@ -130,9 +130,6 @@ module Cult
       locate Dir.getwd
     end
 
-    attr_accessor :git_integration
-    alias_method :git?, :git_integration
-
     def git_branch
       res = %x(git -C #{Shellwords.escape(path)} branch --no-color)
       if res && (m = res.match(/^\* (.*)/))
