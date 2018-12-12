@@ -53,9 +53,7 @@ Here's some stuff I'd like to add to Cult:
     production, and be totally hard to fat-finger fuck up production.  I type
     `cult node rm //` dozens of times a day.  That doesn't need to work in
     production.  This might go as far as "cult env <something>" checking out
-    a branch.  I don't have a problem tying Cult to git as an integral part of
-    its operations.  We can always allow outside contributions for SCM adapters
-    later.
+    a branch.
 
   * General code clean-up.  Luckily, there aren't any huge architectural
     problems, but older code written while the vision was still up in the air

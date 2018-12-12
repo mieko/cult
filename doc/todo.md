@@ -31,8 +31,3 @@ Check on:
 I want to pull this out of cult, and release cult-provider-{whatever} packages that depend on the
 proper gems, or just move to https://github.com/fog/fog.  It'll handle all the dependencies and
 provides an abstraction later.
-
-# Check compatibility with new provider gems.
-
-I know for a fact `--zone` with Digital Ocean fails (`NoMethodError`).  We need to find out what
-else has been going on in these gems in the last two years.
