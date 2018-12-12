@@ -1,6 +1,6 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
-$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+$:.unshift(lib) unless $:.include?(lib)
 require 'cult/version'
 
 Gem::Specification.new do |spec|
@@ -27,15 +27,20 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = '>= 2.4'
+  spec.required_ruby_version = '>= 2.5.3'
 
-  spec.add_dependency "cri", "~> 2.8"
-  spec.add_dependency "net-ssh", "~> 4.1"
+  spec.add_dependency "cri", "~> 2.15"
+
+  spec.add_dependency "net-ssh", "~> 4.2"
   spec.add_dependency "net-scp", "~> 1.2"
-  spec.add_dependency "rainbow", "~> 2.2.2"
-  spec.add_dependency "erubi", "~> 1.6.0"
-  spec.add_dependency "terminal-table", "~> 1.7.2"
+  spec.add_dependency "rbnacl", ">= 3.2", "< 5.0"
 
-  spec.add_development_dependency "bundler", "~> 1.14"
-  spec.add_development_dependency "rake", "~> 12.0"
+  spec.add_dependency "rainbow", "~> 3.0"
+  spec.add_dependency "erubi", "~> 1.7"
+  spec.add_dependency "terminal-table", "~> 1.8"
+
+  spec.add_development_dependency "bundler", "~> 1.16"
+  spec.add_development_dependency "rake", "~> 12.3"
+
+  spec.add_development_dependency "rubocop-airbnb", "~> 2.0"
 end

@@ -128,7 +128,7 @@ module Cult
 
       # Wanted to use -o and -t ecdsa, but Net::SSH still has some
       # issues with ECDSA, and only 4.0 beta supports -o style new keys
-      cmd = "ssh-keygen -N '' -t rsa -b 4096 -C #{esc.(name)} " +
+      cmd = "ssh-keygen -N '' -t ed25519 -C #{esc.(name)} " +
             "-f #{esc.(ssh_private_key_file)} && " +
             "mv #{esc.(tmp_public)} #{esc.(ssh_public_key_file)}"
       %x(#{cmd})

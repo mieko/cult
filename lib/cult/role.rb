@@ -34,6 +34,10 @@ module Cult
       File.basename(path)
     end
 
+    def cult_identifier
+      name
+    end
+
 
     def collection_name
       class_name = self.class.name.split('::')[-1]

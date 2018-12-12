@@ -105,6 +105,10 @@ module Cult
       end
     end
 
+    def reload!
+      @drivers = @providers = @nodes = @roles = nil
+    end
+
 
     def self.locate(path)
       path = File.expand_path(path)
@@ -157,6 +161,10 @@ module Cult
 
     def development?
       env == 'development'
+    end
+
+    def production?
+      env == 'production'
     end
 
   end

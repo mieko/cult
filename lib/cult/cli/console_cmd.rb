@@ -1,5 +1,6 @@
 require 'delegate'
 require 'rainbow'
+require 'shellwords'
 
 require 'cult/user_refinements'
 
@@ -39,6 +40,11 @@ module Cult
 
       def cult(*argv)
         system $0, *argv
+        reload!
+      end
+
+      def cult!(string)
+        cult(*Shellwords.split(string))
       end
     end
 
@@ -99,6 +105,7 @@ module Cult
 
             irb = IRB::Irb.new(IRB::WorkSpace.new(context_binding))
             IRB.conf[:MAIN_CONTEXT] = irb.context
+            IRB.conf[:CONTEXT_MODE] = 1
             IRB.conf[:IRB_RC].call(irb.context) if IRB.conf[:IRB_RC]
 
             trap("SIGINT") do

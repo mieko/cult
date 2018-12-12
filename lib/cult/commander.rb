@@ -151,7 +151,8 @@ module Cult
                          timeout: 5,
                          auth_methods: ['publickey'],
                          keys_only: true,
-                         keys: [node.ssh_private_key_file]) do |ssh|
+                         keys: [node.ssh_private_key_file]
+                         ) do |ssh|
             return (yield ssh)
           end
         rescue Errno::ECONNREFUSED, Net::SSH::ConnectionTimeout

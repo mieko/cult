@@ -11,37 +11,37 @@ module Cult
     # This allows further -- options to be passed as literals instead of
     # being stripped.
     #   cult node ssh Something -- some-command -- something
-    module ArgumentArrayExtensions
-      attr_reader :explicit_tail
-
-      def initialize(raw_arguments)
-        @explicit_tail = []
-
-        super_super = Array.instance_method(:initialize).bind(self)
-        if (index = raw_arguments.index("--"))
-          @explicit_tail = raw_arguments[index + 1 .. -1]
-          processed = raw_arguments[0 ... index] + @explicit_tail
-          super_super.call(processed)
-        else
-          super_super.call(raw_arguments)
-        end
-        @raw_arguments = raw_arguments
-      end
-
-      ::Cri::ArgumentArray.prepend(self)
-    end
+    # module ArgumentArrayExtensions
+    #   attr_reader :explicit_tail
+    #
+    #   def initialize(raw_arguments)
+    #     @explicit_tail = []
+    #
+    #     super_super = Array.instance_method(:initialize).bind(self)
+    #     if (index = raw_arguments.index("--"))
+    #       @explicit_tail = raw_arguments[index + 1 .. -1]
+    #       processed = raw_arguments[0 ... index] + @explicit_tail
+    #       super_super.call(processed)
+    #     else
+    #       super_super.call(raw_arguments)
+    #     end
+    #     @raw_arguments = raw_arguments
+    #   end
+    #
+    #   ::Cri::ArgumentArray.prepend(self)
+    # end
 
     # This extension stops option processing at the first non-option bare-word.
     # Without it, further arguments that look like options are treated as such.
     # use-case:
     #  cult node ssh SomeNode ls -l
-    module OptionParserExtensions
+    module ParserExtensions
       def run
         peek = @unprocessed_arguments_and_options[0]
         @no_more_options = true if peek && peek[0] != '-'
         super
       end
-      ::Cri::OptionParser.prepend(self)
+      ::Cri::Parser.prepend(self)
     end
 
 
@@ -58,7 +58,6 @@ module Cult
 
       attr_accessor :argument_spec
 
-
       # This function returns a wrapped version of the block passed to `run`
       def block
         lambda do |opts, args, cmd|
@@ -68,7 +67,7 @@ module Cult
 
           check_argument_spec!(args, argument_spec, cmd) if argument_spec
 
-          super.call(opts, args, cmd)
+          super.call(opts, [*args], cmd)
         end
       end
 
@@ -108,7 +107,6 @@ module Cult
       def optional_project
         @command.project_required = false
       end
-
 
       # Lets us say run(arguments: 1 .. unlimited) instead of
       #   run(arguments: 1 .. Float::INFINITY)

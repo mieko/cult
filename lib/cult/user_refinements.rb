@@ -1,11 +1,10 @@
 require 'shellwords'
-
+require 'cult/named_array'
 # These are refinements we enable in a user-facing context, e.g., the console
 # or template files.
 
 module Cult
   module UserRefinements
-    # Alright!  We found a use for refinements!
     module Util
       module_function
 
@@ -42,20 +41,20 @@ module Cult
     end
 
 
-    refine Array do
+    refine NamedArray do
       def dquote(sep = ' ')
-        map {|v| Util.dquote(v) }.join(sep)
+        map {|v| Util.dquote(v.named_array_identifier) }.join(sep)
       end
       alias_method :dq, :dquote
       alias_method :q, :dquote
 
       def squote(sep = ' ')
-        map {|v| Util.squote(v) }.join(sep)
+        map {|v| Util.squote(v.named_array_identifier) }.join(sep)
       end
       alias_method :sq, :squote
 
       def slash(sep = ' ')
-        map {|v| Util.slash(v) }.join(sep)
+        map {|v| Util.slash(v.named_array_identifier) }.join(sep)
       end
       alias_method :e, :slash
     end

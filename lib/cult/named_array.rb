@@ -1,12 +1,10 @@
-# A lot of times, we want a sequential array of objects, but it'd still be
-# really convenient to refer to things by their name.  This is particularly
-# painful in the console, where, e.g., nodes can only be referred to by index,
-# and you end up calling `find` a lot.
+# A lot of times, we want a sequential array of objects, but it'd still be really convenient to
+# refer to things by their name.  This is particularly painful in the console, where, e.g., nodes
+# can only be referred to by index, and you end up calling `find` a lot.
 #
-# NamedArray is an array, but overloads [] to also work with a String, Symbol,
-# Regexp, or a few other things. e.g., nodes[:something].  It works by finding
-# the first item who responds from `named_array_identifier` with the matching
-# key.
+# NamedArray is an array, but overloads [] to also work with a String, Symbol, Regexp, or a few
+# other things. e.g., nodes[:something].  It works by finding the first item who responds from
+# `named_array_identifier` with the matching key.
 #
 # By default named_array_identifier returns name, but this can be overridden.
 
@@ -28,6 +26,7 @@ module Cult
       end
       ::Object.include(self)
     end
+
 
     # Allows named_array.all[/something/]
     class IndexWrapper
@@ -54,6 +53,7 @@ module Cult
     end
     private_constant :IndexWrapper
 
+
     def self.indexable_wrapper(method_name)
       old_method_name = "#{method_name}_without_wrapper"
       alias_method old_method_name, method_name
@@ -66,17 +66,14 @@ module Cult
       end
     end
 
-
     def to_named_array
       self
     end
 
-
-    # Wrap any non-mutating methods that can return an Array,
-    # and wrap the result with a NamedArray.  This is why NamedArray.select
-    # results in a NamedArray instead of an Array
-    PROXY_METHODS = %i(& * + - << | collect compact flatten reject reverse
-                       rotate select shuffle slice sort uniq sort_by)
+    # Wrap any non-mutating methods that can return an Array, and wrap the result with a
+    # NamedArray. This is why NamedArray.select results in a NamedArray instead of an Array
+    PROXY_METHODS = %i(& * + - << | collect compact flatten reject reverse rotate select shuffle
+                       slice sort uniq sort_by)
     PROXY_METHODS.each do |method_name|
       define_method(method_name) do |*args, &b|
         r = super(*args, &b)
@@ -85,8 +82,8 @@ module Cult
     end
 
 
-    # It's unforunate that there's not a Regexp constructor that'll
-    # accept this string format with options.
+    # It's unforunate that there's not a Regexp constructor that'll accept this string format
+    # with options.
     def build_regexp_from_string(s)
       fail RegexpError, "Isn't a Regexp: #{s}" if s[0] != '/'
       options = extract_regexp_options(s)
@@ -109,10 +106,9 @@ module Cult
     end
     private :extract_regexp_options
 
-
-    # Most of the named-array predicates are meant to be useful for user input
-    # or an interactive session.  We give special behavior to certain strings
-    # the user might enter to convert them to a regexp, etc.
+    # Most of the named-array predicates are meant to be useful for user input or an interactive
+    # session.  We give special behavior to certain strings the user might enter to convert them
+    # to a regexp, etc.
     def expand_predicate(predicate)
       case predicate
         when String
@@ -133,14 +129,24 @@ module Cult
       re = /\[\s*([^\]]*)\s*\]$/
       if key.is_a?(String) && (m = key.match(re))
         subs, expr = m[0], m[1]
+
         index = case expr
-          when /^(\-?\d+)$/; $1.to_i #.. $1.to_i
-          when /^(\-?\d+)\s*\.\.\s*(\-?\d+)$/; $1.to_i .. $2.to_i
-          when /^(\-?\d+)\s*\.\.\.\s*(\-?\d+)$/; $1.to_i ... $2.to_i
-          when /^((?:\-?\d+\s*,?\s*)+)$/; $1.split(',').map(&:to_i)
+          # Single decimal: 1
+          when /^(\-?\d+)$/
+            $1.to_i
+          # Decimal range: 4..3
+          when /^(\-?\d+)\s*\.\.\s*(\-?\d+)$/
+            $1.to_i .. $2.to_i
+          # Decimal half-opened range: 4...3
+          when /^(\-?\d+)\s*\.\.\.\s*(\-?\d+)$/
+            $1.to_i ... $2.to_i
+          # List of indexes: 1,2,5
+          when /^((?:\-?\d+\s*,?\s*)+)$/
+            $1.split(',').map(&:to_i)
         end
+
         # We return [predicate string with index removed, expanded index]
-        [ key[0 ... key.size - subs.size], index ]
+        [ key[0 ... (key.size - subs.size)], index ]
       else
         [ key, nil ]
       end
@@ -164,8 +170,7 @@ module Cult
       [Integer, Range].any?{|cls| k.is_a?(cls) }
     end
 
-    # Returns all keys that match if method == :select, the first if
-    # method == :find
+    # Returns all keys that match if method == :select, the first if method == :find
     def all(key, method = :select)
       return [self[key]] if normal_key?(key)
       return [] if key.nil?
@@ -200,17 +205,14 @@ module Cult
       first(key) or raise KeyError, "Not found: #{key.inspect}"
     end
 
-
     def key?(key)
       !! first(key)
     end
     alias_method :exist?, :key?
 
-
     def keys
       map(&:named_array_identifier)
     end
-
 
     def values
       self
@@ -218,14 +220,14 @@ module Cult
 
     # Takes a predicate in the form of:
     #   key: value
-    # And returns all items that both respond_to?(key), and
-    # predicate === the result of sending key.
+    # And returns all items that both respond_to?(key), and  predicate === the result of
+    # sending key.
     #
-    # Instances can override what predicates mean by defining "names_for_*" to
-    # override what is tested.
+    # Instances can override what predicates mean by defining "names_for_*" to override what is
+    # tested.
     #
-    # For example, if you have an Object that contains a list of "Foos", but
-    # you want to select them by name, you'd do something like:
+    # For example, if you have an Object that contains a list of "Foos", but you want to select
+    # them by name, you'd do something like:
     #
     # class Object
     #   attr_reader :foos   # Instances of Foo class
@@ -251,8 +253,7 @@ module Cult
             begin
               predicate === r
             rescue
-              # We're going to assume this is a result of a string
-              # comparison to a custom #==
+              # We're going to assume this is a result of a string comparison to a custom #==
               false
             end
           end

@@ -12,7 +12,7 @@ module Cult
         optional_project
         name        'init'
         aliases     'new'
-        usage       'init DIRECTORY'
+        usage       'init [OPTIONS] DIRECTORY'
         summary     'Create a new Cult project'
         description <<~EOD.format_description
           Generates a new Cult project, based on a project skeleton.
