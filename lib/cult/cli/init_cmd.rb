@@ -3,18 +3,18 @@ require 'json'
 
 module Cult
   module CLI
-
     module_function
+
     def init_cmd
       Cri::Command.define do
-        drivers = Cult::Drivers.all.map{|d| d.driver_name }.join ", "
+        drivers = Cult::Drivers.all.map(&:driver_name).join ", "
 
         optional_project
-        name        'init'
-        aliases     'new'
-        usage       'init [OPTIONS] DIRECTORY'
-        summary     'Create a new Cult project'
-        description <<~EOD.format_description
+        name 'init'
+        aliases 'new'
+        usage 'init [OPTIONS] DIRECTORY'
+        summary 'Create a new Cult project'
+        description <<~DOC.format_description
           Generates a new Cult project, based on a project skeleton.
 
           The most useful option is --driver, which both specifies a driver and
@@ -41,12 +41,12 @@ module Cult
           The project generated sets up a pretty common configuration: a `base`
           role, a 'bootstrap' role, and a demo task that puts a colorful banner
           in each node's MOTD.
-        EOD
+        DOC
 
-        required :d, :driver,   'Driver with which to create your provider'
+        required :d, :driver, 'Driver with which to create your provider'
         required :p, :provider, 'Specify an explicit provider name'
 
-        run(arguments: 1) do |opts, args, cmd|
+        run(arguments: 1) do |opts, args, _cmd|
           project = Project.new(args[0])
           if project.exist?
             fail CLIError, "a Cult project already exists in #{project.path}"
@@ -79,15 +79,12 @@ module Cult
             driver_conf = driver_cls.setup!
             provider_conf.merge!(driver_conf)
 
-
             provider_dir = File.join(project.location_of("providers"),
                                      provider_conf[:name])
             FileUtils.mkdir_p(provider_dir)
 
-
             provider_file = File.join(provider_dir, "provider.json")
             File.write(provider_file, JSON.pretty_generate(provider_conf))
-
 
             defaults_file = File.join(provider_dir, "defaults.json")
             defaults = Provider.generate_defaults(provider_conf)
@@ -95,13 +92,11 @@ module Cult
           end
 
           Dir.chdir(project.path) do
-            `git init .`
-            `git add -A`
-            `git commit -m "[Cult] Created new project"`
+            %x(git init .)
+            %x(git add -A)
+            %x(git commit -m "[Cult] Created new project")
           end
-
         end
-
       end
     end
   end

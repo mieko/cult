@@ -29,7 +29,6 @@ module Cult
       Dir.exist?(path)
     end
 
-
     def name
       File.basename(path)
     end
@@ -38,55 +37,46 @@ module Cult
       name
     end
 
-
     def collection_name
       class_name = self.class.name.split('::')[-1]
       class_name.downcase + 's'
     end
 
-
     def remote_path
       File.join(project.remote_path, collection_name, name)
     end
 
-
     def relative_path(obj_path)
       fail unless obj_path.start_with?(path)
-      obj_path[path.size + 1 .. -1]
-    end
 
+      obj_path[path.size + 1..-1]
+    end
 
     def inspect
       "\#<#{self.class.name} id:#{object_id.to_s(36)} #{name.inspect}>"
     end
     alias_method :to_s, :inspect
 
-
     def hash
       [self.class, project, path].hash
     end
 
-
-    def ==(rhs)
-      [self.class, project, path] == [rhs.class, rhs.project, rhs.path]
+    def ==(other)
+      [self.class, project, path] == [other.class, other.project, other.path]
     end
     alias_method :eql?, :==
-
 
     def tasks
       Task.all_for_role(project, self)
     end
 
-
     def build_tasks
       tasks.select { |t| t.is_a?(Cult::BuildTask) }
     end
 
-
     def event_tasks
       tasks.select { |t| t.is_a?(Cult::EventTask) }
     end
-
 
     def artifacts
       Artifact.all_for_role(project, self)
@@ -101,27 +91,21 @@ module Cult
       @definition ||= Definition.new(self)
     end
 
-
     def definition_path
-      [ File.join(path, "extra.json"),
-        role_file ]
+      [File.join(path, "extra.json"), role_file]
     end
-
 
     def definition_parameters
       { project: project, role: self }
     end
 
-
     def definition_parents
       parent_roles
     end
 
-
     def includes
       definition.direct('includes') || ['base']
     end
-
 
     def parent_roles
       Array(includes).map do |name|
@@ -129,11 +113,11 @@ module Cult
       end.to_named_array
     end
 
-
     def recursive_parent_roles(seen = [])
       result = []
       parent_roles.each do |role|
         next if seen.include?(role)
+
         seen.push(role)
         result.push(role)
         result += role.recursive_parent_roles(seen)
@@ -141,21 +125,17 @@ module Cult
       result.to_named_array
     end
 
-
     def tree
       ([self] + recursive_parent_roles).to_named_array
     end
-
 
     def self.by_name(project, name)
       new(project, File.join(path(project), name))
     end
 
-
     def self.path(project)
       File.join(project.path, "roles")
     end
-
 
     def self.all_files(project)
       Dir.glob(File.join(path(project), "*")).select do |file|
@@ -163,14 +143,13 @@ module Cult
       end
     end
 
-
     def self.all(project)
       fail if block_given?
+
       all_files(project).map do |filename|
         new(project, filename)
       end.select(&:exist?).to_named_array
     end
-
 
     def build_order
       all_items = [self] + parent_roles
@@ -186,12 +165,11 @@ module Cult
       TSort.tsort(each_node, each_child).to_named_array
     end
 
-
     def has_role?(role)
-      ! tree[role].nil?
+      !tree[role].nil?
     end
 
-    def names_for_role(*a)
+    def names_for_role(*_args)
       build_order.map(&:name)
     end
 
@@ -202,6 +180,5 @@ module Cult
     def names_for_task
       tasks.map(&:name)
     end
-
   end
 end

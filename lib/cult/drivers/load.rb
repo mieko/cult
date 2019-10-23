@@ -1,13 +1,12 @@
 module Cult
   module Drivers
-
     module_function
+
     def load!
       Dir.glob(File.join(__dir__, "*_driver.rb")).each do |file|
         require file
       end
     end
-
 
     def all
       Cult::Drivers.constants(false).map do |m|
@@ -16,7 +15,6 @@ module Cult
         ::Cult::Driver > cls
       end.to_named_array
     end
-
   end
 end
 

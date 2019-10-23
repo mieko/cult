@@ -14,10 +14,9 @@ module Cult
       @node = node
     end
 
-    def esc(s)
-      Shellwords.escape(s)
+    def esc(str)
+      Shellwords.escape(str)
     end
-
 
     def send_tar(io, ssh)
       filename = SecureRandom.hex + ".tar"
@@ -26,7 +25,6 @@ module Cult
       scp.upload!(io, filename)
       ssh.exec! "tar -xf #{esc(filename)} && rm #{esc(filename)}"
     end
-
 
     def create_build_tar(role)
       io = StringIO.new
@@ -42,7 +40,6 @@ module Cult
       io.rewind
       io
     end
-
 
     def exec_remote!(ssh:, role:, task:)
       token = SecureRandom.hex
@@ -66,7 +63,6 @@ module Cult
       end
     end
 
-
     def install!(role)
       connect(user: role.user) do |ssh|
         io = create_build_tar(role)
@@ -80,7 +76,6 @@ module Cult
         end
       end
     end
-
 
     def find_sync_tasks(pass:, roles: nil)
       selected_roles = node.build_order
@@ -98,7 +93,6 @@ module Cult
       r
     end
 
-
     def create_sync_tar(pass:, roles: nil)
       io = StringIO.new
       Bundle.new(io) do |bundle|
@@ -110,7 +104,6 @@ module Cult
       io.rewind
       io
     end
-
 
     def sync!(pass:, roles: nil)
       io = create_sync_tar(pass: pass, roles: roles)
@@ -124,7 +117,6 @@ module Cult
       end
     end
 
-
     def bootstrap!
       bootstrap_role = CLI.fetch_item('bootstrap', from: Role)
       install!(bootstrap_role)
@@ -134,15 +126,15 @@ module Cult
       connect do |ssh|
         ssh.exec!("uptime").chomp
       end
-    rescue
+    rescue StandardError
       nil
     end
 
-    def connect(user: nil, &block)
+    def connect(user: nil, &_block)
       5.times do |attempt|
         begin
           user ||= node.user
-          puts "Connecting with user=#{user}, host=#{node.host}, " +
+          puts "Connecting with user=#{user}, host=#{node.host}, " \
                "key=#{node.ssh_private_key_file}"
           Net::SSH.start(node.host,
                          user,
@@ -151,8 +143,7 @@ module Cult
                          timeout: 5,
                          auth_methods: ['publickey'],
                          keys_only: true,
-                         keys: [node.ssh_private_key_file]
-                         ) do |ssh|
+                         keys: [node.ssh_private_key_file]) do |ssh|
             return (yield ssh)
           end
         rescue Errno::ECONNREFUSED, Net::SSH::ConnectionTimeout
@@ -162,5 +153,4 @@ module Cult
       end
     end
   end
-
 end

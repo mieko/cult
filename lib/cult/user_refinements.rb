@@ -8,19 +8,18 @@ module Cult
     module Util
       module_function
 
-      def squote(s)
-        "'" + s.gsub("'", "\\\\\'") + "'"
+      def squote(str)
+        "'" + str.gsub("'", "\\\\\'") + "'"
       end
 
-      def dquote(s)
-        '"' + s.gsub('"', '\"') + '"'
+      def dquote(str)
+        '"' + str.gsub('"', '\"') + '"'
       end
 
-      def slash(s)
-        Shellwords.escape(s)
+      def slash(str)
+        Shellwords.escape(str)
       end
     end
-
 
     refine String do
       def dquote
@@ -40,21 +39,20 @@ module Cult
       alias_method :e, :slash
     end
 
-
     refine NamedArray do
       def dquote(sep = ' ')
-        map {|v| Util.dquote(v.named_array_identifier) }.join(sep)
+        map { |v| Util.dquote(v.named_array_identifier) }.join(sep)
       end
       alias_method :dq, :dquote
       alias_method :q, :dquote
 
       def squote(sep = ' ')
-        map {|v| Util.squote(v.named_array_identifier) }.join(sep)
+        map { |v| Util.squote(v.named_array_identifier) }.join(sep)
       end
       alias_method :sq, :squote
 
       def slash(sep = ' ')
-        map {|v| Util.slash(v.named_array_identifier) }.join(sep)
+        map { |v| Util.slash(v.named_array_identifier) }.join(sep)
       end
       alias_method :e, :slash
     end

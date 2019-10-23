@@ -22,7 +22,10 @@ module Cult
       attr_reader :pid, :pipe
 
       def initialize(ident, value, rebind: {}, &block)
-        @ident, @value, @rebind, @block = ident, value, rebind, block
+        @ident = ident
+        @value = value
+        @rebind = rebind
+        @block = block
 
         @pipe = IO.pipe
         @pid = fork do
@@ -30,7 +33,7 @@ module Cult
           prepare_forked_environment!
           begin
             write_response!('=', block.call(value))
-          rescue Exception => e
+          rescue Exception => e # rubocop:disable Lint/RescueException
             write_response!('!', e)
           end
         end
@@ -45,7 +48,8 @@ module Cult
           nil => '/dev/null'
         }
         rebind.each do |k, v|
-          src, dst = names[k], names[v]
+          src = names[k]
+          dst = names[v]
           dst = File.open(dst, 'w+') if dst.is_a?(String)
           src.reopen(dst)
         end
@@ -54,18 +58,20 @@ module Cult
       def prepare_forked_environment!
         rebind_streams!
         # Stub out things that have caused a problem in the past.
-        Kernel.send(:define_method, :exec) do |*a|
+        Kernel.send(:define_method, :exec) do |*_args|
           fail "don't use Kernel\#exec inside of a paramap job"
         end
       end
 
       def write_response!(scode, obj)
         fail unless ['!', '='].include?(scode)
+
         begin
           pipe[1].write(scode + Marshal.dump(obj))
         rescue TypeError => e
           # Unmarshallable
           raise unless e.message.match(/_dump_data/)
+
           pipe[1].write(scode + Marshal.dump(nil))
         end
         pipe[1].flush
@@ -80,10 +86,10 @@ module Cult
           fail unless ['!', '='].include?(scode)
 
           data = data[1..-1]
-          ivar = (scode == '!') ? :exception : :result
+          ivar = scode == '!' ? :exception : :result
           begin
-            obj = Marshal.load(data)
-          rescue
+            obj = Marshal.load(data) # rubocop:disable Security/MarshalLoad
+          rescue Exception # rubocop:disable Lint/RescueException
             obj = nil
           end
           instance_variable_set("@#{ivar}", obj)
@@ -122,9 +128,10 @@ module Cult
       @concurrent = concurrent || max_concurrent
       @exception_strategy = exception_strategy
       @block = block
-      @exceptions, @results = [], []
-      @job_queue = []
 
+      @exceptions = []
+      @results = []
+      @job_queue = []
     end
 
     def max_concurrent
@@ -175,7 +182,7 @@ module Cult
     end
 
     def report_exceptions(results)
-      self_exceptions = self.exceptions
+      self_exceptions = exceptions
       results.define_singleton_method(:exceptions) do
         self_exceptions
       end
@@ -209,17 +216,19 @@ module Cult
     def run
       loop do
         queue_next_task until job_queue_full? || !more_tasks?
-        break if job_queue.empty? && ! more_tasks?
+        break if job_queue.empty? && !more_tasks?
+
         wait_for_next_job_to_finish
       end
 
-      report_exceptions(self.results)
-      self.results
+      report_exceptions(results)
+      results
     end
   end
   private_constant :Paramap
 
   module_function
+
   def paramap(enum, quiet: false, concurrent: nil, exception: :raise, &block)
     rebind = quiet ? { stdout: nil, stderr: nil } : {}
     Paramap.new(enum,

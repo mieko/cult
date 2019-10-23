@@ -7,9 +7,7 @@ module Cult
   module TableExtensions
     def render_plain
       rows.map do |row|
-        row.cells.map do |cell|
-          cell.value
-        end.join("\t")
+        row.cells.map(&:value).join("\t")
       end.join("\n")
     end
 

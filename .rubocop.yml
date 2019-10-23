@@ -1,0 +1,94 @@
+require:
+  - rubocop-rspec
+
+AllCops:
+  Exclude:
+    - bin/**/*
+    - db/**/*
+
+Bundler/OrderedGems:
+  Enabled: false
+
+Layout/CaseIndentation:
+  Enabled: false
+Layout/EmptyLinesAroundBlockBody:
+  Enabled: false
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+Layout/RescueEnsureAlignment:
+  Enabled: false
+
+Metrics/AbcSize:
+  Max: 20
+Metrics/BlockLength:
+  Exclude:
+    - Rakefile
+    - spec/**/*
+    - '**/*.rake'
+Metrics/ClassLength:
+  Max: 150
+Metrics/LineLength:
+  Max: 99
+Metrics/MethodLength:
+  Max: 22
+
+RSpec/DescribedClass:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/NotToNot:
+  Enabled: false
+RSpec/NestedGroups:
+  Max: 4
+
+Style/Alias:
+  Enabled: false
+Style/BlockComments:
+  Enabled: false
+Style/ClassAndModuleChildren:
+  Enabled: false
+Style/CommandLiteral:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
+Style/ExpandPathArguments:
+  Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: false
+Style/GuardClause:
+  Enabled: false
+Style/HashSyntax:
+  Exclude:
+    - '**/*.rake'
+Style/IfUnlessModifier:
+  Enabled: false
+Style/Lambda:
+  Enabled: false
+Style/MixinUsage:
+  Enabled: false
+Style/PercentLiteralDelimiters:
+  Enabled: false
+Style/SignalException:
+  Enabled: false
+Style/SpecialGlobalVars:
+  EnforcedStyle: use_perl_names
+Style/StringLiterals:
+  Enabled: false
+Style/SymbolArray:
+  Enabled: false
+Style/TrailingCommaInArrayLiteral:
+  Enabled: false
+Style/TrailingCommaInHashLiteral:
+  Enabled: false
+
+# We use instance variables for WebMock stubs
+RSpec/InstanceVariable:
+  Exclude:
+    - 'spec/support/**/with_*_service.rb'
+    - 'spec/controllers/**/*_controller_spec.rb'

@@ -6,13 +6,12 @@ require 'cult/user_refinements'
 
 module Cult
   module CLI
-
     class ConsoleContext < ProjectContext
       using ::Cult::UserRefinements
 
       attr_accessor :original_argv
-
       attr_reader :project
+
       def initialize(project, argv)
         @project = project
         # super(project)
@@ -32,7 +31,6 @@ module Cult
         eval File.read(consolerc) if File.exist?(consolerc)
       end
 
-
       private def exit(*)
         # IRB tries to alias this. And it must be private, or it warns.  WTF.
         super
@@ -49,20 +47,21 @@ module Cult
     end
 
     module_function
+
     def console_cmd
       Cri::Command.define do
-        name        'console'
-        summary     'Launch a REPL with the project loaded'
-        description <<~EOD.format_description
+        name 'console'
+        summary 'Launch a REPL with the project loaded'
+        description <<~DOC.format_description
           The Cult console loads your project, and starts a Ruby REPL.  This can
           be useful for troubleshooting, or just poking around the project.
 
           A few convenience global variables are set to inspect.
-        EOD
+        DOC
 
-        flag :i,  :irb,    'IRB (default)'
-        flag :r,  :ripl,   'Ripl'
-        flag :p,  :pry,    'Pry'
+        flag :i, :irb, 'IRB (default)'
+        flag :r, :ripl, 'Ripl'
+        flag :p, :pry, 'Pry'
         flag nil, :reexec, 'Console has been exec\'d for a reload'
 
         run(arguments: none) do |opts, args, cmd|
@@ -71,7 +70,7 @@ module Cult
           if opts[:reexec]
             $stderr.puts "Reloaded."
           else
-            $stderr.puts <<~EOD
+            $stderr.puts <<~MSG
 
               Welcome to the #{Rainbow('Cult').green} Console.
 
@@ -82,7 +81,7 @@ module Cult
 
               Useful methods: nodes, roles, providers
 
-            EOD
+            MSG
           end
 
           context.load_rc
@@ -106,7 +105,7 @@ module Cult
             irb = IRB::Irb.new(IRB::WorkSpace.new(context_binding))
             IRB.conf[:MAIN_CONTEXT] = irb.context
             IRB.conf[:CONTEXT_MODE] = 1
-            IRB.conf[:IRB_RC].call(irb.context) if IRB.conf[:IRB_RC]
+            IRB.conf[:IRB_RC]&.call(irb.context)
 
             trap("SIGINT") do
               irb.signal_handle
@@ -117,7 +116,7 @@ module Cult
                 irb.eval_input
               end
             ensure
-              IRB::irb_at_exit
+              IRB.irb_at_exit
             end
           end
         end

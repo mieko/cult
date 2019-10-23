@@ -2,7 +2,6 @@ require 'json'
 
 module Cult
   module Drivers
-
     class DigitalOceanDriver < ::Cult::Driver
       self.required_gems = 'droplet_kit'
 
@@ -12,7 +11,6 @@ module Cult
         @client = DropletKit::Client.new(access_token: api_key)
       end
 
-
       def sizes_map
         client.sizes.all.to_a.map do |s|
           [s.slug, s.slug]
@@ -20,7 +18,6 @@ module Cult
       end
       memoize :sizes_map
       with_id_mapping :sizes_map
-
 
       def images_map
         distros = %w(ubuntu coreos centos freebsd fedora debian).join '|'
@@ -34,7 +31,6 @@ module Cult
       memoize :images_map
       with_id_mapping :images_map
 
-
       def zones_map
         client.regions.all.map do |zone|
           [zone.slug, zone.slug]
@@ -42,8 +38,6 @@ module Cult
       end
       memoize :zones_map
       with_id_mapping :zones_map
-
-
 
       def upload_ssh_key(file:)
         key = ssh_key_info(file: file)
@@ -53,16 +47,15 @@ module Cult
         client.ssh_keys.create(dk_key).id
       end
 
-
       def await_creation(droplet)
         d = nil
         backoff_loop do
           d = client.droplets.find(id: droplet.id)
           break if d.status == 'active'
         end
-        return d
-      end
 
+        d
+      end
 
       def destroy!(id:, ssh_key_id: nil)
         client.droplets.delete(id: id)
@@ -85,10 +78,10 @@ module Cult
 
           begin
             params = {
-              name:     name,
-              size:     fetch_mapped(name: :size, from: sizes_map, key: size),
-              image:    fetch_mapped(name: :image, from: images_map, key: image),
-              region:   fetch_mapped(name: :zone, from: zones_map, key: zone),
+              name: name,
+              size: fetch_mapped(name: :size, from: sizes_map, key: size),
+              image: fetch_mapped(name: :image, from: images_map, key: image),
+              region: fetch_mapped(name: :zone, from: zones_map, key: zone),
               ssh_keys: [ssh_key_id],
 
               private_networking: true,
@@ -111,40 +104,38 @@ module Cult
 
           droplet = await_creation(droplet)
 
-          ipv4_public  = droplet.networks.v4.find {|n| n.type == 'public'  }
-          ipv4_private = droplet.networks.v4.find {|n| n.type == 'private' }
-          ipv6_public  = droplet.networks.v6.find {|n| n.type == 'public'  }
-          ipv6_private = droplet.networks.v6.find {|n| n.type == 'private' }
+          ipv4_public  = droplet.networks.v4.find { |n| n.type == 'public'  }
+          ipv4_private = droplet.networks.v4.find { |n| n.type == 'private' }
+          ipv6_public  = droplet.networks.v6.find { |n| n.type == 'public'  }
+          ipv6_private = droplet.networks.v6.find { |n| n.type == 'private' }
 
           await_ssh(ipv4_public.ip_address)
           return {
-              name:          droplet.name,
-              size:          size,
-              zone:          zone,
-              image:         image,
+            name: droplet.name,
+            size: size,
+            zone: zone,
+            image: image,
 
-              ssh_key_id:    ssh_key_id,
+            ssh_key_id: ssh_key_id,
 
-              id:            droplet.id,
-              created_at:    droplet.created_at,
-              host:          ipv4_public&.ip_address,
-              ipv4_public:   ipv4_public&.ip_address,
-              ipv4_private:  ipv4_private&.ip_address,
-              ipv6_public:   ipv6_public&.ip_address,
-              ipv6_private:  ipv6_private&.ip_address,
-              # Get rid of magic in droplet.
-              meta:          JSON.parse(droplet.to_json)
+            id: droplet.id,
+            created_at: droplet.created_at,
+            host: ipv4_public&.ip_address,
+            ipv4_public: ipv4_public&.ip_address,
+            ipv4_private: ipv4_private&.ip_address,
+            ipv6_public: ipv6_public&.ip_address,
+            ipv6_private: ipv6_private&.ip_address,
+            # Get rid of magic in droplet.
+            meta: JSON.parse(droplet.to_json)
           }
         end
       end
-
 
       def self.setup!
         super
         url = "https://cloud.digitalocean.com/settings/api/tokens/new"
 
-        puts "Cult needs a read/write Access Token created for your " +
-             "DigitalOcean account."
+        puts "Cult needs a read/write Access Token created for your DigitalOcean account."
         puts "One can be generated at the following URL:"
         puts
         puts "  #{url}"
@@ -159,12 +150,12 @@ module Cult
 
         inst = new(api_key: api_key)
 
-        return {
+        {
           api_key: api_key,
           driver: driver_name,
           configurations: {
-            sizes:  inst.sizes,
-            zones:  inst.zones,
+            sizes: inst.sizes,
+            zones: inst.zones,
             images: inst.images,
           }
         }

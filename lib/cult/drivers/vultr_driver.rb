@@ -12,7 +12,6 @@ module Cult
         @api_key = api_key
       end
 
-
       # This sets the Vultr API key to this instance's api key for the duration
       # of a method call and restores it afterwards.
       def self.with_api_key(method_name)
@@ -21,7 +20,7 @@ module Cult
         define_method(method_name) do |*args, &block|
           old_api_key = Vultr.api_key
           begin
-            Vultr.api_key = self.api_key
+            Vultr.api_key = api_key
             return send(unwrapped_name, *args, &block)
           ensure
             Vultr.api_key = old_api_key
@@ -29,9 +28,8 @@ module Cult
         end
       end
 
-
       def zones_map
-        Vultr::Regions.list[:result].map do |k, v|
+        Vultr::Regions.list[:result].map do |_k, v|
           [slugify(v["regioncode"]), v["DCID"]]
         end.to_h
       end
@@ -39,22 +37,19 @@ module Cult
       with_id_mapping :zones_map
       with_api_key    :zones_map
 
-
       def images_map
-        Vultr::OS.list[:result].select do |k, v|
+        Vultr::OS.list[:result].select do |_k, v|
           # Doing our part to kill x86/32
           v['arch'] == 'x64'
-        end.map do |k,v|
+        end.map do |_k, v|
           [slugify(distro_name(v["name"])), v["OSID"]]
-        end.reject do |k,v|
-          %w(custom snapshot backup application).include?(k) ||
-          k.match(/^windows/)
+        end.reject do |k, _v|
+          %w(custom snapshot backup application).include?(k) || k.match(/^windows/)
         end.to_h
       end
       memoize         :images_map
       with_id_mapping :images_map
       with_api_key    :images_map
-
 
       def sizes_map
         Vultr::Plans.list[:result].values.select do |v|
@@ -65,26 +60,22 @@ module Cult
             ram = ram.to_i
 
             if unit == "MB" && ram >= 1024
-              ram = ram / 1024
+              ram /= 1024
               unit = "GB"
             end
 
             if unit == "GB" && ram >= 1024
-              ram = ram / 1024
+              ram /= 1024
               unit = "TB"
             end
 
-            ["#{ram}#{unit}".downcase, v["VPSPLANID"] ]
-          else
-            nil
+            ["#{ram}#{unit}".downcase, v["VPSPLANID"]]
           end
         end.compact.to_h
       end
       memoize         :sizes_map
       with_id_mapping :sizes_map
       with_api_key    :sizes_map
-
-
 
       def upload_ssh_key(file:)
         key = ssh_key_info(file: file)
@@ -93,13 +84,11 @@ module Cult
       end
       with_api_key :upload_ssh_key
 
-
       def fetch_ip(list, type)
         goal = (type == :public ? "main_ip" : "private")
-        r = list.find{ |v| v["type"] == goal }
+        r = list.find { |v| v["type"] == goal }
         r.nil? ? nil : r["ip"]
       end
-
 
       def destroy!(id:, ssh_key_id: nil)
         Vultr::Server.destroy(SUBID: id)
@@ -111,7 +100,6 @@ module Cult
         Vultr::SSHKey.destroy(SSHKEYID: ssh_key_id)
       end
       with_api_key :destroy_ssh_key!
-
 
       def provision!(name:, size:, zone:, image:, ssh_public_key:)
         transaction do |xac|
@@ -151,32 +139,32 @@ module Cult
           await_ssh(host)
 
           return {
-              name:          name,
-              size:          size,
-              zone:          zone,
-              image:         image,
+            name: name,
+            size: size,
+            zone: zone,
+            image: image,
 
-              ssh_key_id:    ssh_key_id,
+            ssh_key_id: ssh_key_id,
 
-              id:           subid,
-              created_at:   Time.now.iso8601,
-              host:         host,
-              ipv4_public:  host,
-              ipv4_private: fetch_ip(iplist4, :private),
-              ipv6_public:  fetch_ip(iplist6, :public),
-              ipv6_private: fetch_ip(iplist6, :private),
-              meta:         {}
+            id: subid,
+            created_at: Time.now.iso8601,
+            host: host,
+            ipv4_public: host,
+            ipv4_private: fetch_ip(iplist4, :private),
+            ipv6_public: fetch_ip(iplist6, :public),
+            ipv6_private: fetch_ip(iplist6, :private),
+            meta: {}
           }
         end
       end
       with_api_key :provision!
 
-
       def self.setup!
         super
+
         url = "https://my.vultr.com/settings/#settingsapi"
-        puts "Vultr does not generate multiple API keys, so you'll need to "
-             "create one (if it does not exist).  You can access your API key "
+        puts "Vultr does not generate multiple API keys, so you'll need to " \
+             "create one (if it does not exist).  You can access your API key " \
              "at the following URL:"
         puts
         puts "  #{url}"
@@ -191,12 +179,13 @@ module Cult
         end
 
         inst = new(api_key: api_key)
-        return {
+
+        {
           api_key: api_key,
           driver: driver_name,
           configurations: {
-            sizes:  inst.sizes,
-            zones:  inst.zones,
+            sizes: inst.sizes,
+            zones: inst.zones,
             images: inst.images,
           }
         }

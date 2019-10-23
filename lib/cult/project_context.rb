@@ -15,13 +15,24 @@ module Cult
     def initialize(project, **extra)
       @project = project
       extra.each do |k, v|
-        v.respond_to?(:call) ? define_singleton_method(k, &v)
-                             : define_singleton_method(k) { v }
+        if v.respond_to?(:call)
+          define_singleton_method(k, &v)
+        else
+          define_singleton_method(k) { v }
+        end
       end
     end
 
     def method_missing(*args)
-      project.send(*args)
+      if project.respond_to?(args.first)
+        project.send(*args)
+      else
+        super
+      end
+    end
+
+    def respond_to_missing?(method_name)
+      project.respond_to?(method_name) || super
     end
 
     public :binding

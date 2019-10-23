@@ -18,24 +18,21 @@ module Cult
       end
     end
 
-
     class << self
       attr_accessor :required_gems
 
       def driver_name
         name.split('::')
-            .last
-            .sub(/Driver\z/, '')
-            .gsub(/([a-z])([A-Z])/, '\1-\2')
-            .downcase
+          .last
+          .sub(/Driver\z/, '')
+          .gsub(/([a-z])([A-Z])/, '\1-\2')
+          .downcase
       end
-
 
       def inspect
         self == Driver ? super : "#{super}/#{driver_name}"
       end
       alias_method :to_s, :inspect
-
 
       def named_array_identifier
         driver_name
@@ -46,11 +43,9 @@ module Cult
       "\#<#{self.class.name} \"#{self.class.driver_name}\">"
     end
 
-
     def to_s
       self.class.driver_name
     end
-
 
     # Attempts to loads all of the required gems before doing any real work
     def self.try_requires!
@@ -64,21 +59,18 @@ module Cult
       end.compact
 
       unless req.empty?
-        fail GemNeededError.new(req)
+        fail GemNeededError, req
       end
     end
-
 
     # These are helpers that most implementations will need, but Driver itself
     # doesn't depend on.  Things like exponential back-off, awaiting an SSH
     # port to open, etc.
     include ::Cult::Drivers::Common
 
-
     def self.setup!
       try_requires!
     end
-
 
     def self.new(*args)
       try_requires!

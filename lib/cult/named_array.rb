@@ -18,7 +18,6 @@ module Cult
       ::Array.include(self)
     end
 
-
     # This maps #named_array_identifier to #name by default
     module ObjectExtensions
       def named_array_identifier
@@ -27,11 +26,11 @@ module Cult
       ::Object.include(self)
     end
 
-
     # Allows named_array.all[/something/]
     class IndexWrapper
       def initialize(ary, method_name)
-        @ary, @method_name = ary, method_name
+        @ary = ary
+        @method_name = method_name
       end
 
       def inspect
@@ -53,7 +52,6 @@ module Cult
     end
     private_constant :IndexWrapper
 
-
     def self.indexable_wrapper(method_name)
       old_method_name = "#{method_name}_without_wrapper"
       alias_method old_method_name, method_name
@@ -73,7 +71,7 @@ module Cult
     # Wrap any non-mutating methods that can return an Array, and wrap the result with a
     # NamedArray. This is why NamedArray.select results in a NamedArray instead of an Array
     PROXY_METHODS = %i(& * + - << | collect compact flatten reject reverse rotate select shuffle
-                       slice sort uniq sort_by)
+                       slice sort uniq sort_by).freeze
     PROXY_METHODS.each do |method_name|
       define_method(method_name) do |*args, &b|
         r = super(*args, &b)
@@ -81,26 +79,25 @@ module Cult
       end
     end
 
-
     # It's unforunate that there's not a Regexp constructor that'll accept this string format
     # with options.
-    def build_regexp_from_string(s)
-      fail RegexpError, "Isn't a Regexp: #{s}" if s[0] != '/'
-      options = extract_regexp_options(s)
-      Regexp.new(s[1 ... s.rindex('/')], options)
+    def build_regexp_from_string(str)
+      fail RegexpError, "Isn't a Regexp: #{str}" if str[0] != '/'
+
+      options = extract_regexp_options(str)
+      Regexp.new(str[1...str.rindex('/')], options)
     end
     private :build_regexp_from_string
 
+    def extract_regexp_options(str)
+      offset = str.rindex('/')
+      fail RegexpError, "Unterminated Regexp: #{str}" if offset.zero?
 
-    def extract_regexp_options(s)
-      offset = s.rindex('/')
-      fail RegexpError, "Unterminated Regexp: #{s}" if offset == 0
-
-      trailing = s[offset + 1 ... s.size]
+      trailing = str[offset + 1...str.size]
       re_string = "%r!!#{trailing}"
       begin
-        (eval re_string).options
-      rescue SyntaxError => e
+        (eval re_string).options # rubocop:disable Security/Eval
+      rescue SyntaxError
         fail RegexpError, "invalid Regexp options: #{trailing}"
       end
     end
@@ -128,7 +125,8 @@ module Cult
     def extract_index(key)
       re = /\[\s*([^\]]*)\s*\]$/
       if key.is_a?(String) && (m = key.match(re))
-        subs, expr = m[0], m[1]
+        subs = m[0]
+        expr = m[1]
 
         index = case expr
           # Single decimal: 1
@@ -136,19 +134,19 @@ module Cult
             $1.to_i
           # Decimal range: 4..3
           when /^(\-?\d+)\s*\.\.\s*(\-?\d+)$/
-            $1.to_i .. $2.to_i
+            $1.to_i..$2.to_i
           # Decimal half-opened range: 4...3
           when /^(\-?\d+)\s*\.\.\.\s*(\-?\d+)$/
-            $1.to_i ... $2.to_i
+            $1.to_i...$2.to_i
           # List of indexes: 1,2,5
           when /^((?:\-?\d+\s*,?\s*)+)$/
             $1.split(',').map(&:to_i)
         end
 
         # We return [predicate string with index removed, expanded index]
-        [ key[0 ... (key.size - subs.size)], index ]
+        [key[0...(key.size - subs.size)], index]
       else
-        [ key, nil ]
+        [key, nil]
       end
     end
 
@@ -166,8 +164,8 @@ module Cult
       end
     end
 
-    def normal_key?(k)
-      [Integer, Range].any?{|cls| k.is_a?(cls) }
+    def normal_key?(key)
+      [Integer, Range].any? { |cls| key.is_a?(cls) }
     end
 
     # Returns all keys that match if method == :select, the first if method == :find
@@ -180,7 +178,7 @@ module Cult
       effective_method = index.nil? ? method : :select
 
       result = send(effective_method) do |v|
-        predicate === v.named_array_identifier
+        predicate === v.named_array_identifier # rubocop:disable Style/CaseEquality
       end
 
       result = fetch_by_index(result, index) if index
@@ -188,25 +186,26 @@ module Cult
     end
     indexable_wrapper :all
 
-
     # first matching item
     def [](key)
       return super if normal_key?(key)
+
       all(key).first
     end
 
     def first(key = nil)
       return super() if key.nil?
+
       all(key, :find).first
     end
 
     # first matching item, or raises KeyError
     def fetch(key)
-      first(key) or raise KeyError, "Not found: #{key.inspect}"
+      first(key) || raise(KeyError, "Not found: #{key.inspect}")
     end
 
     def key?(key)
-      !! first(key)
+      !first(key).nil?
     end
     alias_method :exist?, :key?
 
@@ -237,10 +236,10 @@ module Cult
     #   end
     # end
     #
-    def with(**kw)
-      fail ArgumentError, "with requires exactly one predicate" if kw.size != 1
+    def with(**kwargs)
+      fail ArgumentError, "with requires exactly one predicate" if kwargs.size != 1
 
-      key, predicate = kw.first
+      key, predicate = kwargs.first
       predicate = expand_predicate(predicate)
 
       select do |candidate|
@@ -251,8 +250,8 @@ module Cult
         methods.any? do |method|
           Array(candidate.send(method)).any? do |r|
             begin
-              predicate === r
-            rescue
+              predicate === r # rubocop:disable Style/CaseEquality
+            rescue StandardError
               # We're going to assume this is a result of a string comparison to a custom #==
               false
             end

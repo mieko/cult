@@ -2,7 +2,8 @@ module Cult
   class CommanderSync
     attr_reader :project, :nodes
     def initialize(project:, nodes:)
-      @project, @nodes = project, nodes
+      @project = project
+      @nodes = nodes
     end
 
     def sync!(roles: nil, passes: nil)
@@ -22,8 +23,8 @@ module Cult
       # searches through every node and extracts which passes have to be ran
       # to satisfy every event task
       nodes.map(&:build_order).flatten.uniq
-           .select { |r| roles.nil? ? true : roles.include?(r) }
-           .map(&:event_tasks).flatten.map(&:pass).uniq.sort
+        .select { |r| roles.nil? ? true : roles.include?(r) }
+        .map(&:event_tasks).flatten.map(&:pass).uniq.sort
     end
   end
 end

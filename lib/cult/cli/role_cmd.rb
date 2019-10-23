@@ -8,10 +8,10 @@ module Cult
     def role_cmd
       role = Cri::Command.define do
         optional_project
-        name        'role'
-        aliases     'roles'
-        summary     'Manage roles'
-        description <<~EOD.format_description
+        name 'role'
+        aliases 'roles'
+        summary 'Manage roles'
+        description <<~DOC.format_description
           A role defines what a node does.  The easiest way to think about it
           is just a directory full of scripts (tasks).
 
@@ -48,28 +48,27 @@ module Cult
           However, the only thing special about the `base` role is that Cult
           assumes roles and nodes without an explicit `includes` setting belong
           to `base`.
-        EOD
+        DOC
 
-        run(arguments: none) do |opts, args, cmd|
+        run(arguments: none) do |_opts, _args, cmd|
           puts cmd.help
           exit
         end
       end
 
-
       role_new = Cri::Command.define do
-        name        'new'
-        summary     'creates a new role'
-        usage       'create [options] NAME'
-        description <<~EOD.format_description
+        name 'new'
+        summary 'creates a new role'
+        usage 'create [options] NAME'
+        description <<~DOC.format_description
           Creates a new role names NAME, which will then be available under
           $CULT_PROJECT/roles/$NAME
-        EOD
+        DOC
 
         required :r, :roles, 'this role depends on another /ROLE+/ (multiple)',
                  multiple: true
 
-        run(arguments: 1) do |opts, args, cmd|
+        run(arguments: 1) do |opts, args, _cmd|
           name = CLI.fetch_item(args[0], from: Role, exist: false)
 
           role = Role.by_name(Cult.project, name)
@@ -91,16 +90,15 @@ module Cult
       end
       role.add_command(role_new)
 
-
       role_rm = Cri::Command.define do
-        name        'rm'
-        usage       'rm /ROLE+/ ...'
-        summary     'Destroy role ROLE'
-        description <<~EOD.format_description
+        name 'rm'
+        usage 'rm /ROLE+/ ...'
+        summary 'Destroy role ROLE'
+        description <<~DOC.format_description
           Destroys all roles specified.
-        EOD
+        DOC
 
-        run(arguments: 1 .. unlimited) do |opts, args, cmd|
+        run(arguments: 1..unlimited) do |_opts, args, _cmd|
           roles = args.map do |role_name|
             CLI.fetch_items(role_name, from: Role)
           end.flatten
@@ -115,17 +113,16 @@ module Cult
       end
       role.add_command(role_rm)
 
-
       role_ls = Cri::Command.define do
         name        'ls'
         usage       'ls [/ROLE+/ ...]'
         summary     'List existing roles'
-        description <<~EOD.format_description
+        description <<~DOC.format_description
           Lists roles in this project.  By default, lists all roles.  If one or
           more ROLES are specified, only lists those
-        EOD
+        DOC
 
-        run(arguments: unlimited) do |opts, args, cmd|
+        run(arguments: unlimited) do |_opts, args, _cmd|
           roles = Cult.project.roles
           unless args.empty?
             roles = CLI.fetch_items(*args, from: Role)

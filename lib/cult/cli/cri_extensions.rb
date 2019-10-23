@@ -44,17 +44,14 @@ module Cult
       ::Cri::Parser.prepend(self)
     end
 
-
     module CommandExtensions
       def project_required?
         defined?(@project_required) ? @project_required : true
       end
 
-
       def project_required=(v)
         @project_required = v
       end
-
 
       attr_accessor :argument_spec
 
@@ -101,7 +98,6 @@ module Cult
 
       ::Cri::Command.prepend(self)
     end
-
 
     module CommandDSLExtensions
       def optional_project

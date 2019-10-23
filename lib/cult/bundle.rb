@@ -4,7 +4,7 @@ require 'rubygems/package/tar_writer'
 module Cult
   class Bundle
     attr_reader :tar
-    def initialize(io, &block)
+    def initialize(io, &_block)
       @tar = Gem::Package::TarWriter.new(io)
       if block_given?
         begin

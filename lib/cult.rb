@@ -28,23 +28,21 @@ module Cult
       defined?(@singletons) ? @singletons : env_flag('CULT_SINGLETONS', true)
     end
 
-
-    def concurrency=(v)
-      unless v == :max || (v.is_a?(Integer) && v >= 0)
+    def concurrency=(n_processes)
+      unless n_processes == :max || (n_processes.is_a?(Integer) && v >= 0)
         fail CLI::CLIError, "concurrency must be a positive integer or :max"
       end
-      v = 1 if v == 0
-      @concurrency = v
-    end
 
+      n_processes = 1 if n_processes.zero?
+      @concurrency = n_processes
+    end
 
     def concurrency
       defined?(@concurrency) ? @concurrency : :max
     end
 
-
-    def env_flag(s, default = false)
-      case (v = ENV[s])
+    def env_flag(key, default = false)
+      case (v = ENV[key])
         when /^0|false|no|n$/i
           false
         when /^1|true|yes|y$/i
@@ -52,7 +50,7 @@ module Cult
         when nil
           default
         else
-          fail CLI::CLIError, "Invalid value for boolean #{s}: #{v}"
+          fail CLI::CLIError, "Invalid value for boolean #{key}: #{v}"
       end
     end
   end

@@ -19,33 +19,27 @@ module Cult
       end
     end
 
-
     # Quiet mode controls how verbose `say` is
-    def quiet=(v)
-      @quiet = v
+    def quiet=(bool)
+      @quiet = bool
     end
-
 
     def quiet?
       @quiet
     end
 
-
-    def say(v)
-      puts v unless @quiet
+    def say(msg)
+      puts msg unless @quiet
     end
-
 
     # yes=true automatically answers yes to "yes_no" questions.
-    def yes=(v)
-      @yes = v
+    def yes=(value)
+      @yes = value
     end
-
 
     def yes?
       @yes
     end
-
 
     # Asks a yes or no question with promp.  The prompt defaults to "Yes".  If
     # Cli.yes=true, true is returned without showing the prompt.
@@ -77,7 +71,7 @@ module Cult
             when /^[Nn]/
               return false
             else
-              $stderr.puts "Unrecognized response"
+              warn "Unrecognized response"
           end
         rescue Interrupt
           puts
@@ -86,7 +80,6 @@ module Cult
       end
     end
 
-
     # Asks the user a question, and returns the response.  Ensures a newline
     # exists after the response.
     def ask(prompt)
@@ -94,11 +87,9 @@ module Cult
       $stdin.gets.chomp
     end
 
-
     def prompt(*args)
       ask(*args)
     end
-
 
     # Disables echo to ask the user a password.
     def password(prompt)
@@ -110,7 +101,6 @@ module Cult
         end
       end
     end
-
 
     # it's common for drivers to need the user to visit a URL to
     # confirm an API key or similar.  This does this in the most
@@ -126,7 +116,6 @@ module Cult
       end
     end
 
-
     # We actually want "base 47", so we have to generate substantially more
     # characters than len.  The method already generates 1.25*len characters,
     # but is offset by _ and - that we discard.  With the other characters we
@@ -134,14 +123,13 @@ module Cult
     # few thousand ids at 6 len), then handle that case.
     def unique_id(len = 8)
       @uniq_id_disallowed ||= /[^abcdefhjkmnpqrtvwxyzABCDEFGHJKMNPQRTVWXY2346789]/
-      candidate = SecureRandom.urlsafe_base64((len * 2.1).ceil)
-                              .gsub(@uniq_id_disallowed, '')
+      candidate = SecureRandom.urlsafe_base64((len * 2.1).ceil).gsub(@uniq_id_disallowed, '')
       fail RangeError if candidate.size < len
+
       candidate[0...len]
     rescue RangeError
       retry
     end
-
 
     # v is an option or argv value from a user, label: is the name of it.
     #
@@ -155,11 +143,14 @@ module Cult
     # CLIError is raised if these invariants are violated
     def fetch_item(v, from:, label: nil, exist: true, method: :fetch)
       implied_from = case
-        when from == Driver;   Cult::Drivers.all
-        when from == Provider; Cult.project.providers
-        when from == Role;     Cult.project.roles
-        when from == Node;     Cult.project.nodes
-        else;                  nil
+        when from == Driver
+          Cult::Drivers.all
+        when from == Provider
+          Cult.project.providers
+        when from == Role
+          Cult.project.roles
+        when from == Node
+          Cult.project.nodes
       end
 
       label ||= implied_from ? from.name.split('::')[-1].downcase : nil
@@ -184,22 +175,19 @@ module Cult
           fail CLIError, "#{label} does not exist: #{v}"
         end
       else
-        if from.key?(v)
-          fail CLIError, "#{label} already exists: #{v}"
-        end
+        fail CLIError, "#{label} already exists: #{v}" if from.key?(v)
+
         v
       end
     end
 
-
     # Takes a list of keys and returns an array of objects that correspond
     # to any of them.
-    def fetch_items(*keys, **kw)
+    def fetch_items(*keys, **kwargs)
       keys.flatten.map do |key|
-        fetch_item(key, method: :all, **kw)
+        fetch_item(key, method: :all, **kwargs)
       end.flatten
     end
-
 
     # This intercepts GemNeededError and does the installation dance.  It looks
     # a bit hairy because it has a few resumption points, e.g., attempts user
@@ -207,13 +195,13 @@ module Cult
     def offer_gem_install(&block)
       prompt_install = ->(gems) do
         unless quiet?
-          print <<~EOD
+          print <<~MSG
             This driver requires the installation of one or more gems:
 
               #{gems.inspect}
 
             Cult can install them for you.
-          EOD
+          MSG
         end
         yes_no?("Install?")
       end
@@ -233,22 +221,22 @@ module Cult
         loop do
           sudo = catch :sudo_attempt do
             # We don't want to show this again on a retry
-            raise unless sudo || prompt_install.(needed.gems)
+            raise unless sudo || prompt_install.call(needed.gems)
 
             needed.gems.each do |gem|
-              success = try_install.(gem, sudo: sudo)
-              if !success
+              success = try_install.call(gem, sudo: sudo)
+              unless success
                 if sudo
                   puts "Nothing seemed to have worked.  Giving up."
                   puts "The gems needed are #{needed.gems.inspect}."
-                  raise
                 else
                   puts "It doesn't look like that went well."
+
                   if yes_no?("Retry with sudo?")
                     throw :sudo_attempt, true
                   end
-                  raise
                 end
+                raise
               end
             end
 

@@ -3,7 +3,6 @@ require 'json'
 module Cult
   class Definition
     attr_reader :object
-    attr_reader :bag
 
     def initialize(object)
       @object = object
@@ -22,10 +21,10 @@ module Cult
     end
 
     def inspect
-      "\#<#{self.class.name} " +
-        "object: #{object.inspect}, " +
-        "params: #{definition_parameters}, " +
-        "parents: #{definition_parents}, " +
+      "\#<#{self.class.name} " \
+        "object: #{object.inspect}, " \
+        "params: #{definition_parameters}, " \
+        "parents: #{definition_parents}, " \
         "bag: #{bag}>"
     end
     alias_method :to_s, :inspect
@@ -41,41 +40,41 @@ module Cult
     end
     alias_method :to_h, :bag
 
+    def direct(key)
+      fail ArgumentError unless key.is_a?(String)
 
-    def direct(k)
-      fail ArgumentError unless k.is_a?(String)
-      bag[k]
+      bag[key]
     end
 
+    def [](key)
+      fail ArgumentError unless key.is_a?(String)
 
-    def [](k)
-      fail ArgumentError unless k.is_a?(String)
-      if bag.key?(k)
-        bag[k]
+      if bag.key?(key)
+        bag[key]
       else
         parent_responses = definition_parents.map do |p|
-          [p, p.definition[k]]
-        end.reject do |k, v|
+          [p, p.definition[key]]
+        end.reject do |_k, v|
           v.nil?
         end
         consensus = parent_responses.group_by(&:last)
         if consensus.empty?
           return nil
         elsif consensus.size != 1
-          msg = "#{object.inspect}: I didn't have key '#{k}', and " +
-                "my parents had conflicting answers: " +
+          msg = "#{object.inspect}: I didn't have key '#{k}', and " \
+                "my parents had conflicting answers: " \
                 "[answer, parents]: #{consensus}"
           fail KeyError, msg
         end
+
         consensus.keys[0]
       end
     end
 
+    def []=(key, value)
+      fail "Use string keys" unless key.is_a?(String)
 
-    def []=(k, v)
-      fail "Use string keys" unless k.is_a?(String)
-      bag[k] = v
+      bag[key] = value
     end
-
   end
 end

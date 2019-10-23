@@ -9,10 +9,10 @@ require 'cult/drivers/load'
 
 cult = Cri::Command.define do
   optional_project
-  name        'cult'
-  usage       'cult [options] [command [options...]]'
-  summary     'Control a Fleet of Obedient Zomboid Machines'
-  description <<~EOD.format_description
+  name 'cult'
+  usage 'cult [options] [command [options...]]'
+  summary 'Control a Fleet of Obedient Zomboid Machines'
+  description <<~DOC.format_description
     Cult is a tool for creating and then managing a fleet of servers you
     control.  It operates on a few simple concepts:
 
@@ -24,12 +24,12 @@ cult = Cri::Command.define do
 
       * Tasks: Basically shell scripts that run in a specific order.
 
-   Cult has a few more convenience concepts, like Keys and Providers, but you
-   don't end up thinking about them too often.
+    Cult has a few more convenience concepts, like Keys and Providers, but you
+    don't end up thinking about them too often.
 
-   To create a new Cult project, use 'cult init DIRECTORY', but see the 'init'
-   help first, with 'cult init --help'
-  EOD
+    To create a new Cult project, use 'cult init DIRECTORY', but see the 'init'
+    help first, with 'cult init --help'
+  DOC
 
   required :C, :directory, 'Specify a project path' do |value|
     Cult::CLI.set_project(value)
@@ -82,16 +82,14 @@ else
   Cult.project ||= Cult::Project.from_cwd
 end
 
-if Cult.project
-  Cult.project.execute_cultrc
-end
+Cult.project&.execute_cultrc
 
 ERROR_CULT = Rainbow("#{File.basename($0)}:").red
 
 begin
   cult.run(ARGV)
 rescue Cult::CLI::CLIError, RegexpError => e
-  $stderr.puts "#{ERROR_CULT} #{e.message}"
+  warn "#{ERROR_CULT} #{e.message}"
   exit 1
 rescue Interrupt
   exit 1

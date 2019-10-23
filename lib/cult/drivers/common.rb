@@ -6,7 +6,6 @@ require 'cult/transaction'
 module Cult
   module Drivers
     module Common
-
       module ClassMethods
         # Lets us write a method "something_map" that returns {'ident' => ...},
         # and also get a function "something" that returns the keys.
@@ -17,7 +16,6 @@ module Cult
           end
         end
 
-
         def memoize(method_name)
           old_method_name = "#{method_name}_unmemoized".to_sym
 
@@ -26,7 +24,7 @@ module Cult
           var_name = "@#{method_name}".to_sym
 
           define_method(method_name) do
-            if !instance_variable_defined?(var_name)
+            unless instance_variable_defined?(var_name)
               instance_variable_set(var_name, send(old_method_name))
             end
             instance_variable_get(var_name)
@@ -38,7 +36,6 @@ module Cult
         end
       end
 
-
       # works with with_id_mapping to convert a human-readible/normalized key
       # to the id the backend service expects.  Allows '=value' to force a
       # literal value, and gives better error messages.
@@ -49,17 +46,16 @@ module Cult
 
         begin
           from.fetch(key)
-        rescue KeyError => e
-          raise ArgumentError, "Invalid #{name}: \"#{key}\".  " +
-                               "Use \"=#{key}\" to force, or use one of: " +
-                               from.keys.inspect
+        rescue KeyError
+          raise ArgumentError, "Invalid #{name}: \"#{key}\"." \
+                               "Use \"=#{key}\" to force, or use one of: #{from.keys.inspect}"
         end
       end
-
 
       def ssh_key_info(data: nil, file: nil)
         if data.nil?
           fail ArgumentError if file.nil?
+
           data = File.read(file)
         else
           fail ArgumentError unless file.nil?
@@ -69,35 +65,33 @@ module Cult
         key = Net::SSH::KeyFactory.load_data_public_key(data, file)
 
         fields = data.split(/ /)
-        return {
-          name:        fields[-1],
+
+        {
+          name: fields[-1],
           fingerprint: key.fingerprint,
-          data:        data,
-          file:        file
+          data: data,
+          file: file
         }
       end
 
-
-      def slugify(s)
-        s.gsub(/[^a-z0-9]+/i, '-').gsub(/(^\-)|(-\z)/, '').downcase
+      def slugify(str)
+        str.gsub(/[^a-z0-9]+/i, '-').gsub(/(^\-)|(-\z)/, '').downcase
       end
 
-
-      def distro_name(s)
-        s = s.gsub(/\bx64\b/i, '')
+      def distro_name(str)
+        str = str.gsub(/\bx64\b/i, '')
         # People sometimes add "LTS" to the name of Ubuntu LTS releases
-        s = s.gsub(/\blts\b/i, '') if s.match(/ubuntu/i)
+        str = str.gsub(/\blts\b/i, '') if str.match(/ubuntu/i)
 
         # We don't particularly need the debian codename
-        s = s.gsub(/(\d)[\s-]+(\S+)/, '\1') if s.match(/^debian/i)
-        s = s.gsub(/[\s.]+/, '-')
-        s.downcase
+        str = str.gsub(/(\d)[\s-]+(\S+)/, '\1') if str.match(/^debian/i)
+        str = str.gsub(/[\s.]+/, '-')
+        str.downcase
       end
-
 
       # Does back-off retrying.  Defaults to not-exponential.
       # Block must throw :done to signal they are done.
-      def backoff_loop(wait = 3, scale = 1.2, &block)
+      def backoff_loop(wait = 3, scale = 1.2, &_block)
         times = 0
         total_wait = 0.0
 
@@ -110,7 +104,6 @@ module Cult
         end
       end
 
-
       # Waits until SSH is available at host.  "available" jsut means
       # "listening"/acceping connections.
       def await_ssh(host)
@@ -119,15 +112,13 @@ module Cult
           begin
             sock = connect_timeout(host, 22, 1)
             break
-          rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED, Errno::EHOSTUNREACH,
-                 Errno::EHOSTDOWN
+          rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::EHOSTDOWN
             # Nothing, these are expected
           ensure
-            sock.close if sock
+            sock&.close
           end
         end
       end
-
 
       # This should not be needed, but it is:
       # https://spin.atomicobject.com/2013/09/30/socket-connection-timeout-ruby/
@@ -145,7 +136,6 @@ module Cult
             # fail immediately it will raise an IO::WaitWritable
             # (Errno::EINPROGRESS) indicating the connection is in progress.
             socket.connect_nonblock(sockaddr)
-
           rescue IO::WaitWritable
             # IO.select will block until the socket is writable or the timeout
             # is exceeded - whichever comes first.
@@ -155,7 +145,7 @@ module Cult
                 socket.connect_nonblock(sockaddr)
               rescue Errno::EISCONN
                 # Good news everybody, the socket is connected!
-              rescue
+              rescue StandardError
                 # An unexpected exception was raised - the connection is no good.
                 socket.close
                 raise
@@ -174,7 +164,6 @@ module Cult
         cls.extend(ClassMethods)
         cls.include(::Cult::Transaction)
       end
-
     end
   end
 end

@@ -4,7 +4,7 @@ require 'json'
 
 module Cult
   class Project
-    CULT_RC = '.cultrc'
+    CULT_RC = '.cultrc'.freeze
 
     attr_reader :path
     attr_accessor :cult_version
@@ -15,48 +15,40 @@ module Cult
       @path = path
     end
 
-
     def name
       File.basename(path)
     end
-
 
     def cultrc
       location_of(CULT_RC)
     end
 
-
     def execute_cultrc
       load(cultrc)
     end
-
 
     def inspect
       "\#<#{self.class.name} name=#{name.inspect} path=#{path.inspect}>"
     end
     alias_method :to_s, :inspect
 
-
     def location_of(file)
       File.join(path, file)
     end
-
 
     def relative_path(obj_path)
       prefix = "#{path}/"
 
       if obj_path.start_with?(prefix)
-        return obj_path[prefix.length .. -1]
+        return obj_path[prefix.length..-1]
       end
 
       fail ArgumentError, "#{path} isn't in the project"
     end
 
-
     def remote_path
       "cult"
     end
-
 
     def constructed?
       File.exist?(cultrc)
@@ -69,13 +61,11 @@ module Cult
       end
     end
 
-
     def roles
       @roles ||= begin
         Role.all(self)
       end
     end
-
 
     def providers
       @providers ||= begin
@@ -98,7 +88,6 @@ module Cult
       end
     end
 
-
     def drivers
       @drivers ||= begin
         Cult::Drivers.all
@@ -108,7 +97,6 @@ module Cult
     def reload!
       @drivers = @providers = @nodes = @roles = nil
     end
-
 
     def self.locate(path)
       path = File.expand_path(path)
@@ -121,10 +109,10 @@ module Cult
 
         candidate = File.join(path, CULT_RC)
         return new(path) if File.exist?(candidate)
+
         path = File.dirname(path)
       end
     end
-
 
     def self.from_cwd
       locate Dir.getwd
@@ -144,7 +132,6 @@ module Cult
       %x(#{cmd}).chomp
     end
 
-
     def env
       ENV['CULT_ENV'] || begin
         if git_branch&.match(/\bdev(el(opment)?)?\b/)
@@ -155,7 +142,6 @@ module Cult
       end
     end
 
-
     def development?
       env == 'development'
     end
@@ -163,6 +149,5 @@ module Cult
     def production?
       env == 'production'
     end
-
   end
 end

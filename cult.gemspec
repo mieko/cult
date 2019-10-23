@@ -7,10 +7,10 @@ Gem::Specification.new do |spec|
   spec.name          = "cult"
   spec.version       = Cult::VERSION
   spec.authors       = ["Mike Owens"]
-  spec.email         = ["mike@meter.md"]
+  spec.email         = ["mike@mikeowens.us"]
 
   spec.summary       = "Fleet Management like its 1990"
-  spec.homepage      = "https://github.com/metermd/cult"
+  spec.homepage      = "https://github.com/mieko/cult"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -41,6 +41,4 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 12.3"
-
-  spec.add_development_dependency "rubocop-airbnb", "~> 2.0"
 end

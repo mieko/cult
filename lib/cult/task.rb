@@ -13,23 +13,19 @@ module Cult
       @name = File.basename(path)
     end
 
-
     def self.collection_name
       "tasks"
     end
-
 
     def relative_path
       File.basename(path)
     end
 
-
     # Task files are executable by anyone: this makes re-exec'ing
     # tasks as another user trivial.
     def file_mode
-      super | 0111
+      super | 0o111
     end
-
 
     def self.spawn(role, path)
       [BuildTask, EventTask].each do |task_cls|
@@ -40,8 +36,7 @@ module Cult
       nil
     end
 
-
-    def self.all_for_role(project, role)
+    def self.all_for_role(_project, role)
       fail ArgumentError if block_given?
 
       Dir.glob(File.join(role.path, "tasks", "*")).sort.map do |path|
@@ -50,16 +45,13 @@ module Cult
     end
   end
 
-
   class BuildTask < Task
     LEADING_ZEROS = 3
-    BASENAME_RE = /\A(\d{#{LEADING_ZEROS},})-([\w-]+)(\..+)?\z/i
-
+    BASENAME_RE = /\A(\d{#{LEADING_ZEROS},})-([\w-]+)(\..+)?\z/i.freeze
 
     def self.valid_name?(basename)
-      !! basename.match(BASENAME_RE)
+      basename.match?(BASENAME_RE)
     end
-
 
     attr_reader :serial
 
@@ -74,25 +66,22 @@ module Cult
       end
     end
 
-
     def self.from_serial_and_name(role, serial:, name:)
-      basename = sprintf("%0#{LEADING_ZEROS}d-%s", serial, name)
+      basename = format("%0#{LEADING_ZEROS}d-%s", serial, name)
       new(role, File.join(role.path, collection_name, basename))
     end
   end
 
-
   class EventTask < Task
-    EVENT_TYPES = [:sync]
-    EVENT_RE = /^(#{EVENT_TYPES.join('|')})(?:\-P(\d+))?\-?/
+    EVENT_TYPES = [:sync].freeze
+    EVENT_RE = /^(#{EVENT_TYPES.join('|')})(?:\-P(\d+))?\-?/.freeze
 
     attr_reader :event
     attr_reader :pass
 
     def self.valid_name?(basename)
-      !! basename.match(EVENT_RE)
+      basename.match?(EVENT_RE)
     end
-
 
     def initialize(role, path)
       super
@@ -100,8 +89,8 @@ module Cult
       @pass = pass_name(name)
     end
 
-
     private
+
     def event_name(basename)
       basename.match(EVENT_RE)[1].to_sym
     end
@@ -109,6 +98,5 @@ module Cult
     def pass_name(basename)
       basename.match(EVENT_RE)[2].to_i
     end
-
   end
 end

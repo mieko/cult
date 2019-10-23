@@ -2,7 +2,7 @@ require 'fileutils'
 
 module Cult
   class Skel
-    SKEL_DIR = File.expand_path(File.join(__dir__, '../../skel'))
+    SKEL_DIR = File.expand_path(File.join(__dir__, '../../skel')).freeze
 
     attr_reader :project
 
@@ -10,11 +10,9 @@ module Cult
       @project = project
     end
 
-
     def template
-      @erb ||= Template.new(project: project)
+      @template ||= Template.new(project: project)
     end
-
 
     # Skeleton files are files that are copied over for a new project.
     # We allow template files to live in the skeleton directory too, but
@@ -25,11 +23,9 @@ module Cult
       end
     end
 
-
     def template_file(name)
       File.join(SKEL_DIR, name)
     end
-
 
     def copy_template(name, dst)
       src = template_file(name)
@@ -37,10 +33,9 @@ module Cult
       process_file(src, dst)
     end
 
-
     def process_file(src, dst = nil)
       dst ||= begin
-        relative = src.sub(%r/\A#{Regexp.escape(SKEL_DIR)}/, '')
+        relative = src.sub(/\A#{Regexp.escape(SKEL_DIR)}/, '')
         project.location_of(relative)
       end
 
@@ -50,11 +45,10 @@ module Cult
 
       dst, data = case src
         when /\.erb\z/
-          [ dst.sub(/\.erb\z/, ''),
-            template.process(File.read(src), filename: src)]
+          [dst.sub(/\.erb\z/, ''), template.process(File.read(src), filename: src)]
         else
-          [ dst, File.read(src) ]
-        end
+          [dst, File.read(src)]
+      end
 
       display_name = File.basename(dst) == ".keep" ? File.dirname(dst) : dst
 
@@ -64,14 +58,12 @@ module Cult
         return
       end
 
-
       FileUtils.mkdir_p(File.dirname(dst))
 
       File.write(dst, data)
       File.chmod(File.stat(src).mode, dst)
       puts
     end
-
 
     def copy!
       puts "Creating project from skeleton..."

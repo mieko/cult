@@ -6,31 +6,25 @@ module Cult
       end
     end
 
-
     def self.included(cls)
       cls.extend(ClassMethods)
     end
-
 
     def collection_name
       self.class.collection_name
     end
 
-
     def remote_path
       File.join(role.remote_path, role_relative_path)
     end
-
 
     def role_relative_path
       File.join(collection_name, relative_path)
     end
 
-
     def binary?
-      !! File.read(path, 512).match(/[\x00-\x08]/)
+      File.read(path, 512).match?(/[\x00-\x08]/)
     end
-
 
     def contents(project, role, node, pwd: nil)
       if binary?
@@ -41,18 +35,15 @@ module Cult
       end
     end
 
-
     def name
       prefix = File.join(role.path, collection_name) + "/"
       if path.start_with?(prefix)
-        path[prefix.size .. -1]
+        path[prefix.size..-1]
       end
     end
 
-
     def file_mode
-      File.stat(path).mode & 0777
+      File.stat(path).mode & 0o777
     end
-
   end
 end
