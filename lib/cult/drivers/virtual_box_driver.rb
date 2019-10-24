@@ -6,8 +6,6 @@ module Cult
       def initialize(api_key:); end
 
       def sizes_map
-        # Cores = GB Ram is a pretty good scaling factor, and
-        # closely maps what VPS providers are doing.
         [1, 2, 4, 6, 8, 10, 12, 16].map do |size|
           ["#{size}gb", { ram: size * 1024, cores: size }]
         end.to_h
@@ -15,7 +13,7 @@ module Cult
       with_id_mapping :sizes_map
 
       def images_map
-        %x(VBoxManage list vms).each_line.map do |line|
+        vbox_manage('list', 'vms').each_line.map do |line|
           words = Shellwords.split(line.chomp)
           [distro_name(words[0]), words[1]]
         end.to_h
@@ -34,22 +32,24 @@ module Cult
         "/VirtualBox/GuestInfo/Net/#{index}/#{protocols[protocol]}/IP"
       end
 
-      def esc(str)
-        Shellwords.escape(str)
+      def vbox_manage(*args)
+        cmd = ['VBoxManage', *(args.map { |a| Shellwords.escape(a.to_s) })]
+        cmdline = cmd.join(" ")
+        puts " > #{cmdline}"
+        %x(#{cmdline})
+      end
+
+      def vbox_guest_control(name, *args)
+        vbox_manage 'guestcontrol', name, *args
       end
 
       def unset_ip_data(name, index, protocol)
-        cmd = "VBoxManage guestproperty unset #{esc(name)} " \
-              "#{ip_property_name(index, protocol)}"
-        %x(#{cmd})
+        vbox_manage 'guestproperty', 'unset', name, ip_property_name(index, protocol)
       end
 
       def get_ip_data(name, index, protocol)
-        cmd = "VBoxManage guestproperty get #{esc(name)} " \
-              "#{ip_property_name(index, protocol)}"
-        s = %x(#{cmd})
-
-        if $?.success? && (m = s.match(/^Value: (.+)$/))
+        result = vbox_manage 'guestproperty', 'get', name, ip_property_name(index, protocol)
+        if $?.success? && (m = result.match(/^Value: (.+)$/))
           m[1]
         end
       end
@@ -66,47 +66,49 @@ module Cult
       end
 
       def destroy!(id:, ssh_key_id:)
-        system 'VBoxManage', 'controlvm', id, 'poweroff'
-        system 'VBoxManage', 'unregistervm', id, '--delete'
+        vbox_manage 'controlvm', id, 'poweroff'
+        vbox_manage 'unregistervm', id, '--delete'
       end
 
       def guest_copy(name, src, dst)
-        # NOTE: Bug in current (Sep 2016) VBox has a fucked copyto, where
-        # setting target-directory to the full path is a workaround
-        cmd = "VBoxManage guestcontrol #{esc(name)} " \
-              "--username root --password password " \
-              "copyto #{esc(src)} --target-directory #{esc(dst)}"
-        puts cmd
-        %x(#{cmd})
+        # NOTE: Bug in current (Sep 2016) VBox has a fucked copyto, where setting target-directory
+        # to the full path is a workaround
+        vbox_guest_control \
+          name,
+          '--username', 'root',
+          '--password', 'password',
+          'copyto', src, '--target-directory', dst
       end
 
       def guest_command(name, cmd)
-        cmd = "VBoxManage guestcontrol #{esc(name)} " \
-              "--username root --password password " \
-              "run -- /bin/sh -c #{esc(cmd)}"
-        puts cmd
-        %x(#{cmd})
+        vbox_guest_control \
+          name,
+          '--username', 'root',
+          '--password', 'password',
+          'run', '--', '/bin/sh', '-c', cmd
       end
 
       def provision!(name:, size:, zone:, image:, ssh_public_key:)
         transaction do |xac|
-          # TODO: transaction
-          system 'VBoxManage',
-                 'clonevm',
-                 fetch_mapped(name: :image, from: images_map, key: image),
-                 '--name', name, '--register'
+          vbox_manage \
+            'clonevm',
+            fetch_mapped(name: :image, from: images_map, key: image),
+            '--groups', '/Cult',
+            '--name', name,
+            '--register'
 
           xac.rollback do
             destroy!(id: name, ssh_key_id: nil)
           end
 
           system_spec = sizes_map[size]
-          system \
-            'VBoxManage',
-            'modifyvm', name, '--groups', '/Cult', '--memory', system_spec[:ram].to_s,
+
+          vbox_manage \
+            'modifyvm', name,
+            '--memory', system_spec[:ram].to_s,
             '--cpus', system_spec[:cores].to_s
 
-          system 'VBoxManage', 'startvm', name, '--type', 'headless'
+          vbox_manage 'startvm', name, '--type', 'headless'
 
           public_ip  = await_ip_address(name, 0, :ipv4)
           private_ip = public_ip

@@ -89,7 +89,7 @@ module Cult
         str.downcase
       end
 
-      # Does back-off retrying.  Defaults to not-exponential.
+      # Does back-off retrying.  Defaults to non-exponential.
       # Block must throw :done to signal they are done.
       def backoff_loop(wait = 3, scale = 1.2, &_block)
         times = 0
